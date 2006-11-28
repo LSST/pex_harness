@@ -1,0 +1,15 @@
+Version 1 LSST Logging
+----------------------
+While using logTest.py, I found some odd results in the logfile generated.
+There are multiple entries of the same message.  The multiple is not
+predictable.  Perhaps with a delayed ACK, the underlying socket send from the
+threaded socket server (SocketServer.ThreadingTCPServer) is resending its
+packet.  Below is a tail of the logfile for the logTest.py version committed.
+
+2006-08-06 18:12:15,793 ds30.ncsa.uiuc.edu DEBUG    LogTest: Test1 of LSST logging
+2006-08-06 18:12:15,798 ds30.ncsa.uiuc.edu INFO     : Test2 of LSST logging
+2006-08-06 18:12:15,798 ds30.ncsa.uiuc.edu INFO     : Test2 of LSST logging
+
+Note that the problem gets worse if we enable the 1-10 log messages.  It seems
+to be a risk that we will swamp the socket buffers easily if my guess is
+correct.
