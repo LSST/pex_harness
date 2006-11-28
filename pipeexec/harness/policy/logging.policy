@@ -1,0 +1,38 @@
+# logging.policy
+#
+# Author: Michelle Miller & Jonathan Myers
+# Date:   Aug. 2, 2006
+#
+
+#==================================================================
+# This file defines the policy for the nlog.py and other derived
+# packages.
+
+# If this file is not found at run-time in the $LSST_POLICY_DIR,
+# (or the directory where nlog.py is living), then logs will
+# instead be written to stderr. This can be useful for debugging.
+
+# The idea should be to write local logs (specified by logFile)
+# to a local, non-shared disk - thus they are protected in the event 
+#  of heavy network traffic or a network outage.  
+
+#Note: We actually write to logFile.[processPID].[host IP].[username]
+# in order to keep
+# multiple processes from clobbering each other. (host IP should 
+# theoretically not be necessary, as we should be keeping local logs
+# on local, non-shared disks - but it never hurts to be safe.)
+
+# Assuming we run log forwarders and a listener (these will be
+# added to the PBS script by SetupHarnessPipeline.py assuming
+# that this file is found), then the listener will write all 
+# data to the location specified by cenralLogFile.
+# 
+
+
+# in the future:  we might wish to specify a forwarding port
+# as well, but for now, the default NetLogger port works fine.
+
+#==================================================================
+
+logFile = /tmp/lsst.local.log
+centralLogFile = lsst.central.log

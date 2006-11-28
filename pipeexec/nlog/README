@@ -1,0 +1,124 @@
+ ----------------------------------------------------------
+ -                nlog utilities                          -
+ -                                                        -
+ -   logging utilities based on the NetLogger package     -
+ ----------------------------------------------------------
+ 
+author: jmyers
+
+
+The files here require the NetLogger package.  Right now we 
+are using NetLogger 3.3.11 installed with pacman.
+
+A few words on making these utilities run: this code import nllite.py
+from NetLogger, which NetLogger keeps in a normal lib/python/
+directory of its installation target.  However, nlogd.py and
+nloglistenerd.py also import .py files from the <NetLogger-target>/bin
+directory.
+
+
+===========================
+REALLY BASIC USAGE: 
+===========================
+
+see nlogd.py's docstring for more info, but in short:
+
+  from lsst.mw.dps.pipeexec.nlog import nlog.
+
+then use 
+
+  nlog.log("a message") 
+
+to log a message.  If logging.policy is
+found in your LSST_POLICY_DIR or in the directory where nlog.py is
+running, the message will be written to the local log described there.
+If logging.policy is not found, the message will be written to stderr.
+There are many more and very useful things you can do with nlog.log,
+particularly for things like profiling the performance of code, so
+read the docstring if you're using it for anything non-trivial.
+
+
+==============================
+HOW IT IS USED IN THE HARNESS
+==============================
+
+The NetLogger methodology is at work here, this code is mostly just
+for convenience.  For more on the NetLogger methodology, see
+http://dsd.lbl.gov/NetLogger/methodology.html .
+
+Our approach to the methodology: programs write to the local log file
+specified in the logging.policy file.  Our PBS script from
+SetupHarnessPipeline is responsible for clearing out old logs, setting
+up log forwarders on all the machines and a log listener on a chosen
+head node to collect the forwarded logs.  The log listener is
+responsible for writing to the central log file specified in
+logging.policy.  After the run is finished, the PBS script should also
+clear out recently-created logs.
+
+A word on local log files: We need to achieve two things: making sure
+that local logs don't clobber each other, and being able to forward
+all our local logs with a single nlforward.py or nlogd.py command.
+nlogd.py is a wrapper aound nlforward.py (see below) and nlforward.py
+takes a UNIX-glob as a parameter [remember to escape shell expansion]
+and forwards the matches to the log listener.  Ergo, we write local
+logs in the format: 
+   <localLogName from the policy file>.<PID>.<Host IP>.<username>
+and then do the actual log forwarding with the glob:
+   <localLogName from the policy file>.*.*.<username>
+This prevents us from deleting another user's logs, forwarding another
+user's logs, and from accidentally clobbering our own logs.  Host IP
+is provided just in case we accidentally write to a shared file
+system (which is a bad idea anyway), where our PIDs might overlap.
+
+Since this is confusing, nlog.py includes the functions
+getLogFileName, which gives a specific log file to be used for writing
+(this is used by nlog.log) and getLogFileGlob, which returns a UNIX
+glob string.  SetupHarnessPipeline.py (in the harness directory) uses
+this for telling the forwarders what to forward.
+
+Also, note that no such precautions are taken for the central log
+file.  We write to that one just as it appears in logging.policy.
+
+
+==========================================
+A breakdown of the individual files here 
+==========================================
+
+
+- nlog.py: A library that provides nlog.log(), a function for easy
+  writing to logs.  See its docstrings for more information.  It also
+  provides nlog.getLogFileGlob(), which is useful if you want a glob
+  that matches all the local logs that mOAight be generated.
+
+
+-logging.policy:  This is also fairly well-documented inside.
+
+- __init__.py:  This actually runs "from nlog import *" as per
+  Russell's request; thus you can actually import nlog.py with "from
+  lsst.mw.dps.pipeline.pipeexec import nlog" or "from
+  lsst.mw.dps.pipeexec.nlog import nlog".
+
+- nlogtopd.py: Despite the name, this is not a true daemon; I found
+  true deamonization in Python to be unreliable.  However, it *is*
+  still very useful.  Run it on a machine and it will use nlog.log()
+  with UNIX top to log information about the most CPU-bound processes
+  on the current machine. It is also smart enough to look at
+  information about multiple CPUs, but only if top shows them.  To
+  make top show this information, you actually must use a .toprc file
+  - fortunately, one is provided at:
+
+- put-this-in-HOME-as-.toprc:  A .toprc file that configures top to
+  give per-CPU information.  Put it in your ~/.toprc and nlogtopd will
+  give per-CPU information, too.
+
+- nlogd.py:  This provides a fully daemonized interface to netlogd.py,
+  the standard NetLogger log forwarder.  However, I've found it's more
+  useful on TeraGrid to just run nlforward.py in the background with
+  calls like 
+    ssh $NODE "nlforward.py 'locallog-file-glob' x-netlog://headnode" &
+  and thus nlogd.py isn't really all that useful or well-tested. 
+
+- nloglistenerd.py:  Another fully daemonized interface I eventually
+  found less useful than the original, this time around netlogd.py.
+  Perhaps sometime it will have its day.
+
