@@ -2,7 +2,7 @@
 
 import os
 import sys
-import lsst.mw.dps.pipeexec.queue
+import lsst.dps.pipeexec.queue
 
 USAGE = "Usage: "+sys.argv[0]+" directory"
 
@@ -14,7 +14,7 @@ def main():
 		return
 
 	while 1:
-		filename = lsst.mw.pipe.queue.get(getdir)
+		filename = lsst.pipe.queue.get(getdir)
 		print "got "+filename
 		os.unlink(filename)
 

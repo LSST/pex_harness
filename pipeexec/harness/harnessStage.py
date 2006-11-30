@@ -2,7 +2,7 @@
 import os
 import sys
 import optparse
-from lsst.mw.dps.pipeexec.nlog import nlog
+from lsst.dps.pipeexec.nlog import nlog
 
 DefPipelinePolicy = "Pipeline.policy"
 DefDiskPolicy = "DiskRoot.policy"

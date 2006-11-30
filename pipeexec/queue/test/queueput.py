@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-import lsst.mw.dps.pipeexec.queue
+import lsst.dps.pipeexec.queue
 
 USAGE = "Usage: "+ sys.argv[0]+" filename directory"
 
@@ -17,7 +17,7 @@ def main():
 		print USAGE
 		return
 
-	lsst.mw.pipe.queue.put(putfile, putdir)
+	lsst.pipe.queue.put(putfile, putdir)
 
 if __name__ == "__main__":
 	main()

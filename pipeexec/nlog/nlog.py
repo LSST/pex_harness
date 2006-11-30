@@ -155,7 +155,7 @@ Added by jmyers.
 from gov.lbl.dsd.netlogger import nllite
 import os
 import sys
-import lsst.apps.fw.Policy.Policy as Policy
+import lsst.fw.Policy.Policy as Policy
 
 __author__="jmyers"
 

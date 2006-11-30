@@ -1,4 +1,4 @@
-from lsst.apps.fw.Policy import Policy
+from lsst.fw.Policy import Policy
 
 
 #=====================================================================

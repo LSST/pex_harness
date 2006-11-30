@@ -18,9 +18,9 @@
 import os
 import sys
 import optparse
-from lsst.mw.dps.pipeexec.harness import Pipeline
-from lsst.mw.dps.pipeexec.harness import Batch
-from lsst.mw.dps.pipeexec.nlog import nlog
+from lsst.dps.pipeexec.harness import Pipeline
+from lsst.dps.pipeexec.harness import Batch
+from lsst.dps.pipeexec.nlog import nlog
 
 DefInputQ = "./queue"
 DefBatchPolicy = "Batch.policy"

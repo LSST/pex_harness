@@ -27,8 +27,8 @@ import os
 import time #for sleeping!
 import sys
 import commands
-import lsst.mw.dps.pipeexec.nlog as nlog
-import lsst.apps.fw.Policy.Policy as Policy
+import lsst.dps.pipeexec.nlog as nlog
+import lsst.fw.Policy.Policy as Policy
 
 
 
