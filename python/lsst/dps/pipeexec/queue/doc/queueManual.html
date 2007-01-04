@@ -1,0 +1,63 @@
+<html>
+<head>
+<title>queue Manual</title>
+</head>
+<body>
+<h1>lsst.apps.mw.dps.pipeexec.queue Manual</h1>
+<h2>Introduction</h2>
+
+<p>The lsst.apps.mw.dps.pipeexec.queue routines are used in conjunction with each other to move files
+into a directory and retrieve files in the order they were place there.  There
+are two methods:
+
+<ul>
+<li>put - moves a file into a new directory</li>
+<p>
+ 
+    This method takes two arguments: the name of the file you want to move,
+    and the directory where the file will be moved.
+
+
+<li>get - gets the oldest file in this directory.  If there are no files in this
+      directory, block until a file appears.</li>
+<p>
+
+    This method takes one argument:  the directory you want to watch.  It
+    returns with a filename.
+</ul>
+<p>
+<p>
+<h2>Example Usage</h2>
+<p>
+Two example programs in pymw/examples/queue/, queueget.py and queueput.py, show how methods in 
+queue.py work.   The following is an example of how they're used.
+<p>
+<ol>
+<li>Open two shell windows.</li>
+<p>
+<li>In the first window, create two directories:</li>
+<p>
+	$ mkdir tempdir tempdir2
+
+<li>In the first window, execute the queueget.py program:</li>
+<p>
+	$ python queueget.py tempdir2
+<p>
+<li>In the second window, put a file into the tempdir directory</li>
+<p>
+	$ echo  >tempdir/file1
+<p>
+<li>In the second window, execute the queueput.py program:</li>
+<p>
+	$ python queueput.py tempdir/file1 tempdir2
+</ol>
+
+You should see the message:
+
+<pre>
+        got tempdir2/file1
+</pre>
+
+in the first window.
+</body>
+</html>

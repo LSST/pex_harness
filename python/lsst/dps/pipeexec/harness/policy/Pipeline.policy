@@ -1,0 +1,63 @@
+# harness/policy/Pipeline.policy  
+#               ***********  DC1 MPI Version ***********
+#
+#   stage = stagePolicy , diskPolicy, inQ, outQ, code&args
+#
+#       stagePolicy 	filename for stage's algorithm policy
+#       		format: text string, default: none
+#       diskPolicy  	filename for Consumer pipeline stage's Disk policy
+#       		format: text string, default: none
+#	inQ		input queue directory
+#			format: text string, default ''
+#	outQ		output queue directory
+#			format: text string, default ''
+#	code&args	name of executable for stage and any args not derivable
+#			from other policy files
+
+#=============================================================================
+#				Consume Phase
+#=============================================================================
+setup = AssembleImage.policy,    DiskRoot.policy, s0.inQ, s0.outQ, harnessStage.py
+stage = AssembleImage.policy,    DiskRoot.policy, s0.inQ, s0.outQ, harnessStage.py
+#stage = Xtalk.policy,            DiskRoot.policy, s0.outQ, s1.outQ, harnessStage.py
+#stage = ImageCalib.policy,       DiskRoot.policy, s1.outQ, s2.outQ, harnessStage.py
+#stage = WCS.policy,              DiskRoot.policy, s2.outQ, s3.outQ, harnessStage.py
+#stage = PSF.policy,              DiskRoot.policy, s3.outQ, s4.outQ, harnessStage.py
+#stage = PhotoZ.policy,           DiskRoot.policy, s4.outQ, s5.outQ, harnessStage.py
+#stage = ImageSubtraction.policy, DiskRoot.policy, s5.outQ, s6.outQ, harnessStage.py
+#stage = SourceDetection.policy,  DiskRoot.policy, s6.outQ, s7.outQ, harnessStage.py
+#stage = AstrometricCalib.policy, DiskRoot.policy, s7.outQ, s8.outQ, harnessStage.py
+#stage = PhotometricCalib.policy, DiskRoot.policy, s8.outQ, s9.outQ, harnessStage.py
+##stage = ObjectDetection.policy,  DiskRoot.policy, s9.outQ, s10.outQ, harnessStage.py
+##stage = Association.policy,     DiskRoot.policy, s10.outQ, s11.outQ, harnessStage.py
+
+
+#======================================================================
+#          * * T H I S * *  Policy File's Characterization
+#----------------------------------------------------------------------
+# clientPolicyName   - generic name of this policy configuration
+#           Format: string     Default:      Units:
+#           Constraints: no check
+clientPolicyName = WcsConsumer
+                                                                                
+# clientPolicyVersion   - version of this Policy file
+#           Format: string     Default:      Units:
+#           Constraints: no check
+clientPolicyVersion = '1.0'
+                                                                                
+# serverPolicyVersion   - version of Policy class matching this config file
+#           Format: string     Default:      Units:
+#           Constraints: no check
+serverPolicyVersion = '1.0'
+                                                                                
+# logFile   - filename for logging output
+#           Format: string     Default: Code.log     Units:
+#           Constraints: none
+logFile = Consumer.log
+                                                                                
+# diagnose  - Logging verbosity level
+#           Format: int     Default: 2    Units: range(0:3), 0=low, 3=max
+#           Constraints:
+diagnose = 2
+
+
