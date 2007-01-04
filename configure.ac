@@ -10,13 +10,7 @@ dnl       shell programming code to this file, you should be sure to use
 dnl       double brackets, [[ ]], in your if statments.  
 dnl
 dnl
-m4_dnl ---------- UPDATE: Declaring the package ------------------------------
-m4_dnl  Replace these strings in the AC_INIT line
-m4_dnl    m4_LSST_PACKAGE   the name of your package (with no version number)
-m4_dnl    m4_AUTHOR_EMAIL   contact email address for primary developer
-m4_dnl                         of this package
-m4_dnl
-AC_INIT([m4_LSST_PACKAGE], [X.Y], [m4_AUTHOR_EMAIL])
+AC_INIT([dps], [X.Y], [rallsman@lsst.org])
 
 dnl ------------- Include files from ./build ---------------------------------
 dnl Note:  We don't typically use aclocal.  Doing so may require updates to 
@@ -74,7 +68,7 @@ dnl Uncomment one or more of the following lines if your package requires
 dnl the package it refers to.  These will check to ensure that they have been
 dnl installed and setup correctly.
 dnl
-dnl LSST_FIND_PYTHON()                       dnl  if you require Python
+LSST_FIND_PYTHON()                       dnl  if you require Python
 dnl LSST_FIND_NUMARRAY([-DUSE_NUMARRAY=1])   dnl  if you require Numarray
 dnl LSST_FIND_NUMPY([-DUSE_NUMPY=1])         dnl  if you require Numarray
 dnl LSST_SWIG(1.3.29)                        dnl  if you require Swig
@@ -85,8 +79,9 @@ dnl With the help of EUPS, this will check the availability of dependent
 dnl packages.  For each dependent package, add a EUPS_WITHOUT_CONFIGURE line 
 dnl that looks like the following:
 dnl 
-dnl                        PKG-NAME  INCLUDE-FILE       LIBFLG  LIB,FUNCTION
-dnl EUPS_WITHOUT_CONFIGURE([wcslib], [wcslib/wcslib.h], -lwcs,  [wcs,wcsini])
+dnl                     PKG-NAME  INCLUDE-FILE       LIBFLG  LIB,FUNCTION
+EUPS_WITHOUT_CONFIGURE([LAM], [mpi.h], -lmpi  -llam -llammpio -lpthread,  [mpi,MPI_Init])
+EUPS_WITHOUT_CONFIGURE([NetLogger], [nl_log.h], -lnllite,  [nllite,NL_info])
 dnl
 dnl where the arguments are:
 dnl    PKG-NAME       the name of the package required (as known by EUPS)
