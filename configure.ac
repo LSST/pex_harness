@@ -38,6 +38,8 @@ ifdef([AC_PROG_CC_C99],
       AC_MSG_NOTICE([Adding -std=c99 to CC])
       CC="$CC -std=c99"])
 
+AC_PROG_CXX(c++ g++)
+
 AC_SUBST(LD, [$(echo $CC | awk '{print $1'})])
 
 AC_PROG_RANLIB
@@ -80,8 +82,8 @@ dnl packages.  For each dependent package, add a EUPS_WITHOUT_CONFIGURE line
 dnl that looks like the following:
 dnl 
 dnl                     PKG-NAME  INCLUDE-FILE       LIBFLG  LIB,FUNCTION
-EUPS_WITHOUT_CONFIGURE([LAM], [mpi.h], -lmpi  -llam -llammpio -lpthread,  [mpi,MPI_Init])
-EUPS_WITHOUT_CONFIGURE([NetLogger], [nl_log.h], -lnllite,  [nllite,NL_info])
+EUPS_WITHOUT_CONFIGURE([LAM], [mpi.h], -lmpi  -llam -llammpio -lpthread,  [])
+EUPS_WITHOUT_CONFIGURE([NetLogger], [nl_log.h], -lnllite,  [])
 dnl
 dnl where the arguments are:
 dnl    PKG-NAME       the name of the package required (as known by EUPS)
@@ -112,6 +114,7 @@ dnl EUPS_WITH_CONFIGURE([fancypackage])
 dnl ------------ Creation of dynamic libraries ---------------------------------
 	
 LSST_DYNAMIC_LIBS()
+CXXFLAGS=$CFLAGS
 
 AC_SUBST(EXTRA_LIBS, $LIBS)
 AC_CONFIG_FILES([build/makedefs build/Makefile.global build/installdefs])

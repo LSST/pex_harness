@@ -1,74 +1,54 @@
+# Make the C/C++ compile portion of a Python extension module
 #
-# pipeline makefile
+# The Makefile.global contains rules for building .c, .o files and sets 
+# compile and library flags.  This include requires that make be called 
+# with -I option.  
 #
-#
-############################################################################
-###########################################################################
-#  For TERAGRID NETLOGGER use - if NETLOGGER not PACMAN installed, install 
-#				following block in your ~/.tcshrc (or equiv)
-#			- once TG PACMAN installed, this block can be removed
-#				from this Makefile and your startup script
-############################################################################
-CC = mpicc -g 
-#for LAM C++
-CXX = mpic++ -g 
-#for MPICH C++
-#CXX = mpicxx -g 
+include Makefile.global
 
-#Note:  external variable NLHOME must be set - for testing, install NetLogger
-# yourself or try running from /home/jmyers/NetLogger-3.3.11/ on ds30.ncsa
-
-NLINCLUDES=-I $(NLHOME)/include/ 
-LAMINCLUDES=-I/lsst_ibrix/DC1/LAM-7.1.2/include
+# These variables are legacy from DC1.  This makefile is not set up to 
+# support MPICH at this time.  Support for LAM comes through EUPS and the
+# above include file; these are not used.
 MPICH1INCLUDES=-I/usr/local/mpich/mpich-p4-1.2.5.2-intel-r2/include -DMPICH
 MPICH2INCLUDES=-I/usr/projects/LSST/mpich2-1.0.3/include -DMPICH
-
-DEST  = ${HOME}/bin
-
-# LAM MPI2
-#LAMLIBS  = -lmpi  -llam -llammpio -lpthread 
-LAMLIBS  = -lmpi  -llammpi++ -llammpio -lpthread 
-
-# MPICH MPI2
 MPICH2LIBS  = -L/usr/projects/LSST/mpich2-1.0.3/lib -lmpich -lpthread -lg2c
 
-#NetLogger
-NLLIBS=-L  $(NLHOME)/lib/ -lnllite
+INSTALLPROGS = 
+PROGS = $(INSTALLPROGS) Manager practice
 
-LSST_INCLUDES=-I../
+# Make this empty if we don't need to define sighandler_t explicitly
+#
+# NEED_SIGNALHANDLER_DEF ?= 
+NEED_SIGNALHANDLER_DEF ?= -DNEED_SIGNALHANDLER_DEF
 
-#for LAM
-INCLUDES=$(NLINCLUDES) $(LAMINCLUDES) $(LSST_INCLUDES)
-LIBS=$(LAMLIBS) $(NLLIBS)
-#For MPICH2
-#INCLUDES=$(NLINCLUDES) $(MPICH2INCLUDES) $(LSST_INCLUDES)
-#LIBS= $(MPICH2LIBS) $(NLLIBS) 
+CFLAGS += -I.. $(NEED_SIGNALHANDLER_DEF)
+CXX = mpic++ -g
+CC = mpicc -g
 
+.PHONY : all
+all : build
 
-COPTS=-Wall
-
-CXXINCLUDES=$(INCLUDES)
-CXXLIBS=$(LIBS)
-CXXOPTS=$(COPTS)
-
-all: all-cpp
-
-#############################
-#  C++ Versions
-#############################
-
-all-cpp: Manager practice
+.PHONY : build
+build : $(PROGS)
 
 Manager: Manager.o
-	$(CXX) $(CXXLIBS) $(CXXOPTS) Manager.o -o Manager 
-
-Manager.o: Manager.cpp Manager.hpp LSSTException.hpp
-	$(CXX)  $(CXXINCLUDES) $(CXXOPTS) -c Manager.cpp  
+	$(CXX) $(SUPPORT_LIBS) Manager.o -o Manager 
 
 practice: practice.o
-	$(CXX) $(CXXLIBS) $(CXXOPTS) practice.o -o practice 
-
-practice.o: practice.cpp 
-	$(CXX)  $(CXXINCLUDES) $(CXXOPTS) -c practice.cpp  
+	$(CXX) $(SUPPORT_LIBS) practice.o -o practice 
 
 
+
+install : build
+#	install -d $(BINDIR)
+#	install $(INSTALLPROGS) $(BINDIR)
+
+
+clean :
+	$(RM) *.o _*.{so,dylib} *_wrap.c
+	$(RM) core core.[0-9]*[0-9] *~
+
+distclean: clean
+	@ $(RM) .Makefile.depend
+	$(RM) *.so *.pyc 
+	$(RM) $(PROGS)

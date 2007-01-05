@@ -1,107 +1,67 @@
+# Make the C/C++ compile portion of a Python extension module
 #
-# pipeline makefile
+# The Makefile.global contains rules for building .c, .o files and sets 
+# compile and library flags.  This include requires that make be called 
+# with -I option.  
 #
-#
-############################################################################
-###########################################################################
-#  For TERAGRID NETLOGGER use - if NETLOGGER not PACMAN installed, install 
-#				following block in your ~/.tcshrc (or equiv)
-#			- once TG PACMAN installed, this block can be removed
-#				from this Makefile and your startup script
-############################################################################
-#
-# Temporary setup for NetLogger
-#setenv NLHOME /usr/projects/LSST/LSSTProto/NetLogger-3.3.11
-#setenv LD_LIBRARY_PATH $NLHOME/lib:${LD_LIBRARY_PATH}
-#setenv PYTHONPATH $NLHOME/lib/python2.4/site-packages:$NLHOME/bin:${PYTHONPATH}
-#setenv PATH $NLHOME/bin:${PATH}
-#
-############################################################################
-############################################################################
-CC = mpicc -g 
+include Makefile.global
 
-#Note:  external variable NLHOME must be set - for testing, install NetLogger
-# yourself or try running from /home/jmyers/NetLogger-3.3.11/ on ds30.ncsa
-
-NLINCLUDES=-I $(NLHOME)/include/ 
-LAMINCLUDES=-I/lsst_ibrix/DC1/LAM-7.1.2/include
+# These variables are legacy from DC1.  This makefile is not set up to 
+# support MPICH at this time.  Support for LAM comes through EUPS and the
+# above include file
 MPICH1INCLUDES=-I/usr/local/mpich/mpich-p4-1.2.5.2-intel-r2/include -DMPICH
 MPICH2INCLUDES=-I/usr/projects/LSST/mpich2-1.0.3/include -DMPICH
 
-DEST  = ${HOME}/bin
+INSTALLPROGS = manager stageleader stageslice 
+PROGS = $(INSTALLPROGS) runOldest 
 
-# LAM MPI2
-LAMLIBS  = -lmpi  -llam -llammpio -lpthread
+# Make this empty if we don't need to define sighandler_t explicitly
+#
+# NEED_SIGNALHANDLER_DEF ?= 
+NEED_SIGNALHANDLER_DEF ?= -DNEED_SIGNALHANDLER_DEF
 
-# MPICH MPI2
-MPICH2LIBS  = -L/usr/projects/LSST/mpich2-1.0.3/lib -lmpich -lpthread -lg2c
+CFLAGS += $(NEED_SIGNALHANDLER_DEF)
+CC = mpicc -g
 
-#NetLogger
-NLLIBS=-L  $(NLHOME)/lib/ -lnllite
+.PHONY : all
+all : build
 
-#for LAM
-#INCLUDES=$(NLINCLUDES) $(LAMINCLUDES)
-#LIBS=$(LAMLIBS) $(NLLIBS)
-#For MPICH2
-INCLUDES=$(NLINCLUDES) $(MPICH2INCLUDES)
-LIBS= $(MPICH2LIBS) $(NLLIBS)
-COPTS=-Wall
-
-all: manager stageleader stageslice runOldest
+.PHONY : build
+build : $(PROGS)
 
 
 testing: testing.o
-	$(CC) testing.o -o testing $(LIBS) $(COPTS)
+	$(CC) testing.o -o testing $(SUPPORT_LIBS)
 
 manager: manager.o
-	$(CC) manager.o -o manager $(LIBS) $(COPTS)
+	$(CC) manager.o -o manager $(SUPPORT_LIBS)
 
 stageleader: stageleader.o getOldest.o
-	$(CC) stageleader.o getOldest.o -o stageleader $(LIBS) $(COPTS)
+	$(CC) stageleader.o getOldest.o -o stageleader $(SUPPORT_LIBS)
 
 stageslice: stageslice.o
-	$(CC) stageslice.o -o stageslice $(LIBS) $(COPTS)
+	$(CC) stageslice.o -o stageslice $(SUPPORT_LIBS)
 
 runOldest: runOldest.o getOldest.o
-	$(CC) runOldest.o getOldest.o -o runOldest $(LIBS) $(COPTS)
+	$(CC) runOldest.o getOldest.o -o runOldest $(SUPPORT_LIBS)
 
 testMPI:  testMPI.o
-	$(CC) testMPI.o -o testMPI $(LIBS) $(COPTS)
+	$(CC) testMPI.o -o testMPI $(SUPPORT_LIBS)
 
 writetodummyfile:	writetodummyfile.o
-	$(CC) writetodummyfile.o -o writetodummyfile $(COPTS)
+	$(CC) writetodummyfile.o -o writetodummyfile
 
-clean:
-	$(RM) stageleader manager stageslice *.o 
 
-manager.o:  manager.c 
-	$(CC) $(COPTS) $(INCLUDES) -c manager.c
+install : build
+	install -d $(BINDIR)
+	install $(INSTALLPROGS) $(BINDIR)
 
-stageleader.o:  stageleader.c 
-	$(CC) $(COPTS) $(INCLUDES) -c stageleader.c
 
-stageslice.o:  stageslice.c 
-	$(CC) $(COPTS) $(INCLUDES) -c stageslice.c
+clean :
+	$(RM) *.o _*.{so,dylib} *_wrap.c
+	$(RM) core core.[0-9]*[0-9] *~
 
-getOldest.o:  getOldest.c 
-	$(CC) $(COPTS)  $(INCLUDES) -c getOldest.c
-
-runOldest.o:  runOldest.c 
-	$(CC) $(COPTS)  $(INCLUDES) -c runOldest.c
-
-testMPI.o: testMPI.c
-	$(CC) $(COPTS) $(INCLUDES) -c testMPI.c
-
-writetodummyfile.o:	writetodummyfile.c
-	$(CC) $(COPTS) $(INCLUDES) -c writetodummyfile.c
-
-getstagecode.o: getstagecode.c
-	$(CC) $(COPTS) $(INCLUDES) -c getstagecode.c
-
-getstagecode:	getstagecode.o
-	$(CC) getstagecode.o -o getstagecode $(LIBS) $(COPTS)
-
-install: manager stageleader stageslice 
-	cp manager $(LSST_DEVEL)/bin
-	cp stageleader $(LSST_DEVEL)/bin
-	cp stageslice $(LSST_DEVEL)/bin
+distclean: clean
+	@ $(RM) .Makefile.depend
+	$(RM) *.so *.pyc wcstools.py*
+	$(RM) $(PROGS)
