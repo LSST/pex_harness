@@ -64,7 +64,8 @@ depend :
 # Install things in their proper places as specified in etc/installdefs
 #
 .PHONY : install declare installwarn installups installsubs
-install: installwarn installsubs installups
+install: installwarn installnowarn 
+installnowarn: installsubs installups
 installwarn :
 	@:
 	@: Check the inode number for . and $(prefix) to find out if two
