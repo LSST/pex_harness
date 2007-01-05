@@ -42,8 +42,10 @@
 #define KEEP_RUNNING 0
 #define LETS_DIE_NOW 1
 
-/*typedef void (*sighandler_t)(int);  no longer needed when GNU 
-  extensions are enabled*/
+#ifdef NEED_SIGNALHANDLER_DEF
+/* This is needed if GNU extensions are not available */
+typedef void (*sighandler_t)(int);  
+#endif
 
 sighandler_t signal(int signum, sighandler_t handler);
 
