@@ -10,7 +10,7 @@ m4_dnl  it may only be necessary to update the values of the following macros.
 m4_dnl  Only m4_PACKAGE and m4_VERSION are required.  
 m4_dnl
 m4_define([m4_PACKAGE], [dps])m4_dnl
-m4_define([m4_VERSION], [0.2])m4_dnl
+m4_define([m4_VERSION], [0.3])m4_dnl
 m4_define([m4_TARBALL], [m4_PACKAGE-m4_VERSION.tar.gz])m4_dnl
 # 
 # set up the initial pacman definitions and environment variables.
@@ -26,17 +26,17 @@ m4_dnl
 # denote dependencies
 #
 # package('m4_CACHE:otherpkg-2.2')
-setenvShellTemp('PYTHON_DIR', 'export SHELL=sh; source $EUPS_DIR/bin/setups.sh; setup Python 2.4.2; echo $PYTHON_DIR')
+setenvShellTemp('PYTHON_DIR', 'export SHELL=sh; source $EUPS_DIR/bin/setups.sh; setup Python; echo $PYTHON_DIR')
 envIsSet('PYTHON_DIR')
 echo('Using PYTHON_DIR=$PYTHON_DIR')
 shell('[[ -d "$PYTHON_DIR" ]]')
 
-setenvShellTemp('LAM_DIR', 'export SHELL=sh; source $EUPS_DIR/bin/setups.sh; setup LAM 7.1.2; echo $LAM_DIR')
+setenvShellTemp('LAM_DIR', 'export SHELL=sh; source $EUPS_DIR/bin/setups.sh; setup LAM; echo $LAM_DIR')
 envIsSet('LAM_DIR')
 echo('Using LAM_DIR=$LAM_DIR')
 shell('[[ -d "$LAM_DIR" ]]')
 
-setenvShellTemp('NETLOGGER_DIR', 'export SHELL=sh; source $EUPS_DIR/bin/setups.sh; setup NetLogger 3.3.11; echo $NETLOGGER_DIR')
+setenvShellTemp('NETLOGGER_DIR', 'export SHELL=sh; source $EUPS_DIR/bin/setups.sh; setup NetLogger; echo $NETLOGGER_DIR')
 envIsSet('NETLOGGER_DIR')
 echo('Using NETLOGGER_DIR=$NETLOGGER_DIR')
 shell('[[ -d "$NETLOGGER_DIR" ]]')
@@ -65,10 +65,10 @@ downloadUntar('m4_PKGURL/m4_PKGPATH/m4_TARBALL','BUILDDIR')
 #
 cd('$BUILDDIR')
 echo ("configuring m4_PACKAGE-m4_VERSION...")
-shell('export SHELL=sh; source $EUPS_DIR/bin/setups.sh; unsetup m4_PACKAGE 2&>1 /dev/null; setup Python 2.4.2; setup LAM 7.1.2; setup NetLogger 3.3.11; ./configure')
+shell('export SHELL=sh; source $EUPS_DIR/bin/setups.sh; unsetup m4_PACKAGE 2&>1 /dev/null; setup Python; setup LAM; setup NetLogger; ./configure')
 
 echo ("running make install")
-shell('export SHELL=sh; source $EUPS_DIR/bin/setups.sh; unsetup m4_PACKAGE 2&>1 /dev/null; setup Python 2.4.2; setup LAM 7.1.2; setup NetLogger 3.3.11; make installnowarn')
+shell('export SHELL=sh; source $EUPS_DIR/bin/setups.sh; unsetup m4_PACKAGE 2&>1 /dev/null; setup Python; setup LAM; setup NetLogger; make installnowarn')
 cd()
 
 #

@@ -1,5 +1,5 @@
-setupRequired("Python 2.4.2")
-setupRequired("LAM 7.1.2")
-setupRequired("NetLogger 3.3.11")
+setupRequired("Python")
+setupRequired("LAM")
+setupRequired("NetLogger")
 envPrepend(PATH, ${PRODUCT_DIR}/bin)
 envAppend(PYTHONPATH, ${PRODUCT_DIR}/python)
