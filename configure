@@ -1370,7 +1370,7 @@ if test "${with_version+set}" = set; then
   withval="$with_version"
   eups_version=$withval
 else
-  eups_version=$(echo '$HeadURL$' | perl -ne 'chomp;
+  eups_version=$(echo '$HeadURL: svn+ssh://svn.lsstcorp.org/DC2/dps/trunk/configure.ac $' | perl -ne 'chomp;
                                                if(/^\$''Name/) {
 		       	      	     	         if(s|^\$''Name:\s*(\S*)\s*\$|\1|) {
 					           $vers = $_;
@@ -1440,7 +1440,7 @@ fi;
                 { echo "$as_me:$LINENO: Note: since --prefix has been set we will ignore --with-eups" >&5
 echo "$as_me: Note: since --prefix has been set we will ignore --with-eups" >&6;}
               fi
-    	      eupsprefix=$eupsprefix/$relative_path$eups_product/$eups_version
+    	      eupsprefix=$eupsprefix/$eups_flavor/$relative_path$eups_product/$eups_version
 	   fi
            if [ X"$prefix" = X"NONE" ]; then
                 prefix=$eupsprefix
