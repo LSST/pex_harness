@@ -1,0 +1,4 @@
+# Format for node list is hostname followed by number of 
+# processes to run on that node 
+lsst6.ncsa.uiuc.edu:2
+lsst9.ncsa.uiuc.edu:2
