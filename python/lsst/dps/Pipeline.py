@@ -9,6 +9,8 @@ import lsst.mwi.data as datap
 
 import lsst.events as events
 
+# import lsst.mwi.Policy as mwipolicy
+
 """
 Pipeline class manages the operation of a multi-stage parallel pipeline.
 The Pipeline is configured by reading a Policy file.   This Python Pipeline
@@ -52,6 +54,13 @@ class Pipeline:
         self.eventTopic = "pipedata"
         self.sliceTopic = "slicedata"
 
+        # fileName = "pipeline_policy.json"
+        # dictName = "pipeline_dict.json"
+        # aPolicy = mwipolicy.Policy(fileName, "", dictName)
+        # aPolicy = mwipolicy.Policy(fileName)
+        # appStages = aPolicy.get("appstages", "")
+        # self.LOGFILE.write(appStages)
+
         filePolicy = open('pipeline.policy', 'r')
         fullStageList = filePolicy.readlines()
         self.nStages = len(fullStageList)
@@ -65,8 +74,8 @@ class Pipeline:
             package = '' 
             for item in tokenList:
                    package += item
-                   package += '.'
-            package = package.rstrip('.')
+                   package += '/'
+            package = package.rstrip('/')
 
             # For example  package -> lsst.dps.App1Stage  classString -> App1Stage
             AppStage = __import__(package, globals(), locals(), [classString], -1)

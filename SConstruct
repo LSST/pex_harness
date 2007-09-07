@@ -16,10 +16,10 @@ env.Replace(CXX = 'mpicxx')
 for d in Split("src lib python/lsst/dps/swig"):
     SConscript(os.path.join(d, "SConscript"))
 
-
-Alias("install", env.Install(pwd + "/bin", pwd + "/conf/run.sh"))
-Alias("install", env.Install(pwd + "/bin", pwd + "/conf/nodelist.scr"))
-Alias("install", env.Install(pwd + "/bin", pwd + "/conf/pipeline.policy"))
+Alias("install", env.Install(pwd + "/bin", pwd + "/test/run.sh"))
+Alias("install", env.Install(pwd + "/bin", pwd + "/test/nodelist.scr"))
+Alias("install", env.Install(pwd + "/bin", pwd + "/test/pipeline.policy"))
+Alias("install", env.Install(pwd + "/bin", pwd + "/test/lsst/dps/test/ExternalEventTransmit.py"))
 
 env.Help("""
 LSST Distributed Processing  packages
