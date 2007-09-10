@@ -6,8 +6,6 @@ ENV  =  dict['ENV']
 pwd = ENV['PWD']
 print "pwd is %s " % pwd
 
-mpichdir = '/home/ncsa/daues/mpich2/install_gcc3.2'
-
 incdir = pwd + "/include"
 sdir = pwd + "/src/"
 
