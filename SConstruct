@@ -6,11 +6,9 @@ dict = env.Dictionary()
 ENV  =  dict['ENV']
 pwd = ENV['PWD']
 
-mpichdir = '/home/ncsa/daues/mpich2/install_gcc3.2'
+# print "pwd is %s " % pwd 
 
-print "pwd is %s " % pwd 
-
-env.Replace(CPPPATH = mpichdir + "/include:" + pwd + "/include")
+env.Replace(CPPPATH = pwd + "/include")
 env.Replace(CXX = 'mpicxx')
 
 for d in Split("src lib python/lsst/dps/swig"):
