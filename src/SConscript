@@ -4,16 +4,13 @@ Import("env")
 dict = env.Dictionary()
 ENV  =  dict['ENV']
 pwd = ENV['PWD']
-print "pwd is %s " % pwd
-
-# MPICH still need to be integrated into software stack 
-mpichdir = '/home/ncsa/daues/mpich2/install_gcc3.2'
+# print "pwd is %s " % pwd
 
 # Build Pipeline
-env.Object(['Pipeline.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'], LIBS=['mpich'], LIBPATH=mpichdir + '/lib')
+env.Object(['Pipeline.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'], LIBS=['mpich'])
 
 # Build Slice
-env.Object(['Slice.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'], LIBS=['mpich'], LIBPATH=mpichdir + '/lib')
+env.Object(['Slice.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'], LIBS=['mpich'])
 
 incdir = pwd + "/include"
 
