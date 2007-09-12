@@ -2,7 +2,6 @@
 setupRequired(scons)
 setupRequired(mpich2)
 setupRequired(mwi)
-setupRequired(swig)
 # setupRequired(core)
 # setupRequired(boost)
 
