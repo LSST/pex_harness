@@ -1,9 +1,9 @@
 #!/bin/sh
 
 pwd=`pwd`
-LSST_POLICY_DIR=${pwd}/policy
-export LSST_POLICY_DIR
-echo LSST_POLICY_DIR ${LSST_POLICY_DIR} 
+# LSST_POLICY_DIR=${pwd}/policy
+# export LSST_POLICY_DIR
+# echo LSST_POLICY_DIR ${LSST_POLICY_DIR} 
 
 # --------------------------------------------------------- 
 # INPUT PARAMETERS
