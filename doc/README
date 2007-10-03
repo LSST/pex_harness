@@ -3,7 +3,73 @@ LSST DPS README
 Greg Daues    NCSA 
 Sept 07, 2007 
 
-Running the MPI Pipeline Harness in lsst.dps       
+Running the MPI Pipeline Harness in lsst.dps 
+r2677 (trunk) Pipeline Harness 
+
+1. Build lsst.dps
+
+    First build the dps/ with scons and run the appropriate declare and 
+setup with eups. After the build there will be a working directory bin/ 
+that contains
+
+% ls bin/
+AssocIPDPTriggerEventTransmit.py  Mops1EventTransmit.py  nodelist.scr  policy  run.sh
+
+% ls bin/policy/
+pipeline_policy_Assoc.json  pipeline_policy.json  pipeline_policy_MOPS.json  pipeline_policy_None.json
+
+2. Policy file configuration
+
+    The Pipeline harness is configured with a Policy file 
+bin/policy/pipeline_policy.json to select different behavior/scenarios 
+in the execution. Three samples are provided in the bin/policy/ 
+directory, and may be copied over pipeline_policy.json to implement 
+the corresponding scenario.
+
+3. Edit the MPI machinefile
+
+    Edit the MPI machinefile "nodelist.scr" to specify the nodes that 
+the MPI harness will use and the number of processes on each. To 
+run on a single node with a Pipeline and 3 Slices (4 total processes), 
+one can enter, for example,
+
+lsst6.ncsa.uiuc.edu:4
+
+In order to distribute the 4 processes across two nodes, one could use
+
+lsst6.ncsa.uiuc.edu:2
+lsst9.ncsa.uiuc.edu:2
+
+4. Set cpu configuration parameters in the run script
+
+    Edit the run script "run.sh" 
+and set the values for number of nodes and Slices. The default values are
+
+nodes=1
+nslices=3
+
+5. Execute run.sh
+
+    In the bin/ directory execute ./run.sh . The Pipeline Harness will 
+start and spawn the specified number of Slices. Depending on the 
+Policy configuration, the execution may halt and wait for the arrival of 
+events of specified event topics.
+
+6. Execute external event transmitters (if needed)
+
+    In a separate shell execute any required external event transmissions, e.g., 
+see the scripts AssocIPDPTriggerEventTransmit.py Mops1EventTransmit.py in the 
+bin/ directory. These python scripts will issue an event with appropriate 
+topic that the Pipeline will receive. The Pipeline will resume execution and 
+issue a new event to the Slices, and the Slices will receive the event and 
+proceed with their processing. The contents of the events are place on the 
+Clipboards of the Pipeline and the Slices.
+
+
+
+
+
+r2328 (trunk) Running the MPI Pipeline Harness in lsst.dps  (Old) 
 -----------------------------------------------------------------------
 
 The Pipeline harness currently runs in a single demo mode
