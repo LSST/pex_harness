@@ -4,6 +4,8 @@ from Queue import Queue
 from Stage import Stage
 from Clipboard import Clipboard
 
+import lsst.mwi.policy as policy
+
 import lsst.mwi.data as datap
 
 import lsst.events as events
@@ -36,10 +38,20 @@ class Slice:
         self.queueList = []
         self.stageList = []
         self.stageClassList = []
+        self.sliceEventTopicList = []
+        self.eventTopicList = []
         import slice
         self.cppSlice = slice.Slice()
         self.cppSlice.initialize()
+        self.universeSize = self.cppSlice.getUniverseSize()
         self._rank = self.cppSlice.getRank()
+        self.LOGFILE = open("SlicePython_" + str(self._rank) + ".log","w")
+        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : Opened log \n")
+        self.LOGFILE.write("Python Slice "  + str(self._rank) + "__init__ : universeSize is ")
+        self.LOGFILE.write(str(self.universeSize))
+        self.LOGFILE.write("\n")
+        self.LOGFILE.flush()
+
 
     def __del__(self):
         """
@@ -52,15 +64,29 @@ class Slice:
         Configure the slice via reading a Policy file 
         """
         self.eventHost = "lsst8.ncsa.uiuc.edu"
-        self.eventTopic = "slicedata"
+        # self.eventTopic = "slicedata"
 
-        filePolicy = open('pipeline.policy', 'r')
-        fullStageList = filePolicy.readlines()
+        policyFileName = "policy/pipeline_policy.json"
+        p = policy.Policy.createPolicy(policyFileName)
+
+        # Process Application Stages
+        fullStageList = p.getArray("appStages")
+
+        self.LOGFILE.write("appStages")
+        self.LOGFILE.write("\n")
+        for item in fullStageList:
+            self.LOGFILE.write(item)
+            self.LOGFILE.write("\n")
+        self.LOGFILE.write("end appStages")
+        self.LOGFILE.write("\n")
+
+        # filePolicy = open('pipeline.policy', 'r')
+        # fullStageList = filePolicy.readlines()
         self.nStages = len(fullStageList)
 
-        for line in fullStageList:
-            fullStage = line.strip()
-            tokenList = line.split('.')
+        for astage in fullStageList:
+            fullStage = astage.strip()
+            tokenList = astage.split('.')
             classString = tokenList.pop()
             classString = classString.strip()
 
@@ -74,6 +100,25 @@ class Slice:
             AppStage = __import__(package, globals(), locals(), [classString], -1)
             StageClass = getattr(AppStage, classString)
             self.stageClassList.append(StageClass)
+
+        # Process Event Topics
+        self.eventTopicList = p.getArray("eventTopics")
+        self.sliceEventTopicList = p.getArray("eventTopics")
+
+        self.LOGFILE.write("eventTopics")
+        self.LOGFILE.write("\n")
+
+        count = 0
+        for item in self.eventTopicList:
+            newitem = item + "_slice"
+            self.sliceEventTopicList[count] = newitem
+            count += 1
+
+        for item in self.sliceEventTopicList:
+            self.LOGFILE.write(item)
+            self.LOGFILE.write("\n")
+        self.LOGFILE.write("end eventTopics")
+        self.LOGFILE.write("\n")
 
 
     def initializeQueues(self):
@@ -95,6 +140,7 @@ class Slice:
             outputQueue = self.queueList[iStage]
             stageObject.initialize(outputQueue, inputQueue)
             stageObject.setRank(self._rank)
+            stageObject.setUniverseSize(self.universeSize)
             self.stageList.append(stageObject)
 
     def startInitQueue(self):
@@ -136,42 +182,38 @@ class Slice:
         """
         print 'Python Slice handleEvents : rank %i iStage %i' % (self._rank, iStage)
         
-        if (iStage == 1):
-            x = events.EventReceiver(self.eventHost, self.eventTopic)
+        thisTopic = self.eventTopicList[iStage-1]
+
+        if (thisTopic != "None"):
+            sliceTopic = self.sliceEventTopicList[iStage-1]
+            x = events.EventReceiver(self.eventHost, sliceTopic)
 
             print 'Python Slice handleEvents rank : ',self._rank, ' - waiting on receive...\n'
-            inputParamPropertyPtrType = x.receive(80000)
+            inputParamPropertyPtrType = x.receive(800000)
             print 'Python Slice handleEvents rank : ',self._rank,' - received event.\n'
 
-            self.populateClipboard(inputParamPropertyPtrType)
+            self.populateClipboard(inputParamPropertyPtrType, iStage, thisTopic)
 
             print 'Python Slice handleEvents rank : ',self._rank,' Added DataPropertyPtrType to clipboard '
+        else:
+            print 'Python Slice handleEvents : rank %i iStage %i : No event to handle' % (self._rank, iStage)
 
-    def populateClipboard(self, inputParamPropertyPtrType):
+    def populateClipboard(self, inputParamPropertyPtrType, iStage, eventTopic):
         """
         Place the event payload onto the Clipboard
         """
         print 'Python Slice populateClipboard'
 
-        queue1 = self.queueList[0]
-        clipboard = queue1.getNextDataset()
+        queue = self.queueList[iStage-1]
+        clipboard = queue.getNextDataset()
 
-        key1 = "inputParam"
-
-        clipboard.put(key1, inputParamPropertyPtrType)
-
+        # Slice does not disassemble the payload of the event. 
+        # It knows nothing of the contents. 
+        # It simply places the payload on the clipboard with key of the eventTopic
+        clipboard.put(eventTopic, inputParamPropertyPtrType)
         print 'Python Slice populateClipboard rank : ',self._rank,' Added DataPropertyPtrType to clipboard '
-        dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
 
-        for key in dataPropertyKeyList:
-            dpPtr = inputParamPropertyPtrType.findUnique(key)
-            if (key == "float"):
-                print 'Python Slice populateClipboard() rank ', self._rank, key, dpPtr.getValueFloat()
-            else:
-                print 'Python Slice populateClipboard() rank ', self._rank, key, dpPtr.getValueString()
-
-        queue1.addDataset(clipboard)
-
+        queue.addDataset(clipboard)
 
 if (__name__ == '__main__'):
     """

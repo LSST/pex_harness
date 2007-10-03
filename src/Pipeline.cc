@@ -136,6 +136,10 @@ int Pipeline::getNStages() {
     return nStages;
 }
 
+int Pipeline::getUniverseSize() {
+    return universeSize;
+}
+
 Stage Pipeline::getIthStage(int iStage) {
     Stage ithStage = stageVector.at(iStage-1);
     return ithStage;

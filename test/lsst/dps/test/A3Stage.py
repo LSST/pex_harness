@@ -18,8 +18,46 @@ class App3Stage(Stage):
         self.activeClipboard = self.inputQueue.getNextDataset()
         keys = self.activeClipboard.getKeys()
         for key in keys:
-            value = self.activeClipboard.get(key)
-	    print 'Python App3Stage preprocess(): stageId %i key %s value %s' % (self.stageId, key, value)
+            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            # print 'Python App3Stage preprocess(): stageId %i key %s value %s' % (self.stageId, key, inputParamPropertyPtrType)
+            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
+
+            if (key == "assocTriggerEvent"):
+                for dataPropKey in dataPropertyKeyList:
+                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
+                    if (dataPropKey == "DMATCH"):
+                        self.dmatch = dpPtr.getValueFloat()
+                        print 'Python App3Stage preprocess() '
+                        print 'Python App3Stage preprocess() ', key, dataPropKey, self.dmatch
+                    elif (dataPropKey == "DIALOC"):
+                        self.dialoc = dpPtr.getValueString()
+                        print 'Python App3Stage preprocess() '
+                        print 'Python App3Stage preprocess() ', key, dataPropKey, self.dialoc
+                    elif (dataPropKey == "FOVID"):
+                        self.fovid = dpPtr.getValueString()
+                        print 'Python App3Stage preprocess() '
+                        print 'Python App3Stage preprocess() ', key, dataPropKey, self.fovid
+
+            if (key == "mops1Event"):
+                for dataPropKey in dataPropertyKeyList:
+                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
+                    if (dataPropKey == "FOVRA"):
+                        self.fovra = dpPtr.getValueFloat()
+                        print 'Python App3Stage preprocess() '
+                        print 'Python App3Stage preprocess() ', key, dataPropKey, self.fovra
+                    elif (dataPropKey == "FOVDec"):
+                        self.fovdec = dpPtr.getValueFloat()
+                        print 'Python App3Stage preprocess() '
+                        print 'Python App3Stage preprocess() ', key, dataPropKey, self.fovdec
+                    elif (dataPropKey == "FOVID"):
+                        self.fovid = dpPtr.getValueString()
+                        print 'Python App3Stage preprocess() '
+                        print 'Python App3Stage preprocess() ', key, dataPropKey, self.fovid
+                    elif (dataPropKey == "FOVTime"):
+                        self.fovtime = dpPtr.getValueString()
+                        print 'Python App3Stage preprocess() '
+                        print 'Python App3Stage preprocess() ', key, dataPropKey, self.fovtime
+
 
     #------------------------------------------------------------------------
     def process(self):
@@ -30,8 +68,46 @@ class App3Stage(Stage):
         self.activeClipboard = self.inputQueue.getNextDataset()
         keys = self.activeClipboard.getKeys()
         for key in keys:
-            value = self.activeClipboard.get(key)
-            print 'Python App3Stage process(): _rank %i stageId %i key %s value %s' % (self._rank, self.stageId, key, value)
+            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            # print 'Python App3Stage process(): _rank %i stageId %i key %s value %s' % 
+            #                 (self._rank, self.stageId, key, inputParamPropertyPtrType)
+            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
+
+            if (key == "assocTriggerEvent"):
+                for dataPropKey in dataPropertyKeyList:
+                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
+                    if (dataPropKey == "DMATCH"):
+                        self.dmatch = dpPtr.getValueFloat()
+                        print 'Python App3Stage process() ', self._rank
+                        print 'Python App3Stage process() ', self._rank, key, dataPropKey, self.dmatch
+                    elif (dataPropKey == "DIALOC"):
+                        self.dialoc = dpPtr.getValueString()
+                        print 'Python App3Stage process() ', self._rank
+                        print 'Python App3Stage process() ', self._rank, key, dataPropKey, self.dialoc
+                    elif (dataPropKey == "FOVID"):
+                        self.fovid = dpPtr.getValueString()
+                        print 'Python App3Stage process() ', self._rank
+                        print 'Python App3Stage process() ', self._rank, key, dataPropKey, self.fovid
+
+            if (key == "mops1Event"):
+                for dataPropKey in dataPropertyKeyList:
+                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
+                    if (dataPropKey == "FOVRA"):
+                        self.fovra = dpPtr.getValueFloat()
+                        print 'Python App3Stage process() ', self._rank
+                        print 'Python App3Stage process() ', self._rank, key, dataPropKey, self.fovra
+                    elif (dataPropKey == "FOVDec"):
+                        self.fovdec = dpPtr.getValueFloat()
+                        print 'Python App3Stage process() ', self._rank
+                        print 'Python App3Stage process() ', self._rank, key, dataPropKey, self.fovdec
+                    elif (dataPropKey == "FOVID"):
+                        self.fovid = dpPtr.getValueString()
+                        print 'Python App3Stage process() ', self._rank
+                        print 'Python App3Stage process() ', self._rank, key, dataPropKey, self.fovid
+                    elif (dataPropKey == "FOVTime"):
+                        self.fovtime = dpPtr.getValueString()
+                        print 'Python App3Stage process() ', self._rank
+                        print 'Python App3Stage process() ', self._rank, key, dataPropKey, self.fovtime
 
         self.outputQueue.addDataset(self.activeClipboard)
 

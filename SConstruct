@@ -16,8 +16,11 @@ for d in Split("src lib python/lsst/dps/swig"):
 
 Alias("install", env.Install(pwd + "/bin", pwd + "/test/run.sh"))
 Alias("install", env.Install(pwd + "/bin", pwd + "/test/nodelist.scr"))
-Alias("install", env.Install(pwd + "/bin", pwd + "/test/pipeline.policy"))
-Alias("install", env.Install(pwd + "/bin", pwd + "/test/lsst/dps/test/ExternalEventTransmit.py"))
+Alias("install", env.Install(pwd + "/bin", pwd + "/test/policy"))
+
+Alias("install", env.Install(pwd + "/bin", pwd + "/test/lsst/dps/test/Mops1EventTransmit.py"))
+Alias("install", env.Install(pwd + "/bin", pwd + "/test/lsst/dps/test/AssocIPDPTriggerEventTransmit.py"))
+
 
 env.Help("""
 LSST Distributed Processing  packages

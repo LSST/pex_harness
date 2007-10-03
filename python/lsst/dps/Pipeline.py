@@ -1,15 +1,19 @@
 #! /usr/bin/env python
 
+
 from Queue import Queue
 from Stage import Stage
 from Clipboard import Clipboard
 
-# from lsst.mwi.data import DataProperty
+
+import lsst.mwi.policy as policy
+
 import lsst.mwi.data as datap
+from lsst.mwi.data import DataProperty
 
 import lsst.events as events
 
-# import lsst.mwi.Policy as mwipolicy
+import os
 
 """
 Pipeline class manages the operation of a multi-stage parallel pipeline.
@@ -32,11 +36,16 @@ class Pipeline:
         self.queueList = []
         self.stageList = []
         self.stageClassList = []
+        self.eventTopicList = []
         import pipeline
         self.cppPipeline = pipeline.Pipeline()
         self.cppPipeline.initialize()
+        self.universeSize = self.cppPipeline.getUniverseSize()
         self.LOGFILE = open("PipelinePython.log","w")
-        self.LOGFILE.write("Python Pipeline __init__ : Opened log \n");
+        self.LOGFILE.write("Python Pipeline __init__ : Opened log \n")
+        self.LOGFILE.write("Python Pipeline __init__ : universeSize is ")
+        self.LOGFILE.write(str(self.universeSize))
+        self.LOGFILE.write("\n")
         self.LOGFILE.flush()
 
     def __del__(self):
@@ -51,23 +60,35 @@ class Pipeline:
         """
         self.LOGFILE.write("Python Pipeline configurePipeline \n");
         self.eventHost = "lsst8.ncsa.uiuc.edu"
-        self.eventTopic = "pipedata"
-        self.sliceTopic = "slicedata"
+        # self.eventTopic = "pipedata"
+        # self.sliceTopic = "slicedata"
 
-        # fileName = "pipeline_policy.json"
-        # dictName = "pipeline_dict.json"
-        # aPolicy = mwipolicy.Policy(fileName, "", dictName)
-        # aPolicy = mwipolicy.Policy(fileName)
-        # appStages = aPolicy.get("appstages", "")
-        # self.LOGFILE.write(appStages)
+        # path1 = os.environ['LSST_POLICY_DIR']
+        # print 'Python Pipeline path1', path1
+      
+        policyFileName = "policy/pipeline_policy.json"
+        dictName = "pipeline_dict.json"
+        p = policy.Policy.createPolicy(policyFileName)
 
-        filePolicy = open('pipeline.policy', 'r')
-        fullStageList = filePolicy.readlines()
+        # Process Application Stages
+        fullStageList = p.getArray("appStages")
+
+        self.LOGFILE.write("appStages")
+        self.LOGFILE.write("\n")
+        for item in fullStageList:
+            self.LOGFILE.write(item)
+            self.LOGFILE.write("\n")
+        self.LOGFILE.write("end appStages")
+        self.LOGFILE.write("\n")
+
+        # filePolicy = open('pipeline.policy', 'r')
+        # fullStageList = filePolicy.readlines()
+
         self.nStages = len(fullStageList)
 
-        for line in fullStageList:
-            fullStage = line.strip()
-            tokenList = line.split('.')
+        for astage in fullStageList:
+            fullStage = astage.strip()
+            tokenList = astage.split('.')
             classString = tokenList.pop()
             classString = classString.strip()
 
@@ -84,6 +105,17 @@ class Pipeline:
 
         self.LOGFILE.write("Python Pipeline configurePipeline : Done \n");
         self.LOGFILE.flush()
+
+        # Process Event Topics
+        self.eventTopicList = p.getArray("eventTopics")
+
+        self.LOGFILE.write("eventTopics")
+        self.LOGFILE.write("\n")
+        for item in self.eventTopicList:
+            self.LOGFILE.write(item)
+            self.LOGFILE.write("\n")
+        self.LOGFILE.write("end eventTopics")
+        self.LOGFILE.write("\n")
 
     def initializeQueues(self):
         """
@@ -103,6 +135,7 @@ class Pipeline:
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
             stageObject.initialize(outputQueue, inputQueue)
+            stageObject.setUniverseSize(self.universeSize)
             self.stageList.append(stageObject)
 
 
@@ -158,53 +191,56 @@ class Pipeline:
         """
         print 'Python Pipeline handleEvents : iStage %d' % (iStage)
 
-        if (iStage == 1):
-            eventReceiver    = events.EventReceiver(self.eventHost, self.eventTopic)
-            eventTransmitter = events.EventTransmitter(self.eventHost, self.sliceTopic)
+        thisTopic = self.eventTopicList[iStage-1]
+        self.LOGFILE.write("Python Pipeline handleEvents thisTopic ")
+        self.LOGFILE.write(thisTopic)
+        self.LOGFILE.write("\n")
+
+        if (thisTopic != "None"):
+            sliceTopic = thisTopic + "_slice"
+            eventReceiver    = events.EventReceiver(self.eventHost, thisTopic)
+            eventTransmitter = events.EventTransmitter(self.eventHost, sliceTopic)
 
             print 'Python Pipeline handleEvents - waiting on receive...\n'
-            self.LOGFILE.write("Python Pipeline handleEvents - waiting on receive...\n");
-            self.LOGFILE.flush()
-            inputParamPropertyPtrType = eventReceiver.receive(80000)
-            self.LOGFILE.write("Python Pipeline handleEvents -  received event...\n");
-            self.LOGFILE.flush()
-            print 'Python Pipeline handleEvents - received event.\n'
-            self.LOGFILE.write("Python Pipeline handleEvents -  Sending event to Slices\n");
-            self.LOGFILE.flush()
-            print 'Python Pipeline handleEvents - Sending event to Slices.\n'
-
-            self.populateClipboard(inputParamPropertyPtrType)
-
-            eventTransmitter.send("sliceevent1", inputParamPropertyPtrType)
-
-            print 'Python Pipeline handleEvents : Sent event to Slices '
-            self.LOGFILE.write("Python Pipeline handleEvents -  Sent event to Slices\n");
+            self.LOGFILE.write("Python Pipeline handleEvents - waiting on receive...\n")
             self.LOGFILE.flush()
 
-    def populateClipboard(self, inputParamPropertyPtrType):
+            inputParamPropertyPtrType = eventReceiver.receive(800000)
+
+            if (inputParamPropertyPtrType.get() != None): 
+                self.LOGFILE.write("Python Pipeline handleEvents -  received event...\n")
+                self.LOGFILE.flush()
+                print 'Python Pipeline handleEvents - received event.\n'
+                self.LOGFILE.write("Python Pipeline handleEvents -  Sending event to Slices\n")
+                self.LOGFILE.flush()
+                print 'Python Pipeline handleEvents - Sending event to Slices.\n'
+
+                # Pipeline  does not disassemble the payload of the event.
+                # It knows nothing of the contents.
+                # It simply places the payload on the clipboard with key of the eventTopic
+                self.populateClipboard(inputParamPropertyPtrType, iStage, thisTopic)
+                eventTransmitter.publish("sliceevent1", inputParamPropertyPtrType)
+
+                print 'Python Pipeline handleEvents : Sent event to Slices '
+                self.LOGFILE.write("Python Pipeline handleEvents -  Sent event to Slices\n")
+                self.LOGFILE.flush()
+
+    def populateClipboard(self, inputParamPropertyPtrType, iStage, eventTopic):
         """
         Place the event payload onto the Clipboard 
         """
         print 'Python Pipeline populateClipboard'
 
-        queue1 = self.queueList[0]
-        clipboard = queue1.getNextDataset()
+        queue = self.queueList[iStage-1]
+        clipboard = queue.getNextDataset()
 
-        key1 = "inputParam"
-
-        clipboard.put(key1, inputParamPropertyPtrType)
-
+        # Pipeline does not disassemble the payload of the event.
+        # It knows nothing of the contents.
+        # It simply places the payload on the clipboard with key of the eventTopic
+        clipboard.put(eventTopic, inputParamPropertyPtrType)
         print 'Python Pipeline populateClipboard : Added DataPropertyPtrType to clipboard '
-        dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.") 
-
-        for key in dataPropertyKeyList:
-            dpPtr = inputParamPropertyPtrType.findUnique(key)
-            if (key == "float"):
-                print 'Python Pipeline populateClipboard()', key, dpPtr.getValueFloat()
-            else:
-                print 'Python Pipeline populateClipboard()', key, dpPtr.getValueString()
-
-        queue1.addDataset(clipboard)
+        # print 'Python Pipeline populateClipboard()', inputParamPropertyPtrType.toString('=',1)
+        queue.addDataset(clipboard)
 
 # print __doc__
 

@@ -49,6 +49,7 @@ public:
     void shutdown();
     void setRank(int rank);
     int getRank();
+    int getUniverseSize();
 
 
 private:
@@ -64,6 +65,7 @@ private:
     StageVector stageVector;
     int mpiError;
     int nStages;
+    int universeSize;
     int bufferSize;
     FILE *Fp_logger;
     char logfile[50];

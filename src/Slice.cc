@@ -91,6 +91,19 @@ void Slice::initializeMPI() {
     fflush(Fp_logger); // added by jmyers
 
 
+    int flag;
+    int *universeSizep;
+    mpiError = MPI_Attr_get(sliceIntercomm, MPI_UNIVERSE_SIZE, &universeSizep, &flag);
+    if (mpiError != MPI_SUCCESS){
+        MPI_Finalize();
+        exit(1);
+    }
+    universeSize = *universeSizep;
+
+    fprintf(Fp_logger, "Slice::initializeMPI(): _rank usize %d %d \n", _rank, universeSize);
+    fflush(Fp_logger); // added by jmyers
+
+
     return;
 }
 
@@ -245,5 +258,10 @@ void Slice::setRank(int rank) {
 int Slice::getRank() {
     return _rank;
 }
+
+int Slice::getUniverseSize() {
+    return universeSize;
+}
+
 
 

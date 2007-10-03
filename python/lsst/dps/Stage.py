@@ -87,14 +87,14 @@ class Stage:
         self.stageId = stageId
 
     #------------------------------------------------------------------------
-    def getStageId(): 
+    def getStageId(self): 
         """
         get method for the integer field stageId
         """
         return self.stageId
 
     #------------------------------------------------------------------------
-    def getRank(): 
+    def getRank(self): 
         """
         get method for the integer MPI rank
         """
@@ -106,4 +106,18 @@ class Stage:
         set method for the integer field rank
         """
         self._rank = rank
+
+    #------------------------------------------------------------------------
+    def getUniverseSize(self): 
+        """
+        get method for the integer MPI universe size
+        """
+        return self._universeSize
+
+    #------------------------------------------------------------------------
+    def setUniverseSize(self, universeSize): 
+        """
+        set method for the integer field universe size
+        """
+        self._universeSize = universeSize
 

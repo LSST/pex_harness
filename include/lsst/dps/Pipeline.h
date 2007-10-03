@@ -56,6 +56,7 @@ public:
 
     int getNStages();
     Stage getIthStage(int iStage);
+    int getUniverseSize();
 
 private:
     void initializeLogger();
