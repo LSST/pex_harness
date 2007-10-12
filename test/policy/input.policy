@@ -1,0 +1,11 @@
+AdditionalData: "visitId=tcsEvent.visitId"
+RunMode: "postprocess"
+InputItems: {
+    theProperty: {
+        Type: "DataProperty"
+        StoragePolicy: {
+            Storage: "BoostStorage"
+            Location: "theProperty.%{visitId}.%{sliceId}"
+        }
+    }
+}

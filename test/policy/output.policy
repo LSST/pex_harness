@@ -1,0 +1,10 @@
+AdditionalData: "visitId=tcsEvent.visitId"
+OutputItems: {
+    theProperty: {
+        Required: true
+        StoragePolicy: {
+            Storage: "BoostStorage"
+            Location: "theProperty.%{visitId}.%{sliceId}"
+        }
+    }
+}
