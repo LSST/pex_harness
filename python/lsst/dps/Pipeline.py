@@ -15,6 +15,8 @@ import lsst.events as events
 
 import os
 
+from cStringIO import StringIO
+
 """
 Pipeline class manages the operation of a multi-stage parallel pipeline.
 The Pipeline is configured by reading a Policy file.   This Python Pipeline
@@ -192,12 +194,16 @@ class Pipeline:
         print 'Python Pipeline handleEvents : iStage %d' % (iStage)
 
         thisTopic = self.eventTopicList[iStage-1]
+        thisTopic = thisTopic.strip()
         self.LOGFILE.write("Python Pipeline handleEvents thisTopic ")
         self.LOGFILE.write(thisTopic)
         self.LOGFILE.write("\n")
 
         if (thisTopic != "None"):
-            sliceTopic = thisTopic + "_slice"
+            fileStr = StringIO()
+            fileStr.write(thisTopic)
+            fileStr.write("_slice")
+            sliceTopic = fileStr.getvalue()
             eventReceiver    = events.EventReceiver(self.eventHost, thisTopic)
             eventTransmitter = events.EventTransmitter(self.eventHost, sliceTopic)
 
