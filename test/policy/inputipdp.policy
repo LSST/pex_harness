@@ -1,0 +1,11 @@
+AdditionalData: "visitId=IpdpImageEvent.visitid"
+RunMode: "process"
+InputItems: {
+    inputImage: {
+        Type: "DataProperty"
+        StoragePolicy: {
+            Storage: "BoostStorage"
+            Location: "inputImage.%{visitId}.%{sliceId}"
+        }
+    }
+}

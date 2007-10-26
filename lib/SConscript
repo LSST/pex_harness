@@ -2,18 +2,12 @@
 
 Import("env")
 
-dict = env.Dictionary()
-ENV  =  dict['ENV']
-pwd = ENV['PWD']
-print "pwd is %s " % pwd
-
-Import('env')
+env.Replace(SHLIBPREFIX=["lib"]);
 
 env.SharedLibrary('dps', map(lambda str: "../src/" + str,
                           ["Pipeline.cc", 
                            "Slice.cc", 
                            "Queue.cc", 
                            "Stage.cc", 
-                           "Clipboard.cc"]), 
-                            CXXFLAGS=["-DMPICH_IGNORE_CXX_SEEK"], SHLIBPREFIX=["lib"])
+                           "Clipboard.cc"]))
 

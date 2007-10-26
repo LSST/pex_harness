@@ -38,6 +38,7 @@ class Slice:
         self.queueList = []
         self.stageList = []
         self.stageClassList = []
+        self.stagePolicyList = []
         self.sliceEventTopicList = []
         self.eventTopicList = []
         import slice
@@ -120,6 +121,8 @@ class Slice:
         self.LOGFILE.write("end eventTopics")
         self.LOGFILE.write("\n")
 
+        # Process Stage Policies
+        self.stagePolicyList = p.getArray("stagePolicies")
 
     def initializeQueues(self):
         """
@@ -134,8 +137,16 @@ class Slice:
         Initialize the Stage List
         """
         for iStage in range(1, self.nStages+1):
+            # Make a Policy object for the Stage Policy file
+            policyFileName = self.stagePolicyList[iStage-1]
+            # Make an instance of the specifies Application Stage
+            # Use a constructor with the Policy as an argument
             StageClass = self.stageClassList[iStage-1]
-            stageObject = StageClass(iStage)
+            if (policyFileName != "None"):
+                stagePolicy = policy.Policy.createPolicy(policyFileName)
+                stageObject = StageClass(iStage, stagePolicy)
+            else:
+                stageObject = StageClass(iStage)
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
             stageObject.initialize(outputQueue, inputQueue)

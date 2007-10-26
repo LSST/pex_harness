@@ -73,7 +73,7 @@ class MOPSExampleStage(Stage):
                         print 'Python MOPSExampleStage process() ', self._rank
                         print 'Python MOPSExampleStage process() ', self._rank, key, dataPropKey, self.fovid
                     elif (dataPropKey == "FOVTime"):
-                        self.fovtime = dpPtr.getValueInt()
+                        self.fovtime = dpPtr.getValueString()
                         print 'Python MOPSExampleStage process() ', self._rank
                         print 'Python MOPSExampleStage process() ', self._rank, key, dataPropKey, self.fovtime
 

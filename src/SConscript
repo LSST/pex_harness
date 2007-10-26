@@ -1,27 +1,11 @@
 # -*- python -*-
 Import("env")
 
-dict = env.Dictionary()
-ENV  =  dict['ENV']
-pwd = ENV['PWD']
-# print "pwd is %s " % pwd
+env.Append(LIBS=['mpich'])
 
 # Build Pipeline
-env.Object(['Pipeline.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'], LIBS=['mpich'])
+env.Object(['Pipeline.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'])
 
 # Build Slice
-env.Object(['Slice.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'], LIBS=['mpich'])
-
-incdir = pwd + "/include"
-
-pydir = ENV['PYTHON_DIR']
-
-print "CPPPATH %s " % env['CPPPATH']
-print "pydir %s " % pydir
-
-pyincdir =  pydir + "/include/python2.5"
-
-env.Replace(CPPPATH = env['CPPPATH'] + ":" + incdir + ":" + pyincdir)
-
-print "CPPPATH %s " % env['CPPPATH']
+env.Object(['Slice.cc', 'Clipboard.cc', 'Stage.cc', 'Queue.cc'])
 

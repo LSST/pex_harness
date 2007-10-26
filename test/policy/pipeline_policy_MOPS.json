@@ -11,6 +11,7 @@
 
 {
     "appStages":[ "lsst.dps.test.MOPSExampleStage.MOPSExampleStage", "lsst.dps.test.A2Stage.App2Stage", "lsst.dps.test.A3Stage.App3Stage", "lsst.dps.test.A4Stage.App4Stage" ] , 
-    "eventTopics":[ "mops1Event", "None", "None", "None" ] 
+    "eventTopics":[ "mops1Event", "None", "None", "None" ] ,
+    "stagePolicies":[ "None", "None" , "None" , "None" ]
 }
 

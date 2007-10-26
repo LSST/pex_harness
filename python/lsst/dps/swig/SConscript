@@ -1,33 +1,13 @@
 # -*- python -*-
 Import("env")
 
-dict = env.Dictionary()
-ENV  =  dict['ENV']
-pwd = ENV['PWD']
-print "pwd is %s " % pwd
+sdir = "../../../../src/"
 
-incdir = pwd + "/include"
-sdir = pwd + "/src/"
+env.Replace(SHLIBPREFIX=["_"])
+env.Append(SWIGFLAGS=["-c++", "-python", "-Iinclude"])
 
-pydir = ENV['PYTHON_DIR']
+env.SharedLibrary('pipeline', ["Pipeline.i", sdir+"Pipeline.cc", sdir+"Queue.cc", sdir+"Stage.cc", sdir+"Clipboard.cc"]) 
 
-print "CPPPATH %s " % env['CPPPATH']
-print "pydir %s " % pydir
-
-pyincdir =  pydir + "/include/python2.5"
-
-env.Replace(CPPPATH = env['CPPPATH'] + ":" + incdir + ":" + pyincdir)
-
-print "CPPPATH %s " % env['CPPPATH']
-
-env.SharedLibrary('pipeline', ["Pipeline.i", sdir+"Pipeline.cc", sdir+"Queue.cc", sdir+"Stage.cc", sdir+"Clipboard.cc"], 
-                 CXXFLAGS=["-DMPICH_IGNORE_CXX_SEEK"], 
-                 SHLIBPREFIX=["_"],
-                 SWIGFLAGS=["-c++", "-python", "-Iinclude"])
-
-env.SharedLibrary('slice', ["Slice.i", sdir+"Slice.cc", sdir+"Queue.cc", sdir+"Stage.cc", sdir+"Clipboard.cc"], 
-                 CXXFLAGS=["-DMPICH_IGNORE_CXX_SEEK"], 
-                 SHLIBPREFIX=["_"],
-                 SWIGFLAGS=["-c++", "-python", "-Iinclude"])
+env.SharedLibrary('slice', ["Slice.i", sdir+"Slice.cc", sdir+"Queue.cc", sdir+"Stage.cc", sdir+"Clipboard.cc"]) 
 
 

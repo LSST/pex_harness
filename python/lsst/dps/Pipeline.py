@@ -38,6 +38,7 @@ class Pipeline:
         self.queueList = []
         self.stageList = []
         self.stageClassList = []
+        self.stagePolicyList = []
         self.eventTopicList = []
         import pipeline
         self.cppPipeline = pipeline.Pipeline()
@@ -71,6 +72,7 @@ class Pipeline:
         policyFileName = "policy/pipeline_policy.json"
         dictName = "pipeline_dict.json"
         p = policy.Policy.createPolicy(policyFileName)
+
 
         # Process Application Stages
         fullStageList = p.getArray("appStages")
@@ -119,6 +121,10 @@ class Pipeline:
         self.LOGFILE.write("end eventTopics")
         self.LOGFILE.write("\n")
 
+        # Process Stage Policies
+        # inputStagePolicy = policy.Policy.createPolicy("policy/inputStage.policy")
+        self.stagePolicyList = p.getArray("stagePolicies")
+
     def initializeQueues(self):
         """
         Initialize the Queue List for the Pipeline
@@ -132,8 +138,16 @@ class Pipeline:
         Initialize the Stage List for the Pipeline
         """
         for iStage in range(1, self.nStages+1):
+            # Make a Policy object for the Stage Policy file
+            policyFileName = self.stagePolicyList[iStage-1] 
+            # Make an instance of the specifies Application Stage
+            # Use a constructor with the Policy as an argument 
             StageClass = self.stageClassList[iStage-1]
-            stageObject = StageClass(iStage)
+            if (policyFileName != "None"):
+                stagePolicy = policy.Policy.createPolicy(policyFileName)
+                stageObject = StageClass(iStage, stagePolicy)
+            else:
+                stageObject = StageClass(iStage)
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
             stageObject.initialize(outputQueue, inputQueue)

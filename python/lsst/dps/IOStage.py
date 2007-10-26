@@ -112,6 +112,8 @@ class OutputStage (lsst.dps.Stage.Stage):
         (subclass) processing, if desired.
         """
 
+        self.dataClipboard = self.inputQueue.getNextDataset()
+
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'preprocess':
             self._output()
@@ -136,6 +138,7 @@ class OutputStage (lsst.dps.Stage.Stage):
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'postprocess':
             self._output()
+        self.outputQueue.addDataset(self.dataClipboard)
 
     def _output(self):
         """
@@ -224,6 +227,7 @@ class InputStage (lsst.dps.Stage.Stage):
         Initialize the stage with a policy.
         """
 
+
         lsst.dps.Stage.Stage.__init__(self, stageId)
         self._policy = stagePolicy
 
@@ -232,6 +236,8 @@ class InputStage (lsst.dps.Stage.Stage):
         Retrieve the requested data in the master process before any
         (subclass) processing, if desired.
         """
+
+        self.dataClipboard = self.inputQueue.getNextDataset()
 
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'preprocess':
@@ -257,6 +263,7 @@ class InputStage (lsst.dps.Stage.Stage):
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'postprocess':
             self._input()
+        self.outputQueue.addDataset(self.dataClipboard)
 
     def _input(self):
         """
