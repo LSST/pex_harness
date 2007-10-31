@@ -17,20 +17,14 @@ class Stage:
     '''Allows access to Python Stages that implement Stage interface'''
 
     #------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, stageId=-1, stagePolicy=None):
         """
-        Initialize the Stage; set stageId to -1 as default value
-        """
-        self.stageId = -1
-        self._rank = -1
-
-    #------------------------------------------------------------------------
-    def __init__(self, stageId):
-        """
-        Initialize the Stage, setting the stageId to the value sent
+        Initialize the Stage, setting the stageId to the value sent, setting policy to that sent
         """
         self.stageId = stageId
         self._rank = -1
+        self._policy = stagePolicy
+
 
     #------------------------------------------------------------------------
     def __del__(self):

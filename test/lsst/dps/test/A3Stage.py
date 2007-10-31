@@ -4,7 +4,7 @@
 Test Application Stage 3
 """
 
-from Stage import Stage
+from lsst.dps.Stage import Stage
 
 class App3Stage(Stage):
 

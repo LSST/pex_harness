@@ -4,7 +4,7 @@
 Test Application Stage 1
 """
 
-from Stage import Stage
+from lsst.dps.Stage import Stage
 
 import lsst.mwi.data as datap
 

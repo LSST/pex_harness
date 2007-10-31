@@ -4,7 +4,7 @@
 Test Application Stage 2
 """
 
-from Stage import Stage
+from lsst.dps.Stage import Stage
 
 class IPDPStage(Stage):
 
