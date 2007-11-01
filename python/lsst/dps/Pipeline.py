@@ -96,11 +96,7 @@ class Pipeline:
             classString = tokenList.pop()
             classString = classString.strip()
 
-            package = '' 
-            for item in tokenList:
-                   package += item
-                   package += '/'
-            package = package.rstrip('/')
+            package = ".".join(tokenList)
 
             # For example  package -> lsst.dps.App1Stage  classString -> App1Stage
             AppStage = __import__(package, globals(), locals(), [classString], -1)

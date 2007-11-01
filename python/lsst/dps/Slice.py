@@ -85,17 +85,17 @@ class Slice:
         # fullStageList = filePolicy.readlines()
         self.nStages = len(fullStageList)
 
+        self.LOGFILE.write("fullStageList")
+        self.LOGFILE.write("\n")
         for astage in fullStageList:
+            self.LOGFILE.write(astage)
+            self.LOGFILE.write("\n")
             fullStage = astage.strip()
             tokenList = astage.split('.')
             classString = tokenList.pop()
             classString = classString.strip()
 
-            package = ''
-            for item in tokenList:
-                package += item
-                package += '/'
-            package = package.rstrip('/')
+            package = ".".join(tokenList)
 
             # For example  package -> lsst.dps.App1Stage  classString -> App1Stage
             AppStage = __import__(package, globals(), locals(), [classString], -1)
