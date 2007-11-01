@@ -27,11 +27,11 @@ class MOPSExampleStage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "FOVRA"):
-                        self.fovra = dpPtr.getValueFloat()
+                        self.fovra = dpPtr.getValueDouble()
                         print 'Python MOPSExampleStage preprocess() '
                         print 'Python MOPSExampleStage preprocess() ', key, dataPropKey, self.fovra
                     elif (dataPropKey == "FOVDec"):
-                        self.fovdec = dpPtr.getValueFloat()
+                        self.fovdec = dpPtr.getValueDouble()
                         print 'Python MOPSExampleStage preprocess() '
                         print 'Python MOPSExampleStage preprocess() ', key, dataPropKey, self.fovdec
                     elif (dataPropKey == "FOVID"):
@@ -61,11 +61,11 @@ class MOPSExampleStage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "FOVRA"):
-                        self.fovra = dpPtr.getValueFloat()
+                        self.fovra = dpPtr.getValueDouble()
                         print 'Python MOPSExampleStage process() ', self._rank
                         print 'Python MOPSExampleStage process() ', self._rank, key, dataPropKey, self.fovra
                     elif (dataPropKey == "FOVDec"):
-                        self.fovdec = dpPtr.getValueFloat()
+                        self.fovdec = dpPtr.getValueDouble()
                         print 'Python MOPSExampleStage process() ', self._rank
                         print 'Python MOPSExampleStage process() ', self._rank, key, dataPropKey, self.fovdec
                     elif (dataPropKey == "FOVID"):

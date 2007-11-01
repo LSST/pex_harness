@@ -26,7 +26,7 @@ class App4Stage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "DMATCH"):
-                        self.dmatch = dpPtr.getValueFloat()
+                        self.dmatch = dpPtr.getValueDouble()
                         print 'Python App4Stage preprocess() '
                         print 'Python App4Stage preprocess() ', key, dataPropKey, self.dmatch
                     elif (dataPropKey == "DIALOC"):
@@ -42,11 +42,11 @@ class App4Stage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "FOVRA"):
-                        self.fovra = dpPtr.getValueFloat()
+                        self.fovra = dpPtr.getValueDouble()
                         print 'Python App4Stage preprocess() '
                         print 'Python App4Stage preprocess() ', key, dataPropKey, self.fovra
                     elif (dataPropKey == "FOVDec"):
-                        self.fovdec = dpPtr.getValueFloat()
+                        self.fovdec = dpPtr.getValueDouble()
                         print 'Python App4Stage preprocess() '
                         print 'Python App4Stage preprocess() ', key, dataPropKey, self.fovdec
                     elif (dataPropKey == "FOVID"):
@@ -77,7 +77,7 @@ class App4Stage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "DMATCH"):
-                        self.dmatch = dpPtr.getValueFloat()
+                        self.dmatch = dpPtr.getValueDouble()
                         print 'Python App4Stage process() ', self._rank
                         print 'Python App4Stage process() ', self._rank, key, dataPropKey, self.dmatch
                     elif (dataPropKey == "DIALOC"):
@@ -93,11 +93,11 @@ class App4Stage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "FOVRA"):
-                        self.fovra = dpPtr.getValueFloat()
+                        self.fovra = dpPtr.getValueDouble()
                         print 'Python App4Stage process() ', self._rank
                         print 'Python App4Stage process() ', self._rank, key, dataPropKey, self.fovra
                     elif (dataPropKey == "FOVDec"):
-                        self.fovdec = dpPtr.getValueFloat()
+                        self.fovdec = dpPtr.getValueDouble()
                         print 'Python App4Stage process() ', self._rank
                         print 'Python App4Stage process() ', self._rank, key, dataPropKey, self.fovdec
                     elif (dataPropKey == "FOVID"):

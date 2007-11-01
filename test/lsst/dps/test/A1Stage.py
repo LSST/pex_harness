@@ -29,7 +29,7 @@ class App1Stage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "DMATCH"):
-                        self.dmatch = dpPtr.getValueFloat()
+                        self.dmatch = dpPtr.getValueDouble()
                         print 'Python App1Stage preprocess() '
                         print 'Python App1Stage preprocess() ', key, dataPropKey, self.dmatch
                     elif (dataPropKey == "DIALOC"):
@@ -46,11 +46,11 @@ class App1Stage(Stage):
 	            print 'Python App1Stage preprocess(): stageId %i dataPropKey %s' % (self.stageId, dataPropKey)
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "FOVRA"):
-                        self.fovra = dpPtr.getValueFloat()
+                        self.fovra = dpPtr.getValueDouble()
                         print 'Python App1Stage preprocess() '
                         print 'Python App1Stage preprocess() ', key, dataPropKey, self.fovra
                     elif (dataPropKey == "FOVDec"):
-                        self.fovdec = dpPtr.getValueFloat()
+                        self.fovdec = dpPtr.getValueDouble()
                         print 'Python App1Stage preprocess() '
                         print 'Python App1Stage preprocess() ', key, dataPropKey, self.fovdec
                     elif (dataPropKey == "FOVID"):
@@ -82,7 +82,7 @@ class App1Stage(Stage):
                     print 'Python App1Stage process(): _rank %i stageId %i dataPropKey %s' % (self._rank, self.stageId, dataPropKey)
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "DMATCH"):
-                        self.dmatch = dpPtr.getValueFloat()
+                        self.dmatch = dpPtr.getValueDouble()
                         print 'Python App1Stage process() ', self._rank
                         print 'Python App1Stage process() ', self._rank, key, dataPropKey, self.dmatch
                     elif (dataPropKey == "DIALOC"):
@@ -98,11 +98,11 @@ class App1Stage(Stage):
                 for dataPropKey in dataPropertyKeyList:
                     dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
                     if (dataPropKey == "FOVRA"):
-                        self.fovra = dpPtr.getValueFloat()
+                        self.fovra = dpPtr.getValueDouble()
                         print 'Python App1Stage process() ', self._rank
                         print 'Python App1Stage process() ', self._rank, key, dataPropKey, self.fovra
                     elif (dataPropKey == "FOVDec"):
-                        self.fovdec = dpPtr.getValueFloat()
+                        self.fovdec = dpPtr.getValueDouble()
                         print 'Python App1Stage process() ', self._rank
                         print 'Python App1Stage process() ', self._rank, key, dataPropKey, self.fovdec
                     elif (dataPropKey == "FOVID"):
