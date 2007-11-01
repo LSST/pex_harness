@@ -103,16 +103,13 @@ class OutputStage (lsst.dps.Stage.Stage):
         Initialize the stage with a policy.
         """
 
-        lsst.dps.Stage.Stage.__init__(self, stageId)
-        self._policy = stagePolicy
+        lsst.dps.Stage.Stage.__init__(self, stageId, stagePolicy)
 
     def preprocess(self):
         """
         Persist the requested data in the master process before any
         (subclass) processing, if desired.
         """
-
-        self.dataClipboard = self.inputQueue.getNextDataset()
 
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'preprocess':
@@ -138,7 +135,14 @@ class OutputStage (lsst.dps.Stage.Stage):
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'postprocess':
             self._output()
-        self.outputQueue.addDataset(self.dataClipboard)
+
+        if not self._policy.exists('RunMode') or \
+                (self._policy.getString('RunMode') != 'preprocess' and \
+                self._policy.getString('RunMode') != 'postprocess'):
+            # Nobody has copied the clipboards yet in the master process
+            for i in xrange(self.inputQueue.size()):
+                clipboard = self.inputQueue.getNextDataset()
+                self.outputQueue.addDataset(clipboard)
 
     def _output(self):
         """
@@ -228,16 +232,13 @@ class InputStage (lsst.dps.Stage.Stage):
         """
 
 
-        lsst.dps.Stage.Stage.__init__(self, stageId)
-        self._policy = stagePolicy
+        lsst.dps.Stage.Stage.__init__(self, stageId, stagePolicy)
 
     def preprocess(self):
         """
         Retrieve the requested data in the master process before any
         (subclass) processing, if desired.
         """
-
-        self.dataClipboard = self.inputQueue.getNextDataset()
 
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'preprocess':
@@ -263,7 +264,15 @@ class InputStage (lsst.dps.Stage.Stage):
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'postprocess':
             self._input()
-        self.outputQueue.addDataset(self.dataClipboard)
+
+        if not self._policy.exists('RunMode') or \
+                (self._policy.getString('RunMode') != 'preprocess' and \
+                self._policy.getString('RunMode') != 'postprocess'):
+            # Nobody has copied the clipboards yet in the master process
+            for i in xrange(self.inputQueue.size()):
+                clipboard = self.inputQueue.getNextDataset()
+                self.outputQueue.addDataset(clipboard)
+
 
     def _input(self):
         """
@@ -291,6 +300,7 @@ class InputStage (lsst.dps.Stage.Stage):
 
                 itemPolicy = inputPolicy.getPolicy(item)
                 itemType = itemPolicy.getString('Type')
+                pythonType = itemPolicy.getString('PythonType')
 
                 # Add the item name to the additionalData.
                 additionalData.deleteAll('itemName', False)
@@ -316,9 +326,18 @@ class InputStage (lsst.dps.Stage.Stage):
                     storageList.append(storage)
 
                 # Retrieve the item.
-                itemData = persistence.retrieve(itemType, storageList, \
+                itemData = persistence.unsafeRetrieve(itemType, storageList, \
                         additionalData)
-                clipboard.put(item, itemData)
+
+                # Cast the SWIGged Persistable to a more useful type.
+                pos = pythonType.rfind('.')
+                if pos != -1:
+                    pythonModule = pythonType[0:pos]
+                    exec 'import ' + pythonModule
+                exec 'finalItem = ' + pythonType + '.swigConvert(itemData)'
+
+                # Put the item on the clipboard
+                clipboard.put(item, finalItem)
             
             # Propagate the clipboard to the output queue.
             self.outputQueue.addDataset(clipboard)

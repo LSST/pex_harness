@@ -45,10 +45,8 @@ clip.put("theProperty", dp)
 # Put the clipboard on the input queue
 q1.addDataset(clip)
 
-# Run the output stage
-outputStage.preprocess()
+# Run the output stage like a slice
 outputStage.process()
-outputStage.postprocess()
 
 # Check the output queue: should have everything we put on the input
 assert q2.size() == 1
@@ -67,9 +65,8 @@ clip3.put("tcsEvent", event)
 # No DataProperty on this queue!
 q3.addDataset(clip3)
 
-# Run the input stage
+# Run the input stage like a master process
 inputStage.preprocess()
-inputStage.process()
 inputStage.postprocess()
 
 # Check the output queue: should have the event -- and now the DataProperty!
@@ -78,7 +75,8 @@ clip4 = q4.getNextDataset()
 assert clip4
 assert clip4.get("tcsEvent")
 assert clip4.get("theProperty")
-dp2 = lsst.mwi.data.DataPropertyPtrType(clip4.get("theProperty"))
+dp2 = clip4.get("theProperty")
+assert dp2.__class__ == lsst.mwi.data.DataProperty
 print dp2.findUnique("str").getValueString()
 print dp2.findUnique("num").getValueInt()
 assert dp2.findUnique("str").getValueString() == \
