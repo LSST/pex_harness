@@ -70,16 +70,17 @@ def createAdditionalData(stage, stagePolicy, clipboard):
 
     # Parse array of "key=clipboard-key" or
     # "key=clipboard-key.dataproperty-key" mappings
-    dataPairs = stagePolicy.getStringArray('AdditionalData')
-    for pair in dataPairs:
-        (rename, name) = pair.split("=")
-        if name.find(".") != -1:
-            (clipKey, dpKey) = name.split(".", 1)
-            data = clipboard.get(clipKey).findUnique(dpKey).getValue()
-        else:
-            data = clipboard.get(name)
-        leaf = lsst.mwi.data.DataProperty(rename, data)
-        dataProperty.addProperty(leaf)
+    if stagePolicy.exists('AdditionalData'):
+        dataPairs = stagePolicy.getStringArray('AdditionalData')
+        for pair in dataPairs:
+            (rename, name) = pair.split("=")
+            if name.find(".") != -1:
+                (clipKey, dpKey) = name.split(".", 1)
+                data = clipboard.get(clipKey).findUnique(dpKey).getValue()
+            else:
+                data = clipboard.get(name)
+            leaf = lsst.mwi.data.DataProperty(rename, data)
+            dataProperty.addProperty(leaf)
 
     # Add the predefined sliceId and universeSize keys
 
