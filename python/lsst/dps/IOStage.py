@@ -337,6 +337,11 @@ class InputStage (lsst.dps.Stage.Stage):
                     exec 'import ' + pythonModule
                 exec 'finalItem = ' + pythonType + '.swigConvert(itemData)'
 
+                # Make sure that the useful type owns the pointer, not the
+                # original Persistable.
+                itemData.this.disown()
+                finalItem.this.acquire()
+
                 # Put the item on the clipboard
                 clipboard.put(item, finalItem)
             
