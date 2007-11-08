@@ -216,7 +216,12 @@ class OutputStage (lsst.dps.Stage.Stage):
                     storageList.append(storage)
 
                 # Persist the item.
-                persistence.persist(itemData.get(), storageList, additionalData)
+                if 'get' in dir(itemData):
+                    # We have a smart pointer, so dereference it.
+                    persistence.persist(itemData.get(), storageList, \
+                            additionalData)
+                else:
+                    persistence.persist(itemData, storageList, additionalData)
 
             # Propagate the clipboard to the output queue.
             self.outputQueue.addDataset(clipboard)
