@@ -30,7 +30,6 @@ Alias("install", env.Install("./bin", "./test/nodelist.scr"))
 Alias("install", env.Install("./bin", "./test/policy"))
 
 Alias("install", env.Install("./bin", "./test/lsst/dps/test/Mops1EventTransmit.py"))
-Alias("install", env.Install("./bin", "./test/lsst/dps/test/AssocIPDPTriggerEventTransmit.py"))
 Alias("install", env.Install("./bin", "./test/lsst/dps/test/IpdpImageEventTransmit.py"))
 
 env.Help("""

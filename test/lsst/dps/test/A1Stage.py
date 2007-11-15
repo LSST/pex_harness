@@ -25,22 +25,6 @@ class App1Stage(Stage):
             dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.") 
 	    print dataPropertyKeyList
 
-            if (key == "assocTriggerEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "DMATCH"):
-                        self.dmatch = dpPtr.getValueDouble()
-                        print 'Python App1Stage preprocess() '
-                        print 'Python App1Stage preprocess() ', key, dataPropKey, self.dmatch
-                    elif (dataPropKey == "DIALOC"):
-                        self.dialoc = dpPtr.getValueString()
-                        print 'Python App1Stage preprocess() '
-                        print 'Python App1Stage preprocess() ', key, dataPropKey, self.dialoc
-                    elif (dataPropKey == "FOVID"):
-                        self.fovid = dpPtr.getValueString()
-                        print 'Python App1Stage preprocess() '
-                        print 'Python App1Stage preprocess() ', key, dataPropKey, self.fovid
-
             if (key == "mops1Event"):
                 for dataPropKey in dataPropertyKeyList:
 	            print 'Python App1Stage preprocess(): stageId %i dataPropKey %s' % (self.stageId, dataPropKey)
@@ -76,23 +60,6 @@ class App1Stage(Stage):
             inputParamPropertyPtrType = self.activeClipboard.get(key)
             print 'Python App1Stage process(): _rank %i stageId %i key %s' % (self._rank, self.stageId, key)
             dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-
-            if (key == "assocTriggerEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    print 'Python App1Stage process(): _rank %i stageId %i dataPropKey %s' % (self._rank, self.stageId, dataPropKey)
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "DMATCH"):
-                        self.dmatch = dpPtr.getValueDouble()
-                        print 'Python App1Stage process() ', self._rank
-                        print 'Python App1Stage process() ', self._rank, key, dataPropKey, self.dmatch
-                    elif (dataPropKey == "DIALOC"):
-                        self.dialoc = dpPtr.getValueString()
-                        print 'Python App1Stage process() ', self._rank
-                        print 'Python App1Stage process() ', self._rank, key, dataPropKey, self.dialoc
-                    elif (dataPropKey == "FOVID"):
-                        self.fovid = dpPtr.getValueString()
-                        print 'Python App1Stage process() ', self._rank
-                        print 'Python App1Stage process() ', self._rank, key, dataPropKey, self.fovid
 
             if (key == "mops1Event"):
                 for dataPropKey in dataPropertyKeyList:
