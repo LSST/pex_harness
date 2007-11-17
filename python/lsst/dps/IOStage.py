@@ -216,9 +216,9 @@ class OutputStage (lsst.dps.Stage.Stage):
                     storageList.append(storage)
 
                 # Persist the item.
-                if 'get' in dir(itemData):
+                if '__deref__' in dir(itemData):
                     # We have a smart pointer, so dereference it.
-                    persistence.persist(itemData.get(), storageList, \
+                    persistence.persist(itemData.__deref__(), storageList, \
                             additionalData)
                 else:
                     persistence.persist(itemData, storageList, additionalData)
