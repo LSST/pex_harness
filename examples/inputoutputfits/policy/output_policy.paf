@@ -5,7 +5,7 @@ OutputItems: {
         required: true
         StoragePolicy: {
             Storage: "FitsStorage"
-            Location: "/share/lsst9/work/stack/DC2/t105/examples/inputoutputfits/image%{exposureId}"
+            Location: "image%{exposureId}"
         }
     }
 }
