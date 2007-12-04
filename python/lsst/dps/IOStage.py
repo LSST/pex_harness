@@ -13,7 +13,6 @@ to the stage; DataProperty names of the additional data items to be retrieved
 are given in the AdditionalData sub-Policy.
 """
 
-
 import lsst.dps.Stage
 import lsst.mwi.data
 import lsst.mwi.policy
@@ -308,6 +307,20 @@ class InputStage (lsst.dps.Stage.Stage):
                 itemType = itemPolicy.getString('Type')
                 pythonType = itemPolicy.getString('PythonType')
 
+                # import this pythonType dynamically 
+                pythonTypeTokenList = pythonType.split('.')
+                importClassString = pythonTypeTokenList.pop()
+                importClassString = importClassString.strip()
+                importPackage = ".".join(pythonTypeTokenList)
+
+                print "i importing: importPackage importClassString ", \
+                       i, importPackage, importClassString, "\n"
+
+                # For example  importPackage -> lsst.fw.Core.fwLib  
+                #              importClassString -> MaskedImageF
+                importType = __import__(importPackage, globals(), locals(), \
+                                       [importClassString], -1)
+
                 # Add the item name to the additionalData.
                 additionalData.deleteAll('itemName', False)
                 additionalData.addProperty( \
@@ -330,6 +343,7 @@ class InputStage (lsst.dps.Stage.Stage):
                     storage = persistence.getRetrieveStorage(storageName, \
                             logLoc)
                     storageList.append(storage)
+
 
                 # Retrieve the item.
                 itemData = persistence.unsafeRetrieve(itemType, storageList, \

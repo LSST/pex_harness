@@ -24,14 +24,6 @@ env.Append(CXXFLAGS = "-DMPICH_IGNORE_CXX_SEEK")
 for d in Split("src lib python/lsst/dps/swig"):
     SConscript(os.path.join(d, "SConscript"))
 
-Alias("install", env.Install("./bin", "./test/run.sh"))
-Alias("install", env.Install("./bin", "./test/inputImage.fov391.0"))
-Alias("install", env.Install("./bin", "./test/nodelist.scr"))
-Alias("install", env.Install("./bin", "./test/policy"))
-
-Alias("install", env.Install("./bin", "./test/lsst/dps/test/Mops1EventTransmit.py"))
-Alias("install", env.Install("./bin", "./test/lsst/dps/test/IpdpImageEventTransmit.py"))
-
 env.Help("""
 LSST Distributed Processing  packages
 """)

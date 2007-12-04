@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 
-
-from Queue import Queue
-from Stage import Stage
-from Clipboard import Clipboard
-
+from lsst.dps.Queue import Queue
+from lsst.dps.Stage import Stage
+from lsst.dps.Clipboard import Clipboard
 
 import lsst.mwi.policy as policy
 

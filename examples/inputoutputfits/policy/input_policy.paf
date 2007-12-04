@@ -1,0 +1,12 @@
+AdditionalData: "exposureId=triggerImageprocEvent.exposureid"
+RunMode: "process"
+InputItems: {
+    InputImage: {
+        Type: "MaskedImageF"
+        PythonType: "lsst.fw.Core.fwLib.MaskedImageF"
+        StoragePolicy: {
+            Storage: "FitsStorage"
+            Location: "/share/lsst9/work/stack/DC2/fwData/%{exposureId}p_1_MI"
+        }
+    }
+}

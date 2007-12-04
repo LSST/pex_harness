@@ -155,7 +155,7 @@ void Pipeline::startSlices() {
     array_of_errcodes = (int *)malloc(4 * sizeof (int));
 
     int errcodes[4];
-    char *myexec  = "Slice.py";
+    char *myexec  = "runSlice.py";
 
     fprintf(Fp_logger, "Pipeline::startSlices() : Spawning \n");
     fflush(Fp_logger); // added by jmyers
