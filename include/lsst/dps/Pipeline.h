@@ -51,6 +51,8 @@ public:
     void startInitQueue();  
     void startStagesLoop();  
     void invokeProcess(int iStage);
+    void invokeShutdown();
+    void invokeContinue();
 
     void shutdown();
 

@@ -123,6 +123,10 @@ class OutputStage (lsst.dps.Stage.Stage):
         if self._policy.exists('RunMode') and \
                 (self._policy.getString('RunMode') == 'preprocess' or \
                 self._policy.getString('RunMode') == 'postprocess'):
+            # Nobody has copied the clipboards yet in the worker process
+            for i in xrange(self.inputQueue.size()):
+                clipboard = self.inputQueue.getNextDataset()
+                self.outputQueue.addDataset(clipboard)
             return
         self._output()
 
@@ -257,6 +261,10 @@ class InputStage (lsst.dps.Stage.Stage):
         if self._policy.exists('RunMode') and \
                 (self._policy.getString('RunMode') == 'preprocess' or \
                 self._policy.getString('RunMode') == 'postprocess'):
+            # Nobody has copied the clipboards yet in the worker process
+            for i in xrange(self.inputQueue.size()):
+                clipboard = self.inputQueue.getNextDataset()
+                self.outputQueue.addDataset(clipboard)
             return
         self._input()
 

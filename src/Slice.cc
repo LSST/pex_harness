@@ -139,10 +139,34 @@ void Slice::initialize() {
     return;
 }
 
+void Slice::invokeShutdownTest() {
+
+    char shutdownCommand[bufferSize];
+
+    fprintf(Fp_logger, "Slice::invokeShutdownTest() : bufferSize  %d \n", bufferSize);
+    fflush(Fp_logger); 
+
+    mpiError = MPI_Bcast(shutdownCommand, bufferSize, MPI_CHAR, 0, sliceIntercomm);
+    if (mpiError != MPI_SUCCESS){
+        MPI_Finalize();
+        exit(1);
+    }
+
+
+    if(strcmp(shutdownCommand, "SHUTDOWN")) {
+        fprintf(Fp_logger, "Slice::invokeShutdownTest()  : shutdownCommand  %s\n", shutdownCommand);
+        fflush(Fp_logger);
+    }
+    else {
+        shutdown();
+    }
+
+}
+
 void Slice::invokeBcast(int iStage) {
 
     char runCommand[bufferSize];
-    char bogusCommand[bufferSize];
+    /* char bogusCommand[bufferSize]; */ 
     int kStage;
 
     fprintf(Fp_logger, "Slice::invokeBcast() : bufferSize  %d \n", bufferSize);
@@ -184,7 +208,7 @@ void Slice::invokeBarrier(int iStage) {
 void Slice::start() {
 
     char runCommand[bufferSize];
-    char bogusCommand[bufferSize];
+    /* char bogusCommand[bufferSize]; */ 
     int kStage;
 
     fprintf(Fp_logger, "Slice::start() : bufferSize  %d \n", bufferSize);
@@ -244,11 +268,12 @@ void Slice::start() {
 
 void Slice::shutdown() {
 
+    fprintf(Fp_logger, "Slice::shutdown() : Exiting \n");
+    fflush(Fp_logger); 
     fclose(Fp_logger);
 
     MPI_Finalize();
-
-    return;
+    exit(0);
 }
 
 void Slice::setRank(int rank) {

@@ -46,6 +46,7 @@ public:
     void start();
     void invokeBcast(int iStage);
     void invokeBarrier(int iStage);
+    void invokeShutdownTest();
     void shutdown();
     void setRank(int rank);
     int getRank();

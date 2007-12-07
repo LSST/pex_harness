@@ -42,6 +42,7 @@ class Slice:
         self.stagePolicyList = []
         self.sliceEventTopicList = []
         self.eventTopicList = []
+        self.shutdownTopic = "triggerShutdownEvent_slice"
         import slice
         self.cppSlice = slice.Slice()
         self.cppSlice.initialize()
@@ -169,18 +170,29 @@ class Slice:
         the analogous stage loop in the central Pipeline by means of
         MPI Bcast and Barrier calls.
         """
-        for iStage in range(1, self.nStages+1):
 
-            self.handleEvents(iStage)
+        count = 0
+        while True:
+            count += 1
+            print 'Python Slice startStagesLoop : count ', count
 
-            stageObject = self.stageList[iStage-1]
-            self.cppSlice.invokeBcast(iStage)
-            stageObject.process()
-            self.cppSlice.invokeBarrier(iStage)
+            self.cppSlice.invokeShutdownTest()
 
-        else:
-            print 'Python Slice The for loop is over'
+            self.startInitQueue()    # place an empty clipboard in the first Queue
 
+            for iStage in range(1, self.nStages+1):
+
+                self.handleEvents(iStage)
+
+                stageObject = self.stageList[iStage-1]
+                self.cppSlice.invokeBcast(iStage)
+                stageObject.process()
+                self.cppSlice.invokeBarrier(iStage)
+
+            else:
+                print 'Python Slice startStagesLoop : Stage loop iteration is over'
+
+        print 'Python Slice startStagesLoop : Full Slice Stage loop is over'
 
     def shutdown(self): 
         """

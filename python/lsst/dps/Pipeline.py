@@ -38,6 +38,8 @@ class Pipeline:
         self.stageClassList = []
         self.stagePolicyList = []
         self.eventTopicList = []
+        self.eventReceiverList = []
+        self.executionMode = 0
         import pipeline
         self.cppPipeline = pipeline.Pipeline()
         self.cppPipeline.initialize()
@@ -61,7 +63,6 @@ class Pipeline:
         """
         self.LOGFILE.write("Python Pipeline configurePipeline \n");
         self.eventHost = "lsst8.ncsa.uiuc.edu"
-        # self.eventTopic = "pipedata"
         # self.sliceTopic = "slicedata"
 
         # path1 = os.environ['LSST_POLICY_DIR']
@@ -70,7 +71,6 @@ class Pipeline:
         policyFileName = "policy/pipeline_policy.json"
         dictName = "pipeline_dict.json"
         p = policy.Policy.createPolicy(policyFileName)
-
 
         # Process Application Stages
         fullStageList = p.getArray("appStages")
@@ -115,9 +115,26 @@ class Pipeline:
         self.LOGFILE.write("end eventTopics")
         self.LOGFILE.write("\n")
 
+        # Make a List of corresponding eventReceivers for the eventTopics
+        # eventReceiverList    
+        for topic in self.eventTopicList:
+            eventReceiver = events.EventReceiver(self.eventHost, topic)
+            self.eventReceiverList.append(eventReceiver)
+
         # Process Stage Policies
         # inputStagePolicy = policy.Policy.createPolicy("policy/inputStage.policy")
         self.stagePolicyList = p.getArray("stagePolicies")
+
+        # Check for executionMode of oneloop 
+        if (p.exists('executionMode') and (p.getString('executionMode') == "oneloop")):
+            self.executionMode = 1 
+
+        # Check for executionMode of oneloop 
+        if (p.exists('shutdownTopic')):
+            self.shutdownTopic = p.getString('shutdownTopic')
+        else:
+            self.shutdownTopic = "triggerShutdownEvent"
+
 
     def initializeQueues(self):
         """
@@ -171,21 +188,42 @@ class Pipeline:
         """
         Method to execute loop over Stages
         """
-        for iStage in range(1, self.nStages+1):
 
-            stage = self.stageList[iStage-1]
+        eventReceiver = events.EventReceiver(self.eventHost, self.shutdownTopic)
 
-            self.handleEvents(iStage)
+        count = 0 
+        while True:
 
-            stage.preprocess()
+            val = eventReceiver.receive(100)
+            if ((val.get() != None) or ((self.executionMode == 1) and (count == 1))):
+                print "Pipeline Terminating "
+                print "Pipeline Terminating the Slices "
+                self.cppPipeline.invokeShutdown()
+                break
+            else:
+                count += 1
+                print 'Python Pipeline startStagesLoop : count ', count
+                self.cppPipeline.invokeContinue()
+                self.startInitQueue()    # place an empty clipboard in the first Queue
 
-            self.cppPipeline.invokeProcess(iStage)
+                for iStage in range(1, self.nStages+1):
 
-            stage.postprocess()
+                    stage = self.stageList[iStage-1]
+
+                    self.handleEvents(iStage)
+
+                    stage.preprocess()
+
+                    self.cppPipeline.invokeProcess(iStage)
+
+                    stage.postprocess()
            
+                else:
+                    print 'Python Pipeline startStagesLoop : Stage loop iteration is over'
 
-        else:
-            print 'Python Pipeline startStagesLoop : Stage loop is over'
+
+        print 'Python Pipeline startStagesLoop : Full Pipeline Stage loop is over'
+        self.shutdown()
 
 
     def shutdown(self): 
@@ -212,7 +250,9 @@ class Pipeline:
             fileStr.write(thisTopic)
             fileStr.write("_slice")
             sliceTopic = fileStr.getvalue()
-            eventReceiver    = events.EventReceiver(self.eventHost, thisTopic)
+            #  Replace 
+            # eventReceiver    = events.EventReceiver(self.eventHost, thisTopic)
+            eventReceiver    = self.eventReceiverList[iStage-1]
             eventTransmitter = events.EventTransmitter(self.eventHost, sliceTopic)
 
             print 'Python Pipeline handleEvents - waiting on receive...\n'

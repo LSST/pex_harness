@@ -217,13 +217,63 @@ void Pipeline::startStagesLoop() {
 }
 
 
+void Pipeline::invokeShutdown() {
+
+    fprintf(Fp_logger, "Pipeline::invokeShutdown(): Entry \n");
+    fflush(Fp_logger); 
+
+    char procCommand[bufferSize];
+
+    strcpy(procCommand, "SHUTDOWN");  
+
+    fprintf(Fp_logger, "Pipeline::invokeShutdown(): Before Bcast \n");
+    fflush(Fp_logger); 
+
+    mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
+    if (mpiError != MPI_SUCCESS) {
+        MPI_Finalize();
+        exit(1);
+    }
+
+    fprintf(Fp_logger, "Pipeline::shutdownProcess(): After Bcast \n");
+    fflush(Fp_logger); 
+
+    return;
+
+}
+
+void Pipeline::invokeContinue() {
+
+    fprintf(Fp_logger, "Pipeline::invokeContinue(): Entry \n");
+    fflush(Fp_logger); 
+
+    char procCommand[bufferSize];
+
+    strcpy(procCommand, "CONTINUE");  
+
+    fprintf(Fp_logger, "Pipeline::invokeContinue(): Before Bcast \n");
+    fflush(Fp_logger); 
+
+    mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
+    if (mpiError != MPI_SUCCESS) {
+        MPI_Finalize();
+        exit(1);
+    }
+
+    fprintf(Fp_logger, "Pipeline::invokeContinue(): After Bcast \n");
+    fflush(Fp_logger); 
+
+    return;
+
+}
+
 void Pipeline::invokeProcess(int iStage) {
 
     fprintf(Fp_logger, "Pipeline::invokeProcess(): Entry %d\n", iStage);
     fflush(Fp_logger); // added by jmyers
 
     char processCommand[nSlices][bufferSize];
-    char bogusCommand[nSlices][bufferSize];
+    /* char bogusCommand[nSlices][bufferSize]; */ 
     for (int k = 0 ; k < nSlices; k++) {
         strcpy(processCommand[k], "PROCESS");
     }
@@ -282,9 +332,12 @@ void Pipeline::start() {
 
 void Pipeline::shutdown() {
 
+    fprintf(Fp_logger, "Pipeline::shutdown(): \n");
+    fflush(Fp_logger);
     fclose(Fp_logger);
 
-    MPI_Finalize();
+    MPI_Finalize(); 
+    exit(0);
 
 }
 
