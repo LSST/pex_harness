@@ -31,7 +31,7 @@ if (__name__ == '__main__'):
 
     pyPipeline.startSlices()  
 
-    pyPipeline.startInitQueue()    # place an empty clipboard in the first Queue 
+    # pyPipeline.startInitQueue()    # place an empty clipboard in the first Queue 
 
     pyPipeline.startStagesLoop()
 

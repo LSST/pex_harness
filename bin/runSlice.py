@@ -27,7 +27,7 @@ if (__name__ == '__main__'):
 
     pySlice.initializeStages()   
 
-    pySlice.startInitQueue()
+    # pySlice.startInitQueue()
 
     pySlice.startStagesLoop()
 
