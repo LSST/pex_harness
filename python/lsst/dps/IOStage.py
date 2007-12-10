@@ -91,7 +91,11 @@ def createAdditionalData(stage, stagePolicy, clipboard):
             leaf = lsst.mwi.data.DataProperty(rename, data)
             dataProperty.addProperty(leaf)
 
-    # Add the predefined sliceId and universeSize keys
+    # Add the predefined runId, sliceId, and universeSize keys
+
+    runId = stage.getRun()
+    leaf = lsst.mwi.data.DataProperty('runId', runId)
+    dataProperty.addProperty(leaf)
 
     sliceId = stage.getRank()
     leaf = lsst.mwi.data.DataProperty('sliceId', sliceId)
