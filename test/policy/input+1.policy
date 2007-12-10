@@ -1,0 +1,12 @@
+AdditionalData: "visitId=tcsEvent.visitId"
+RunMode: "postprocess"
+InputItems: {
+    theProperty: {
+        Type: "DataProperty"
+        PythonType: "lsst.mwi.data.DataProperty"
+        StoragePolicy: {
+            Storage: "BoostStorage"
+            Location: "theProperty.%{visitId}.%{sliceId+1}"
+        }
+    }
+}

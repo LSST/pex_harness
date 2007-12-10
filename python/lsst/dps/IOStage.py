@@ -28,12 +28,13 @@ def massage(location, additionalData):
 
     if location.find('%{') == -1:
         return location
-    vars = re.compile(r'\%\{(\w+)(=([^}]+))?\}')
+    vars = re.compile(r'\%\{(\w+)(\+1)?(=([^}]+))?\}')
 
     def replace(match):
         """
         Get the value of a DataProperty key in match.group(1), using
-        match.group(3) as a default if not found.
+        match.group(4) as a default if not found.
+        Add one to integer values if match.group(2) is "+1".
         """
         dp = additionalData.findUnique(match.group(1))
 	if dp:
@@ -43,7 +44,16 @@ def massage(location, additionalData):
             except:
                 pass
             try:
+                value = dp.getValueInt64()
+                if match.group(2):
+                    value += 1
+                return repr(value)
+            except:
+                pass
+            try:
                 value = dp.getValueInt()
+                if match.group(2):
+                    value += 1
                 return repr(value)
             except:
                 pass
@@ -52,8 +62,8 @@ def massage(location, additionalData):
                 return repr(value)
             except:
                 pass
-        if match.group(3):
-            return match.group(3)
+        if match.group(4):
+            return match.group(4)
         else:
             raise Runtime, 'Unknown substitution in IOStage'
 
