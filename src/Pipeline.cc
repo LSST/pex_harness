@@ -156,7 +156,7 @@ void Pipeline::startSlices() {
 
     int errcodes[4];
     char *myexec  = "runSlice.py";
-    char *argv[] = {_runId, NULL};
+    char *argv[] = {_policyName, _runId, NULL};
 
     fprintf(Fp_logger, "Pipeline::startSlices() : Spawning \n");
     fflush(Fp_logger); // added by jmyers
@@ -350,6 +350,15 @@ void Pipeline::setRunId(char* runId) {
 
 char* Pipeline::getRunId() {
     return _runId;
+}
+
+void Pipeline::setPolicyName(char* policyName) {
+    _policyName = policyName;
+    return;
+}
+
+char* Pipeline::getPolicyName() {
+    return _policyName;
 }
 
 

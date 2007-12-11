@@ -19,13 +19,14 @@ if (__name__ == '__main__'):
     runSlice: Slice Main execution 
     """
 
-    if(len(sys.argv) != 2):
-        print "Usage: runSlice.py <runId> "
+    if(len(sys.argv) != 3):
+        print "Usage: runSlice.py <policy-file-name> <runId> "
         sys.exit(0)
 
-    runId = sys.argv[1]
+    pipelinePolicyName = sys.argv[1]
+    runId = sys.argv[2]
 
-    pySlice = Slice(runId)
+    pySlice = Slice(runId, pipelinePolicyName)
 
     pySlice.configureSlice()   
 

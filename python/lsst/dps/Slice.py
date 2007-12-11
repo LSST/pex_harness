@@ -31,7 +31,7 @@ class Slice:
     '''Slice: Python Slice class implementation. Wraps C++ Slice'''
 
     #------------------------------------------------------------------------
-    def __init__(self, runId=-1):
+    def __init__(self, runId=-1, pipelinePolicyName=None):
         """
         Initialize the Slice: create an empty Queue List and Stage List;
         Import the C++ Slice  and initialize the MPI environment
@@ -48,6 +48,7 @@ class Slice:
         # self.cppSlice.setRunId(runId)
         self.cppSlice.initialize()
         self._runId = runId
+        self.pipelinePolicyName = pipelinePolicyName
         self.universeSize = self.cppSlice.getUniverseSize()
         self._rank = self.cppSlice.getRank()
         self.LOGFILE = open("SlicePython_" + str(self._rank) + ".log","w")
@@ -72,8 +73,10 @@ class Slice:
         self.eventHost = "lsst8.ncsa.uiuc.edu"
         # self.eventTopic = "slicedata"
 
-        policyFileName = "policy/pipeline_policy.json"
-        p = policy.Policy.createPolicy(policyFileName)
+        if(self.pipelinePolicyName == None):
+            self.pipelinePolicyName = "pipeline_policy.json"
+        dictName = "pipeline_dict.json"
+        p = policy.Policy.createPolicy(self.pipelinePolicyName)
 
         # Process Application Stages
         fullStageList = p.getArray("appStages")

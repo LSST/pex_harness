@@ -43,6 +43,7 @@ class Pipeline:
         import pipeline
         self.cppPipeline = pipeline.Pipeline()
         self.cppPipeline.setRunId(runId)
+        self.cppPipeline.setPolicyName(pipelinePolicyName)
         self.cppPipeline.initialize()
         self.universeSize = self.cppPipeline.getUniverseSize()
         self._runId = runId

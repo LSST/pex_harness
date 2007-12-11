@@ -63,6 +63,9 @@ public:
     void setRunId(char* runId);
     char* getRunId();
 
+    void setPolicyName(char* policyName);
+    char* getPolicyName();
+
 
 private:
     void initializeLogger();
@@ -74,6 +77,7 @@ private:
 
     int _pid;
     char* _runId;
+    char* _policyName;
 
     MPI_Comm sliceIntercomm;
     StageVector stageVector;
