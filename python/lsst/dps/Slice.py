@@ -74,8 +74,8 @@ class Slice:
         # self.eventTopic = "slicedata"
 
         if(self.pipelinePolicyName == None):
-            self.pipelinePolicyName = "pipeline_policy.json"
-        dictName = "pipeline_dict.json"
+            self.pipelinePolicyName = "pipeline_policy.paf"
+        dictName = "pipeline_dict.paf"
         p = policy.Policy.createPolicy(self.pipelinePolicyName)
 
         # Process Application Stages
