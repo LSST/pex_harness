@@ -170,6 +170,13 @@ class OutputStage (lsst.dps.Stage.Stage):
         for i in xrange(self.inputQueue.size()):
 
             clipboard = self.inputQueue.getNextDataset()
+            if not self._policy.exists('OutputItems'):
+                # Propagate the clipboard to the output queue, but otherwise
+                # do nothing.
+                print "*** WARNING *** No OutputItems found."
+                self.outputQueue.addDataset(clipboard)
+                continue
+
             additionalData = createAdditionalData(self, self._policy, clipboard)
 
             # Create a persistence object using policy, if present.
@@ -309,6 +316,13 @@ class InputStage (lsst.dps.Stage.Stage):
         for i in xrange(self.inputQueue.size()):
 
             clipboard = self.inputQueue.getNextDataset()
+            if not self._policy.exists('InputItems'):
+                # Propagate the clipboard to the output queue, but otherwise
+                # do nothing.
+                print "*** WARNING *** No InputItems found."
+                self.outputQueue.addDataset(clipboard)
+                continue
+
             additionalData = createAdditionalData(self, self._policy, clipboard)
 
             # Create a persistence object using policy, if present.
