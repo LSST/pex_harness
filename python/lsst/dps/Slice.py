@@ -31,7 +31,7 @@ class Slice:
     '''Slice: Python Slice class implementation. Wraps C++ Slice'''
 
     #------------------------------------------------------------------------
-    def __init__(self, runId=-1, pipelinePolicyName=None):
+    def __init__(self, runId="TEST", pipelinePolicyName=None):
         """
         Initialize the Slice: create an empty Queue List and Stage List;
         Import the C++ Slice  and initialize the MPI environment
@@ -54,7 +54,7 @@ class Slice:
         self.LOGFILE = open("SlicePython_" + str(self._rank) + ".log","w")
         self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : Opened log \n")
         self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : universeSize is " + str(self.universeSize))
-        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : runId is " + self._runId)
+        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : runId is " + str(self._runId))
         self.LOGFILE.write(str(self.universeSize))
         self.LOGFILE.write("\n")
         self.LOGFILE.flush()
