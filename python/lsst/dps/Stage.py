@@ -24,6 +24,7 @@ class Stage:
         self.stageId = stageId
         self._rank = -1
         self._policy = stagePolicy
+        self._runId = "TEST"
 
 
     #------------------------------------------------------------------------
