@@ -8,8 +8,10 @@
 # These events are issues with test scripts
 # Mops1EventTransmit.py and AssocIPDPTriggerEventTransmit.py, respectively.
 #
+# "executionMode": "oneloop" ,
 
 {
+    "executionMode": "oneloop" ,
     "appStages":[ "lsst.dps.IOStage.InputStage", "lsst.dpsexamples.ipdp.ImageprocStage", "lsst.dps.IOStage.OutputStage" ] , 
     "eventTopics":[ "triggerImageprocEvent", "None", "None" ],
     "stagePolicies":[ "policy/input_policy.paf", "None", "policy/output_policy.paf" ]

@@ -31,7 +31,7 @@ class Slice:
     '''Slice: Python Slice class implementation. Wraps C++ Slice'''
 
     #------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, runId=-1):
         """
         Initialize the Slice: create an empty Queue List and Stage List;
         Import the C++ Slice  and initialize the MPI environment
@@ -45,12 +45,15 @@ class Slice:
         self.shutdownTopic = "triggerShutdownEvent_slice"
         import slice
         self.cppSlice = slice.Slice()
+        # self.cppSlice.setRunId(runId)
         self.cppSlice.initialize()
+        self._runId = runId
         self.universeSize = self.cppSlice.getUniverseSize()
         self._rank = self.cppSlice.getRank()
         self.LOGFILE = open("SlicePython_" + str(self._rank) + ".log","w")
         self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : Opened log \n")
-        self.LOGFILE.write("Python Slice "  + str(self._rank) + "__init__ : universeSize is ")
+        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : universeSize is " + str(self.universeSize))
+        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : runId is " + self._runId)
         self.LOGFILE.write(str(self.universeSize))
         self.LOGFILE.write("\n")
         self.LOGFILE.flush()
@@ -238,6 +241,20 @@ class Slice:
         print 'Python Slice populateClipboard rank : ',self._rank,' Added DataPropertyPtrType to clipboard '
 
         queue.addDataset(clipboard)
+
+    #------------------------------------------------------------------------
+    def getRun(self):
+        """
+        get method for the runId
+        """
+        return self._runId
+
+    #------------------------------------------------------------------------
+    def setRun(self, run):
+        """
+        set method for the runId
+        """
+        self._runId = run
 
 if (__name__ == '__main__'):
     """

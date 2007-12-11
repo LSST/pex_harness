@@ -12,14 +12,20 @@ import lsst.mwi.data as datap
 import lsst.events as events
 
 import os
-
+import sys
 
 if (__name__ == '__main__'):
     """
     runSlice: Slice Main execution 
     """
 
-    pySlice = Slice()
+    if(len(sys.argv) != 2):
+        print "Usage: runSlice.py <runId> "
+        sys.exit(0)
+
+    runId = sys.argv[1]
+
+    pySlice = Slice(runId)
 
     pySlice.configureSlice()   
 

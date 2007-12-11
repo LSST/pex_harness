@@ -60,6 +60,10 @@ public:
     Stage getIthStage(int iStage);
     int getUniverseSize();
 
+    void setRunId(char* runId);
+    char* getRunId();
+
+
 private:
     void initializeLogger();
     void initializeMPI();
@@ -69,6 +73,7 @@ private:
 
 
     int _pid;
+    char* _runId;
 
     MPI_Comm sliceIntercomm;
     StageVector stageVector;

@@ -156,11 +156,13 @@ void Pipeline::startSlices() {
 
     int errcodes[4];
     char *myexec  = "runSlice.py";
+    char *argv[] = {_runId, NULL};
 
     fprintf(Fp_logger, "Pipeline::startSlices() : Spawning \n");
     fflush(Fp_logger); // added by jmyers
 
-    mpiError = MPI_Comm_spawn(myexec, MPI_ARGV_NULL, nSlices, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &sliceIntercomm, errcodes); 
+    /* mpiError = MPI_Comm_spawn(myexec, MPI_ARGV_NULL, nSlices, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &sliceIntercomm, errcodes);  */ 
+    mpiError = MPI_Comm_spawn(myexec, argv, nSlices, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &sliceIntercomm, errcodes); 
 
     fprintf(Fp_logger, "Pipeline::startSlices() : Spawned \n");
     fflush(Fp_logger); // added by jmyers
@@ -340,4 +342,14 @@ void Pipeline::shutdown() {
     exit(0);
 
 }
+
+void Pipeline::setRunId(char* runId) {
+    _runId = runId;
+    return;
+}
+
+char* Pipeline::getRunId() {
+    return _runId;
+}
+
 

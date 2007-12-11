@@ -28,7 +28,7 @@ using an MPI-2 Spawn operation.
 class Pipeline:
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
-    def __init__(self):
+    def __init__(self, runId=-1, pipelinePolicyName=None):
         """
         Initialize the Pipeline: create empty Queue and Stage lists;
         import the C++ Pipeline instance; initialize the MPI environment
@@ -42,8 +42,11 @@ class Pipeline:
         self.executionMode = 0
         import pipeline
         self.cppPipeline = pipeline.Pipeline()
+        self.cppPipeline.setRunId(runId)
         self.cppPipeline.initialize()
         self.universeSize = self.cppPipeline.getUniverseSize()
+        self._runId = runId
+        self.pipelinePolicyName = pipelinePolicyName
         self.LOGFILE = open("PipelinePython.log","w")
         self.LOGFILE.write("Python Pipeline __init__ : Opened log \n")
         self.LOGFILE.write("Python Pipeline __init__ : universeSize is ")
@@ -68,9 +71,11 @@ class Pipeline:
         # path1 = os.environ['LSST_POLICY_DIR']
         # print 'Python Pipeline path1', path1
       
-        policyFileName = "policy/pipeline_policy.json"
+        # 
+        if(self.pipelinePolicyName == None):
+            self.pipelinePolicyName = "pipeline_policy.json"
         dictName = "pipeline_dict.json"
-        p = policy.Policy.createPolicy(policyFileName)
+        p = policy.Policy.createPolicy(self.pipelinePolicyName)
 
         # Process Application Stages
         fullStageList = p.getArray("appStages")
@@ -113,6 +118,10 @@ class Pipeline:
             self.LOGFILE.write(item)
             self.LOGFILE.write("\n")
         self.LOGFILE.write("end eventTopics")
+        self.LOGFILE.write("\n")
+
+        self.LOGFILE.write("_runId is ")
+        self.LOGFILE.write(self._runId)
         self.LOGFILE.write("\n")
 
         # Make a List of corresponding eventReceivers for the eventTopics
@@ -297,6 +306,21 @@ class Pipeline:
         queue.addDataset(clipboard)
 
 # print __doc__
+
+    #------------------------------------------------------------------------
+    def getRun(self):
+        """
+        get method for the runId
+        """
+        return self._runId
+
+    #------------------------------------------------------------------------
+    def setRun(self, run):
+        """
+        set method for the runId
+        """
+        self._runId = run
+
 
 if (__name__ == '__main__'):
     """

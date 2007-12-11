@@ -6,7 +6,9 @@
 # These events are issues with test scripts 
 # triggerAssociationEventTransmitter.py  and triggerMatchMopEventTransmitter.py, respectively. 
 #
+# "executionMode": "oneloop" ,
 {
+    "shutdownTopic": "shutdownGreg" ,
     "appStages":[ "lsst.dpsexamples.pipeline.LoadStage", "lsst.dpsexamples.pipeline.MatchDiaSourceStage", "lsst.dpsexamples.pipeline.MatchMopStage", "lsst.dpsexamples.pipeline.StoreStage" ] , 
     "eventTopics":[ "triggerAssociationEvent", "None", "triggerMatchMopEvent", "None" ] ,
     "stagePolicies":[ "None", "None" , "None" , "None" ]

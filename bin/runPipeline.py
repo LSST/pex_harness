@@ -13,6 +13,7 @@ from lsst.mwi.data import DataProperty
 import lsst.events as events
 
 import os
+import sys
 
 from cStringIO import StringIO
 
@@ -21,7 +22,14 @@ if (__name__ == '__main__'):
      runPipeline : Pipeline Main method 
     """
 
-    pyPipeline = Pipeline()
+    if(len(sys.argv) != 3):
+        print "Usage: runPipeline.py <policy-file-name> <runId> "
+        sys.exit(0)
+
+    pipelinePolicyName = sys.argv[1]
+    runId = sys.argv[2]
+
+    pyPipeline = Pipeline(runId, pipelinePolicyName)
 
     pyPipeline.configurePipeline()   
 

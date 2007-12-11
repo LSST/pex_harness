@@ -3,11 +3,9 @@ Import("env")
 
 sdir = "../../../../src/"
 
-env.Replace(SHLIBPREFIX=["_"])
 env.Append(SWIGFLAGS=["-c++", "-python", "-Iinclude"])
 
-env.SharedLibrary('pipeline', ["Pipeline.i", sdir+"Pipeline.cc", sdir+"Queue.cc", sdir+"Stage.cc", sdir+"Clipboard.cc"]) 
+env.LoadableModuleIncomplete("_pipeline", Split("Pipeline.i"), LIBS=["dps"])  
 
-env.SharedLibrary('slice', ["Slice.i", sdir+"Slice.cc", sdir+"Queue.cc", sdir+"Stage.cc", sdir+"Clipboard.cc"]) 
-
+env.LoadableModuleIncomplete("_slice", Split("Slice.i"), LIBS=["dps"])  
 
