@@ -5,6 +5,18 @@ pwd=`pwd`
 # export LSST_POLICY_DIR
 # echo LSST_POLICY_DIR ${LSST_POLICY_DIR} 
 
+# Command line arguments 
+# echo $@  echo $#
+if [ "$#" != 2 ]; then
+    echo "------------------------------------------"
+    echo "Usage:  run.sh <policy-file-name> <runId>"
+    echo "------------------------------------------"
+    exit 0
+fi
+
+pipelinePolicyName=${1}
+runId=${2}
+
 # --------------------------------------------------------- 
 # INPUT PARAMETERS
 # To run on a single host, keep nodes set equal to 1 
@@ -34,7 +46,7 @@ sleep 2s
 
 echo "Running mpiexec"
 
-mpiexec -usize ${usize}  -machinefile nodelist.scr -np 1 runPipeline.py
+mpiexec -usize ${usize}  -machinefile nodelist.scr -np 1 runPipeline.py ${pipelinePolicyName} ${runId}
 
 sleep 1s
 
