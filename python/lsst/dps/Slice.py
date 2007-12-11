@@ -160,6 +160,7 @@ class Slice:
             stageObject.initialize(outputQueue, inputQueue)
             stageObject.setRank(self._rank)
             stageObject.setUniverseSize(self.universeSize)
+            stageObject.setRun(self._runId)
             self.stageList.append(stageObject)
 
     def startInitQueue(self):

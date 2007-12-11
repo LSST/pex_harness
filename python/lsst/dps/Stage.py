@@ -115,3 +115,17 @@ class Stage:
         """
         self._universeSize = universeSize
 
+    #------------------------------------------------------------------------
+    def getRun(self):
+        """
+        get method for the runId
+        """
+        return self._runId
+
+    #------------------------------------------------------------------------
+    def setRun(self, run):
+        """
+        set method for the runId
+        """
+        self._runId = run
+
