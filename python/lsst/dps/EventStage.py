@@ -27,15 +27,7 @@ class EventStage(Stage):
                 self._policy.getString('RunMode') == 'postprocess'):
             return
 
-        if self._policy.exists('keysToPublish'):
-            publKeyList = self._policy.getArray("keysToPublish") 
-            for key in publKeyList:
-                dpPtrType = self.activeClipboard.get(key)
-                # if dpPtrType is suitable  
-                oneEventTransmitter = events.EventTransmitter(\
-                                             "lsst8.ncsa.uiuc.edu", key)
-                oneEventTransmitter.publish("eventtype", dpPtrType)
-                print 'Python pipeline.EventStage preprocess() published event ', key
+        self._publish();
 
 
     #------------------------------------------------------------------------
@@ -48,19 +40,31 @@ class EventStage(Stage):
 
         if self._policy.exists('RunMode') and \
                 self._policy.getString('RunMode') == 'postprocess': 
-            if self._policy.exists('keysToPublish'):
-                publKeyList = self._policy.getArray("keysToPublish") 
-                for key in publKeyList:
-                    dpPtrType = self.activeClipboard.get(key)
-                    # if dpPtrType is suitable  
-                    oneEventTransmitter = events.EventTransmitter(\
-                                             "lsst8.ncsa.uiuc.edu", key)
-                    oneEventTransmitter.publish("eventtype", dpPtrType)
-                    print 'Python pipeline.EventStage postprocess() published event ', key
+            self._publish()
 
 	print 'Python lsst.dps.EventStage postprocess : stageId %d' % self.stageId
         self.outputQueue.addDataset(self.activeClipboard)
 
 
+    #------------------------------------------------------------------------
+    def _publish(self):
+        """
+        Publish events if required
+        """
+        if self._policy.exists('keysToPublish'):
+            publKeyList = self._policy.getArray("keysToPublish") 
+            for key in publKeyList:
+                pos = key.find("=")
+                if pos > 0:
+                    eventName = key[:pos]
+                    dataPropertyName = key[pos+1:]
+                else:
+                    eventName = key
+                    dataPropertyName = key
 
-
+                dpPtrType = self.activeClipboard.get(dataPropertyName)
+                # if dpPtrType is suitable  
+                oneEventTransmitter = events.EventTransmitter(\
+                                             "lsst8.ncsa.uiuc.edu", eventName)
+                oneEventTransmitter.publish("eventtype", dpPtrType)
+                print 'Python pipeline.EventStage published event ', key
