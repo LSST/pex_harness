@@ -173,6 +173,7 @@ class Pipeline:
             outputQueue = self.queueList[iStage]
             stageObject.initialize(outputQueue, inputQueue)
             stageObject.setUniverseSize(self.universeSize)
+            stageObject.setRun(self._runId)
             self.stageList.append(stageObject)
 
 
