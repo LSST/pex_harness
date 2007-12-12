@@ -107,7 +107,7 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     leaf = lsst.mwi.data.DataProperty('sliceId', sliceId)
     dataProperty.addProperty(leaf)
 
-    ccdId = "%02d" % stage.getRank() + 1
+    ccdId = "%02d" % (stage.getRank() + 1)
     leaf = lsst.mwi.data.DataProperty('ccdId', ccdId)
     dataProperty.addProperty(leaf)
 
