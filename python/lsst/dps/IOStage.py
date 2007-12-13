@@ -28,10 +28,6 @@ def massage(location, additionalData):
     """
 
     lsst.mwi.utils.Trace("IOStage", 3, "Massaging location: " + location)
-
-    dict
-    location % 
-
     if location.find('%{') == -1:
         lsst.mwi.utils.Trace("IOStage", 3, "\tNo substitutions")
         return location
