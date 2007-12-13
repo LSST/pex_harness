@@ -18,6 +18,7 @@ import lsst.mwi.data
 import lsst.mwi.policy
 import lsst.mwi.persistence
 import lsst.mwi.utils
+from lsst.mwi.logging import Log
 import re
 
 __all__ = ['OutputStage', 'InputStage']
@@ -185,7 +186,8 @@ class OutputStage (lsst.dps.Stage.Stage):
             if not self._policy.exists('OutputItems'):
                 # Propagate the clipboard to the output queue, but otherwise
                 # do nothing.
-                print "*** WARNING *** No OutputItems found."
+                mylog = Log(Log.defaultLog(), "IOStage")
+                mylog.log(Log.WARN, "No OutputItems found")
                 self.outputQueue.addDataset(clipboard)
                 continue
 
@@ -331,7 +333,8 @@ class InputStage (lsst.dps.Stage.Stage):
             if not self._policy.exists('InputItems'):
                 # Propagate the clipboard to the output queue, but otherwise
                 # do nothing.
-                print "*** WARNING *** No InputItems found."
+                mylog = Log(Log.defaultLog(), "IOStage")
+                mylog.log(Log.WARN, "No InputItems found")
                 self.outputQueue.addDataset(clipboard)
                 continue
 
