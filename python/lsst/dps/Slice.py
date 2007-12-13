@@ -70,13 +70,17 @@ class Slice:
         """
         Configure the slice via reading a Policy file 
         """
-        self.eventHost = "lsst8.ncsa.uiuc.edu"
-        # self.eventTopic = "slicedata"
 
         if(self.pipelinePolicyName == None):
             self.pipelinePolicyName = "pipeline_policy.paf"
         dictName = "pipeline_dict.paf"
         p = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+        # Check for activemqBroker 
+        if (p.exists('activemqBroker')):
+            self.activemqBroker = p.getString('activemqBroker')
+        else:
+            self.activemqBroker = "lsst8.ncsa.uiuc.edu"   # default value
 
         # Process Application Stages
         fullStageList = p.getArray("appStages")
@@ -199,6 +203,13 @@ class Slice:
             else:
                 print 'Python Slice startStagesLoop : Stage loop iteration is over'
 
+            print 'Python Slice startStagesLoop : Retrieving finalClipboard for deletion'
+            finalQueue = self.queueList[self.nStages]
+            finalClipboard = finalQueue.getNextDataset()
+            print 'Python Slice startStagesLoop : Deleting finalClipboard'
+            finalClipboard.__del__()
+            print 'Python Slice startStagesLoop : Deleted finalClipboard'
+
         print 'Python Slice startStagesLoop : Full Slice Stage loop is over'
 
     def shutdown(self): 
@@ -217,7 +228,7 @@ class Slice:
 
         if (thisTopic != "None"):
             sliceTopic = self.sliceEventTopicList[iStage-1]
-            x = events.EventReceiver(self.eventHost, sliceTopic)
+            x = events.EventReceiver(self.activemqBroker, sliceTopic)
 
             print 'Python Slice handleEvents rank : ',self._rank, ' - waiting on receive...\n'
             inputParamPropertyPtrType = x.receive(800000)

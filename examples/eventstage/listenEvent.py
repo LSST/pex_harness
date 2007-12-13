@@ -6,7 +6,10 @@ import time
 
 if __name__ == "__main__":
     print "starting...\n"
-    eventRec = events.EventReceiver("lsst8.ncsa.uiuc.edu", "outgoingEvent")
+
+    activemqBroker = "lsst4.ncsa.uiuc.edu"
+
+    eventRec = events.EventReceiver(activemqBroker, "outgoingEvent")
 
     print 'Python listenEvents : waiting on receive...\n'
     inputParamPropertyPtrType = eventRec.receive(800000)

@@ -66,7 +66,6 @@ class Pipeline:
         Configure the Pipeline by reading a Policy File
         """
         self.LOGFILE.write("Python Pipeline configurePipeline \n");
-        self.eventHost = "lsst8.ncsa.uiuc.edu"
         # self.sliceTopic = "slicedata"
 
         # path1 = os.environ['LSST_POLICY_DIR']
@@ -77,6 +76,12 @@ class Pipeline:
             self.pipelinePolicyName = "pipeline_policy.paf"
         dictName = "pipeline_dict.paf"
         p = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+        # Check for activemqBroker 
+        if (p.exists('activemqBroker')):
+            self.activemqBroker = p.getString('activemqBroker')
+        else:
+            self.activemqBroker = "lsst8.ncsa.uiuc.edu"   # default value
 
         # Process Application Stages
         fullStageList = p.getArray("appStages")
@@ -128,7 +133,7 @@ class Pipeline:
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.eventTopicList:
-            eventReceiver = events.EventReceiver(self.eventHost, topic)
+            eventReceiver = events.EventReceiver(self.activemqBroker, topic)
             self.eventReceiverList.append(eventReceiver)
 
         # Process Stage Policies
@@ -200,7 +205,7 @@ class Pipeline:
         Method to execute loop over Stages
         """
 
-        eventReceiver = events.EventReceiver(self.eventHost, self.shutdownTopic)
+        eventReceiver = events.EventReceiver(self.activemqBroker, self.shutdownTopic)
 
         count = 0 
         while True:
@@ -232,6 +237,12 @@ class Pipeline:
                 else:
                     print 'Python Pipeline startStagesLoop : Stage loop iteration is over'
 
+            print 'Python Pipeline startStagesLoop : Retrieving finalClipboard for deletion'
+            finalQueue = self.queueList[self.nStages]
+            finalClipboard = finalQueue.getNextDataset()
+            print 'Python Pipeline startStagesLoop : Deleting finalClipboard'
+            finalClipboard.__del__()
+            print 'Python Pipeline startStagesLoop : Deleted finalClipboard'
 
         print 'Python Pipeline startStagesLoop : Full Pipeline Stage loop is over'
         self.shutdown()
@@ -262,9 +273,9 @@ class Pipeline:
             fileStr.write("_slice")
             sliceTopic = fileStr.getvalue()
             #  Replace 
-            # eventReceiver    = events.EventReceiver(self.eventHost, thisTopic)
+            # eventReceiver    = events.EventReceiver(self.activemqBroker, thisTopic)
             eventReceiver    = self.eventReceiverList[iStage-1]
-            eventTransmitter = events.EventTransmitter(self.eventHost, sliceTopic)
+            eventTransmitter = events.EventTransmitter(self.activemqBroker, sliceTopic)
 
             print 'Python Pipeline handleEvents - waiting on receive...\n'
             self.LOGFILE.write("Python Pipeline handleEvents - waiting on receive...\n")

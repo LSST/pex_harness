@@ -1,7 +1,0 @@
-# eventstage.policy
-#
-#
-{
-    "keysToPublish":[ "outgoingEvent" ] ,
-    "RunMode":"preprocess"
-}

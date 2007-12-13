@@ -2,8 +2,8 @@
 # processes to run on that node 
 #
 # Single node case
+lsst4.ncsa.uiuc.edu:2
 lsst6.ncsa.uiuc.edu:2
 # Example for two nodes, two processes each (dual core) 
 # lsst6.ncsa.uiuc.edu:2
-# lsst9.ncsa.uiuc.edu:2
 

@@ -23,8 +23,8 @@ runId=${2}
 # Increase nodes for a larger parallel execution. 
 # For example, for two nodes with 4 cpus we could set nodes=2 
 # and nslices=3 (pipeline itself takes one cpu) 
-nodes=1
-nslices=1
+nodes=2
+nslices=3
 # --------------------------------------------------------- 
 
 # Add 1 to the number of slices to get the universe size 

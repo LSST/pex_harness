@@ -6,7 +6,10 @@ import time
 
 if __name__ == "__main__":
     print "starting...\n"
-    externalEventTransmitter = events.EventTransmitter("lsst8.ncsa.uiuc.edu", "triggerMatchMopEvent")
+
+    activemqBroker = "lsst4.ncsa.uiuc.edu"
+
+    externalEventTransmitter = events.EventTransmitter(activemqBroker, "triggerMatchMopEvent")
 
     root = datap.SupportFactory.createPropertyNode("root");
 
