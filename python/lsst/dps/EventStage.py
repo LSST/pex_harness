@@ -5,6 +5,7 @@ Stage for publishing events, pulling contents off the Clipboard according to Pol
 """
 
 from lsst.dps.Stage import Stage
+from lsst.mwi.logging import Log
 
 import lsst.mwi.data as datap
 import lsst.mwi.utils as utils
@@ -53,26 +54,36 @@ class EventStage(Stage):
         """
         Publish events if required
         """
+        mylog = Log(Log.getDefaultLog(), "EventStage")
 	utils.Trace("EventStage", 4, "Looking for keysToPublish")
-        if self._policy.exists('keysToPublish'):
-	    utils.Trace("EventStage", 4, "Found keysToPublish")
-            publKeyList = self._policy.getArray("keysToPublish") 
-	    utils.Trace("EventStage", 4, "Got array: " + str(publKeyList))
-            for key in publKeyList:
-	        utils.Trace("EventStage", 4, "Got key %s" % key)
-                pos = key.find("=")
-                if pos > 0:
-                    eventName = key[:pos]
-                    dataPropertyName = key[pos+1:]
-                else:
-                    eventName = key
-                    dataPropertyName = key
-	        utils.Trace("EventStage", 4, "eventName=%s, dataPropertyName=%s" % (eventName, dataPropertyName))
+        if not self._policy.exists('keysToPublish'):
+            mylog.log(Log.WARN, "Did not find keysToPublish in EventStage Policy")
+            return
 
-                dpPtrType = self.activeClipboard.get(dataPropertyName)
-		utils.Trace("EventStage", 4, "Got dataProperty %s" % dpPtrType.toString())
-                # if dpPtrType is suitable  
-                oneEventTransmitter = events.EventTransmitter(\
-                                             "lsst8.ncsa.uiuc.edu", eventName)
-                oneEventTransmitter.publish("eventtype", dpPtrType)
-                utils.Trace("EventStage", 4, 'Python pipeline.EventStage published event %s' % key)
+	utils.Trace("EventStage", 4, "Found keysToPublish")
+        publKeyList = self._policy.getArray("keysToPublish") 
+        if len(publKeyList) <= 0:
+            mylog.log(Log.WARN, "Empty keysToPublish in EventStage Policy")
+            return
+	utils.Trace("EventStage", 4, "Got array: " + str(publKeyList))
+
+        for key in publKeyList:
+	    utils.Trace("EventStage", 4, "Got key %s" % key)
+            pos = key.find("=")
+            if pos > 0:
+                eventName = key[:pos]
+                dataPropertyName = key[pos+1:]
+            else:
+                eventName = key
+                dataPropertyName = key
+	    utils.Trace("EventStage", 4, "eventName=%s, dataPropertyName=%s" % (eventName, dataPropertyName))
+
+            if not self.activeClipboard.has_key(dataPropertyName):
+                mylog.log(Log.WARN, "DataProperty %s missing" % dataPropertyName)
+                continue
+            dpPtrType = self.activeClipboard.get(dataPropertyName)
+            utils.Trace("EventStage", 4, "Got dataProperty %s" % dpPtrType.toString())
+            oneEventTransmitter = events.EventTransmitter(\
+                                         "lsst8.ncsa.uiuc.edu", eventName)
+            oneEventTransmitter.publish("eventtype", dpPtrType)
+            utils.Trace("EventStage", 4, 'Python pipeline.EventStage published event %s' % key)
