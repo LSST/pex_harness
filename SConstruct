@@ -36,6 +36,7 @@ Alias("install", [env.Install(env['prefix'], "python"),
 
 scons.CleanTree(r"*~ core *.so *.os *.o")
 
+env.Declare()
 env.Help("""
 LSST Distributed Processing  packages
 """)
