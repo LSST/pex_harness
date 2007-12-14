@@ -28,9 +28,9 @@ def massage(location, additionalData):
     Substitute values from additionalData into the location, if requested.
     """
 
-    lsst.mwi.utils.Trace("IOStage", 3, "Massaging location: " + location)
+    lsst.mwi.utils.Trace("dps.IOStage", 3, "Massaging location: " + location)
     if location.find('%{') == -1:
-        lsst.mwi.utils.Trace("IOStage", 3, "\tNo substitutions")
+        lsst.mwi.utils.Trace("dps.IOStage", 3, "\tNo substitutions")
         return location
     vars = re.compile(r'\%\{(\w+)(\+1)?(=([^}]+))?\}')
 
@@ -72,7 +72,7 @@ def massage(location, additionalData):
             raise Runtime, 'Unknown substitution in IOStage'
 
     newLoc = vars.sub(replace, location)
-    lsst.mwi.utils.Trace("IOStage", 3, "\tnew location: " + newLoc)
+    lsst.mwi.utils.Trace("dps.IOStage", 3, "\tnew location: " + newLoc)
     return newLoc
 
 def createAdditionalData(stage, stagePolicy, clipboard):
@@ -95,7 +95,8 @@ def createAdditionalData(stage, stagePolicy, clipboard):
             else:
                 data = clipboard.get(name)
             leaf = lsst.mwi.data.DataProperty(rename, data)
-            lsst.mwi.utils.Trace("IOStage", 3, "AdditionalData item: " + pair)
+            lsst.mwi.utils.Trace("dps.IOStage", 3, \
+                    "AdditionalData item: " + pair)
             dataProperty.addProperty(leaf)
 
     # Add the predefined runId, sliceId, and universeSize keys
@@ -116,7 +117,7 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     leaf = lsst.mwi.data.DataProperty('universeSize', universeSize)
     dataProperty.addProperty(leaf)
 
-    lsst.mwi.utils.Trace("IOStage", 3, "additionalData:\n" + \
+    lsst.mwi.utils.Trace("dps.IOStage", 3, "additionalData:\n" + \
         dataProperty.toString('\t', True))
     return dataProperty
 

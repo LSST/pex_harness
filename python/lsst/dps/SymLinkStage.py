@@ -59,7 +59,8 @@ def createAdditionalData(stage, stagePolicy, clipboard):
             else:
                 value = clipboard.get(name)
             additionalData[rename] = value
-            lsst.mwi.utils.Trace("SymLinkStage", 3, "AdditionalData item: " + pair)
+            lsst.mwi.utils.Trace("dps.SymLinkStage", 3, \
+                    "AdditionalData item: " + pair)
 
     # Add the predefined runId, sliceId, and universeSize keys
 
@@ -68,8 +69,8 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     additionalData['ccdId'] = "%02d" % (stage.getRank() + 1)
     additionalData['universeSize'] = stage.getUniverseSize()
 
-    lsst.mwi.utils.Trace("SymLinkStage", 3, "additionalData:\n" + \
-        str(additionalData))
+    lsst.mwi.utils.Trace("dps.SymLinkStage", 3, \
+            "additionalData:\n" + str(additionalData))
 
     return additionalData
 
@@ -85,7 +86,7 @@ class SymLinkStage (lsst.dps.Stage.Stage):
         """
         self.activeClipboard = self.inputQueue.getNextDataset()
         if not self._policy.exists('Links'):
-            mylog = Log(Log.defaultLog(), "SymLinkStage")
+            mylog = Log(Log.defaultLog(), "dps.SymLinkStage")
             mylog.log(Log.WARN, "No Links found")
             return
 
@@ -96,6 +97,6 @@ class SymLinkStage (lsst.dps.Stage.Stage):
         for linkPolicy in linkPolicyList:
             sourcePath = linkPolicy.getString('sourcePath') % additionalData
             destPath = linkPolicy.getString('destPath') % additionalData
-            lsst.mwi.utils.Trace("SymLinkStage", 3, "linking %s to %s" % \
-                    (sourcePath, destPath))
+            lsst.mwi.utils.Trace("dps.SymLinkStage", 3, \
+                    "linking %s to %s" % (sourcePath, destPath))
             os.symlink(sourcePath, destPath)
