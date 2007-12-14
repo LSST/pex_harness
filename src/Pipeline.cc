@@ -154,7 +154,7 @@ void Pipeline::startSlices() {
     int *array_of_errcodes;
     array_of_errcodes = (int *)malloc(4 * sizeof (int));
 
-    int errcodes[4];
+    int errcodes[nSlices];
     char *myexec  = "runSlice.py";
     char *argv[] = {_policyName, _runId, NULL};
 
