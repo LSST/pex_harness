@@ -78,9 +78,6 @@ class EventStage(Stage):
                 dataPropertyName = key
 	    utils.Trace("EventStage", 4, "eventName=%s, dataPropertyName=%s" % (eventName, dataPropertyName))
 
-            if not self.activeClipboard.has_key(dataPropertyName):
-                mylog.log(Log.WARN, "DataProperty %s missing" % dataPropertyName)
-                continue
             dpPtrType = self.activeClipboard.get(dataPropertyName)
             utils.Trace("EventStage", 4, "Got dataProperty %s" % dpPtrType.toString())
             oneEventTransmitter = events.EventTransmitter(\
