@@ -132,10 +132,12 @@ class SymLinkStage (lsst.dps.Stage.Stage):
             lsst.mwi.utils.Trace("dps.SymLinkStage", 3, \
                     "linking %s to %s" % (sourcePath, destPath))
             parentDir = os.path.dirname(destPath)
-            if not os.path.exists(parentDir):
-                try:
+            try:
+                if not os.path.exists(parentDir):
                     os.makedirs(parentDir)
-                except:
-                    # May have just been created on another node.
-                    pass
-            os.symlink(sourcePath, destPath)
+                print "linking %s to %s" % (sourcePath, destPath)
+                os.symlink(sourcePath, destPath)
+            except OSError, e:
+                # ignore "file exists" but re-raise anything else
+                if e.errno != 17:
+                    raise e

@@ -47,7 +47,7 @@ def startPipeline(nodeList, pipelinePolicy, runId, createIoDirs=False, createDbT
     
     # create I/O directories for this run
     if createIoDirs:
-        lsst.mwi.utils.Trace("lsst.dps", 3, "Creating I/O directories for run %s" % (runId,))
+        lsst.mwi.utils.Trace("dps.startPipeline", 3, "Creating I/O directories for run %s" % (runId,))
         runRoot = os.path.join(RootIoDir, runId)
         if os.path.exists(runRoot):
             raise RuntimeError("runId %s already exists" % (runId,))
@@ -63,18 +63,18 @@ def startPipeline(nodeList, pipelinePolicy, runId, createIoDirs=False, createDbT
         os.mkdir(os.path.join(runRoot, "assoc", "update"))
         os.mkdir(os.path.join(runRoot, "assoc", "output"))
     else:
-        lsst.mwi.utils.Trace("lsst.dps", 3, "Not creating I/O directories for run %s" % (runId,))
+        lsst.mwi.utils.Trace("dps.startPipeline", 3, "Not creating I/O directories for run %s" % (runId,))
     
     # create database tables for this run
     if createDbTables:
-        lsst.mwi.utils.Trace("lsst.dps", 3, "Creating database tables for run %s" % (runId,))
+        lsst.mwi.utils.Trace("dps.startPipeline", 3, "Creating database tables for run %s" % (runId,))
         dbBaseArgs = ["mysql", "-h", "lsst10.ncsa.uiuc.edu", "-u"+DbUser, "-p"+DbPassword]
         subprocess.call(dbBaseArgs + ["-e", 'create database "%s"' % (runId,)])
         for sqlCmdFile in DbCmdFiles:
             with file(os.path.join(Dc2PipeDir, sqlCmdFile)) as sqlFile:
                 subprocess.call(dbBaseArgs + [runId], stdin=sqlFile)
     else:
-        lsst.mwi.utils.Trace("lsst.dps", 3, "Not creating database tables for run %s" % (runId,))
+        lsst.mwi.utils.Trace("dps.startPipeline", 3, "Not creating database tables for run %s" % (runId,))
 
     lsst.mwi.utils.Trace("lsst.dps.startPipeline", 3, "pipelineDir=%s" % (pipelineDir,))
 
