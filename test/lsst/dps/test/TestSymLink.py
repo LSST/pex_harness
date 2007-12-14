@@ -5,6 +5,9 @@ import lsst.dps.Clipboard
 import lsst.dps.Queue
 import lsst.mwi.data
 import lsst.mwi.policy
+import lsst.mwi.utils
+
+lsst.mwi.utils.Trace.setVerbosity("dps.SymLinkStage", 5)
 
 # Get the policies
 linkPolicy = lsst.mwi.policy.Policy.createPolicy("test/policy/symlink.policy")
@@ -36,9 +39,8 @@ clip.put("triggerVisitEvent", event)
 # Put the clipboard on the input queue
 q1.addDataset(clip)
 
-# Run the link stage like the master
-linkStage.preprocess()
-linkStage.postprocess()
+# Run the link stage
+linkStage.process()
 
 # Check the output queue: should have everything we put on the input
 assert q2.size() == 1
