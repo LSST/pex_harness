@@ -1,0 +1,5 @@
+AdditionalData: "exposureId=triggerVisitEvent.exposureId" "filterName=triggerVisitEvent.filterName"
+Links: {
+	sourcePath: "/lsst/images/becker/D4/%(filterName)s/output/%(sliceId)02d/%(exposureId)d"
+	destPath: "%(exposureId)d"
+}
