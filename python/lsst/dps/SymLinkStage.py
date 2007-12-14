@@ -98,7 +98,8 @@ class SymLinkStage (lsst.dps.Stage.Stage):
         if self._policy.exists('RunMode') and \
         (self._policy.getString('RunMode') == 'preprocess' or \
         self._policy.getString('RunMode') == 'postprocess'):
-            self._link()
+            return
+        self._link()
         
     def postprocess(self):
         """
