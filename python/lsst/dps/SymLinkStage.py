@@ -80,35 +80,35 @@ class SymLinkStage (lsst.dps.Stage.Stage):
     """
 
     def preprocess(self):
-    """
-    Persist the requested data in the master process before any (subclass)
-    processing, if desired.
-    """
-    self.activeClipboard = self.inputQueue.getNextDataset()
-    if self._policy.exists('RunMode') and \
-        self._policy.getString('RunMode') == 'preprocess':
-        self._link()
+        """
+        Persist the requested data in the master process before any (subclass)
+        processing, if desired.
+        """
+        self.activeClipboard = self.inputQueue.getNextDataset()
+        if self._policy.exists('RunMode') and \
+            self._policy.getString('RunMode') == 'preprocess':
+            self._link()
         
     def process(self):
-    """
-    Persist the requested data in the slice processes.
-    """
-    self.activeClipboard = self.inputQueue.getNextDataset()
-    self.outputQueue.addDataset(self.activeClipboard)
-    if self._policy.exists('RunMode') and \
+        """
+        Persist the requested data in the slice processes.
+        """
+        self.activeClipboard = self.inputQueue.getNextDataset()
+        self.outputQueue.addDataset(self.activeClipboard)
+        if self._policy.exists('RunMode') and \
         (self._policy.getString('RunMode') == 'preprocess' or \
         self._policy.getString('RunMode') == 'postprocess'):
-    self._link()
-    
+            self._link()
+        
     def postprocess(self):
-    """
-    Persist the requested data in the master process after any (subclass)
-    processing, if desired.
-    """
-    if self._policy.exists('RunMode') and \
-        self._policy.getString('RunMode') == 'postprocess':
-        self._link()
-    self.outputQueue.addDataset(self.activeClipboard)
+        """
+        Persist the requested data in the master process after any (subclass)
+        processing, if desired.
+        """
+        if self._policy.exists('RunMode') and \
+            self._policy.getString('RunMode') == 'postprocess':
+            self._link()
+        self.outputQueue.addDataset(self.activeClipboard)
 
  
     def _link(self):
