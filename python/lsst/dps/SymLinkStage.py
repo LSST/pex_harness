@@ -133,5 +133,9 @@ class SymLinkStage (lsst.dps.Stage.Stage):
                     "linking %s to %s" % (sourcePath, destPath))
             parentDir = os.path.dirname(destPath)
             if not os.path.exists(parentDir):
-                os.makedirs(parentDir)
+                try:
+                    os.makedirs(parentDir)
+                except:
+                    # May have just been created on another node.
+                    pass
             os.symlink(sourcePath, destPath)
