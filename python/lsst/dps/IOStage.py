@@ -125,13 +125,6 @@ class OutputStage (lsst.dps.Stage.Stage):
     A Stage that persists data.
     """
 
-    def __init__(self, stageId, stagePolicy):
-        """
-        Initialize the stage with a policy.
-        """
-
-        lsst.dps.Stage.Stage.__init__(self, stageId, stagePolicy)
-
     def preprocess(self):
         """
         Persist the requested data in the master process before any
@@ -269,14 +262,6 @@ class InputStage (lsst.dps.Stage.Stage):
     """
     A Stage that retrieves data.
     """
-
-    def __init__(self, stageId, stagePolicy):
-        """
-        Initialize the stage with a policy.
-        """
-
-
-        lsst.dps.Stage.Stage.__init__(self, stageId, stagePolicy)
 
     def preprocess(self):
         """
