@@ -3,7 +3,7 @@
   *
   * \ingroup dps
   *
-  * \brief   Stage provides a super class for a particular <ApplicationStage> to inherit.
+  * \brief   Stage provides a super class for a particular ApplicationStage to inherit.
   *
   * \author  Greg Daues, NCSA
   */

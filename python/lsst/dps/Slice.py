@@ -231,7 +231,7 @@ class Slice:
             x = events.EventReceiver(self.activemqBroker, sliceTopic)
 
             print 'Python Slice handleEvents rank : ',self._rank, ' - waiting on receive...\n'
-            inputParamPropertyPtrType = x.receive(800000)
+            inputParamPropertyPtrType = x.receive(8000000)
             print 'Python Slice handleEvents rank : ',self._rank,' - received event.\n'
 
             self.populateClipboard(inputParamPropertyPtrType, iStage, thisTopic)

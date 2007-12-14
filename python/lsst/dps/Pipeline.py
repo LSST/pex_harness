@@ -39,6 +39,7 @@ class Pipeline:
         self.stagePolicyList = []
         self.eventTopicList = []
         self.eventReceiverList = []
+        self.clipboardList = []
         self.executionMode = 0
         import pipeline
         self.cppPipeline = pipeline.Pipeline()
@@ -197,6 +198,15 @@ class Pipeline:
         Place an empty Clipboard in the first Queue
         """
         clipboard = Clipboard()
+        self.clipboardList.append(clipboard)
+
+        print "Python Pipeline Clipboard check \n"
+        acount=0
+        for clip in self.clipboardList:
+            acount+=1
+            print acount
+            print str(clip)
+
         queue1 = self.queueList[0]
         queue1.addDataset(clipboard)
 
@@ -241,7 +251,7 @@ class Pipeline:
             finalQueue = self.queueList[self.nStages]
             finalClipboard = finalQueue.getNextDataset()
             print 'Python Pipeline startStagesLoop : Deleting finalClipboard'
-            finalClipboard.__del__()
+            del finalClipboard
             print 'Python Pipeline startStagesLoop : Deleted finalClipboard'
 
         print 'Python Pipeline startStagesLoop : Full Pipeline Stage loop is over'
