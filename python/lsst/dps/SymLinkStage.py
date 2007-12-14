@@ -131,4 +131,7 @@ class SymLinkStage (lsst.dps.Stage.Stage):
             destPath = linkPolicy.getString('destPath') % additionalData
             lsst.mwi.utils.Trace("dps.SymLinkStage", 3, \
                     "linking %s to %s" % (sourcePath, destPath))
+            parentDir = os.path.dirname(destPath)
+            if not os.path.exists(parentDir):
+                os.makedirs(parentDir)
             os.symlink(sourcePath, destPath)
