@@ -6,12 +6,14 @@ from lsst.dps.Clipboard import Clipboard
 
 
 import lsst.mwi.policy as policy
+import lsst.mwi.exceptions as ex
 
 import lsst.mwi.data as datap
 
 import lsst.events as events
 
 import os
+import sys
 
 
 """
@@ -175,6 +177,24 @@ class Slice:
         queue1 = self.queueList[0]
         queue1.addDataset(clipboard)
 
+    def postOutputClipboard(self, iStage):
+        """
+        Place an empty Clipboard in the output queue for designated stage
+        """
+        clipboard = Clipboard()
+        queue2 = self.queueList[iStage]
+        queue2.addDataset(clipboard)
+
+    def transferClipboard(self, iStage):
+        """
+        Move the Clipboard from the input queue to output queue for the designated stage
+        """
+        # clipboard = Clipboard()
+        queue1 = self.queueList[iStage-1]
+        queue2 = self.queueList[iStage]
+        clipboard = queue1.getNextDataset()
+        queue2.addDataset(clipboard)
+
     def startStagesLoop(self): 
         """
         Execute the Stage loop. The loop progressing in step with 
@@ -191,24 +211,48 @@ class Slice:
 
             self.startInitQueue()    # place an empty clipboard in the first Queue
 
+            self.errorFlagged = 0
             for iStage in range(1, self.nStages+1):
 
                 self.handleEvents(iStage)
 
                 stageObject = self.stageList[iStage-1]
                 self.cppSlice.invokeBcast(iStage)
-                stageObject.process()
+
+                # Important try - except construct 
+                try:
+                    # If no error/exception has been flagged, run process()
+                    # otherwise, simply pass along the Clipboard 
+                    if (self.errorFlagged == 0):
+                        stageObject.process()
+                    else:
+                        self.transferClipboard(iStage)
+                except:
+                    # Log / Report the Exception
+                    excInfo = sys.exc_info()
+                    print "ERROR: Rank ", self._rank, " System Exception info: ", sys.exc_info()
+                    self.LOGFILE.write("ERROR: System Exception info: " + str(excInfo) + "\n") 
+                    self.LOGFILE.flush()
+                    # Flag that an exception occurred to guide the framework to skip processing
+                    self.errorFlagged = 1
+                    # Post the cliphoard that the Stage failed to transfer to the output queue
+                    self.postOutputClipboard(iStage)
+
                 self.cppSlice.invokeBarrier(iStage)
 
             else:
                 print 'Python Slice startStagesLoop : Stage loop iteration is over'
 
             print 'Python Slice startStagesLoop : Retrieving finalClipboard for deletion'
-            finalQueue = self.queueList[self.nStages]
-            finalClipboard = finalQueue.getNextDataset()
-            print 'Python Slice startStagesLoop : Deleting finalClipboard'
-            finalClipboard.__del__()
-            print 'Python Slice startStagesLoop : Deleted finalClipboard'
+
+            # If no error/exception was flagged, 
+            # then clear the final Clipboard in the final Queue
+            if self.errorFlagged == 0:
+                finalQueue = self.queueList[self.nStages]
+                finalClipboard = finalQueue.getNextDataset()
+                print 'Python Slice startStagesLoop : Deleting finalClipboard'
+                finalClipboard.__del__()
+                print 'Python Slice startStagesLoop : Deleted finalClipboard'
 
         print 'Python Slice startStagesLoop : Full Slice Stage loop is over'
 
