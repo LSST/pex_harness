@@ -52,7 +52,7 @@ class Pipeline:
         self.pipelinePolicyName = pipelinePolicyName
 
         # set up the logger
-        events.EventLog.setDefaultLog();
+        events.EventLog.createDefaultLog(self._runId, self._rank);
         self.log = Log(Log.getDefaultLog(), "dps.pipeline")
         initlog = Log(self.log, "init")
         LogRec(initlog, Log.INFO) << "Initializing Pipeline" \

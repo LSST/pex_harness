@@ -55,7 +55,7 @@ class Slice:
         self._rank = self.cppSlice.getRank()
 
         # set up the logger
-        events.EventLog.setDefaultLog();
+        events.EventLog.createDefaultLog(self._runId, self._rank);
         self.log = Log(Log.getDefaultLog(), "dps.slice")
         initlog = Log(self.log, "init")
         LogRec(initlog, Log.INFO) << "Initializing Slice " + str(self._runId) \
