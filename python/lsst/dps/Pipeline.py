@@ -3,6 +3,7 @@
 from lsst.dps.Queue import Queue
 from lsst.dps.Stage import Stage
 from lsst.dps.Clipboard import Clipboard
+from lsst.mwi.logging import Log, LogRec
 
 import lsst.mwi.policy as policy
 
@@ -28,7 +29,7 @@ using an MPI-2 Spawn operation.
 class Pipeline:
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
-    def __init__(self, runId=-1, pipelinePolicyName=None):
+    def __init__(self, runId='-1', pipelinePolicyName=None):
         """
         Initialize the Pipeline: create empty Queue and Stage lists;
         import the C++ Pipeline instance; initialize the MPI environment
@@ -49,24 +50,30 @@ class Pipeline:
         self.universeSize = self.cppPipeline.getUniverseSize()
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
-        self.LOGFILE = open("PipelinePython.log","w")
-        self.LOGFILE.write("Python Pipeline __init__ : Opened log \n")
-        self.LOGFILE.write("Python Pipeline __init__ : universeSize is ")
-        self.LOGFILE.write(str(self.universeSize))
-        self.LOGFILE.write("\n")
-        self.LOGFILE.flush()
+
+        # set up the logger
+        events.EventLog.setDefaultLog();
+        self.log = Log(Log.getDefaultLog(), "dps.pipeline")
+        initlog = Log(self.log, "init")
+        LogRec(initlog, Log.INFO) << "Initializing Pipeline" \
+              << DataProperty("universeSize", self.universeSize) << endr
+
+        # we'll use these in our logging
+        self.statstart = DataProperty("STATUS", string("start"))
+        self.statend = DataProperty("STATUS", string("end"))
+        
 
     def __del__(self):
         """
         Delete the Pipeline object: clean up
         """
-        print 'Python Pipeline being deleted'
+        self.log.log(Log.DEBUG, 'Python Pipeline being deleted')
 
     def configurePipeline(self):
         """
         Configure the Pipeline by reading a Policy File
         """
-        self.LOGFILE.write("Python Pipeline configurePipeline \n");
+        self.log.log(Log.DEBUG, "configuring pipeline");
         # self.sliceTopic = "slicedata"
 
         # path1 = os.environ['LSST_POLICY_DIR']
@@ -87,24 +94,23 @@ class Pipeline:
         # Process Application Stages
         fullStageList = p.getArray("appStages")
 
-        self.LOGFILE.write("appStages")
-        self.LOGFILE.write("\n")
+        lr = LogRec(self.log, Log.INFO)
+        lr << "Loading stages"
         for item in fullStageList:
-            self.LOGFILE.write(item)
-            self.LOGFILE.write("\n")
-        self.LOGFILE.write("end appStages")
-        self.LOGFILE.write("\n")
+            lr << DataProperty("appStage", item)
+        lr << Log.endr
 
         # filePolicy = open('pipeline.policy', 'r')
         # fullStageList = filePolicy.readlines()
 
         self.nStages = len(fullStageList)
-
+        self.stageNames = [ ] 
         for astage in fullStageList:
             fullStage = astage.strip()
             tokenList = astage.split('.')
             classString = tokenList.pop()
             classString = classString.strip()
+            self.stangeNames.append(classString)
 
             package = ".".join(tokenList)
 
@@ -113,23 +119,16 @@ class Pipeline:
             StageClass = getattr(AppStage, classString)
             self.stageClassList.append(StageClass) 
 
-        self.LOGFILE.write("Python Pipeline configurePipeline : Done \n");
-        self.LOGFILE.flush()
-
         # Process Event Topics
         self.eventTopicList = p.getArray("eventTopics")
 
-        self.LOGFILE.write("eventTopics")
-        self.LOGFILE.write("\n")
+        lr = LogRec(self.log, Log.INFO)
+        lr << "Loading event topics"
         for item in self.eventTopicList:
-            self.LOGFILE.write(item)
-            self.LOGFILE.write("\n")
-        self.LOGFILE.write("end eventTopics")
-        self.LOGFILE.write("\n")
+            lr << DataProperty("appStage", item)
+        lr << Log.endr
 
-        self.LOGFILE.write("_runId is ")
-        self.LOGFILE.write(self._runId)
-        self.LOGFILE.write("\n")
+        self.log.log(Log.INFO, "runID is " + self._runId)
 
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
@@ -151,6 +150,7 @@ class Pipeline:
         else:
             self.shutdownTopic = "triggerShutdownEvent"
 
+        self.log.log(Log.DEBUG, "configuration done")
 
     def initializeQueues(self):
         """
@@ -187,11 +187,9 @@ class Pipeline:
         """
         Initialize the Queue by defining an initial dataset list
         """
-        self.LOGFILE.write("Python Pipeline startSlices \n");
-        self.LOGFILE.flush()
+        self.log.log(Log.DEBUG, "starting slices")
         self.cppPipeline.startSlices()
-        self.LOGFILE.write("Python Pipeline startSlices : Done \n");
-        self.LOGFILE.flush()
+        self.log.log(Log.DEBUG, "slices started")
 
     def startInitQueue(self):
         """
@@ -217,18 +215,24 @@ class Pipeline:
 
         eventReceiver = events.EventReceiver(self.activemqBroker, self.shutdownTopic)
 
+        looplog = Log(self.log, "visit", Log.INFO);
+        prelog = Log(looplog, "preprocess", Log.INFO);
+        postlog = Log(looplog, "postprocess", Log.INFO);
+
         count = 0 
         while True:
 
             val = eventReceiver.receive(100)
             if ((val.get() != None) or ((self.executionMode == 1) and (count == 1))):
-                print "Pipeline Terminating "
-                print "Pipeline Terminating the Slices "
+                self.log(Log.INFO, "terminating slices")
                 self.cppPipeline.invokeShutdown()
                 break
             else:
                 count += 1
-                print 'Python Pipeline startStagesLoop : count ', count
+                loopnum = DataProperty("loopNumber", count);
+                LogRec(looplog, Log.INFO)                        \
+                       << "starting stage loop number " + count  \
+                       << loopnum  << self.statstart << LogRec.endr
                 self.cppPipeline.invokeContinue()
                 self.startInitQueue()    # place an empty clipboard in the first Queue
 
@@ -238,23 +242,28 @@ class Pipeline:
 
                     self.handleEvents(iStage)
 
+                    prelog.log(Log.INFO, "Starting preprocess", self.statstart)
                     stage.preprocess()
+                    prelog.log(Log.INFO, "Ending preprocess", self.statend)
 
                     self.cppPipeline.invokeProcess(iStage)
 
+                    postlog.log(Log.INFO,"Starting postprocess",self.statstart)
                     stage.postprocess()
+                    postlog.log(Log.INFO, "Ending postprocess", self.statend)
            
                 else:
-                    print 'Python Pipeline startStagesLoop : Stage loop iteration is over'
+                    LogRec(looplog, Log.INFO)                        \
+                           << "starting stage loop number " + count  \
+                           << loopnum << self.statend << LogRec.endr
 
-            print 'Python Pipeline startStagesLoop : Retrieving finalClipboard for deletion'
+            self.log.log(Log.DEBUG, 'Retrieving finalClipboard for deletion')
             finalQueue = self.queueList[self.nStages]
             finalClipboard = finalQueue.getNextDataset()
-            print 'Python Pipeline startStagesLoop : Deleting finalClipboard'
+            self.log.log(Log.DEBUG, "deleting final clipboard")
             del finalClipboard
-            print 'Python Pipeline startStagesLoop : Deleted finalClipboard'
 
-        print 'Python Pipeline startStagesLoop : Full Pipeline Stage loop is over'
+        self.log.log(Log.INFO, "Shutting down pipeline");
         self.shutdown()
 
 
@@ -269,13 +278,12 @@ class Pipeline:
         """
         Handles Events: transmit or receive events as specified by Policy
         """
-        print 'Python Pipeline handleEvents : iStage %d' % (iStage)
+        log = Log(self.log, "handleEvents");
+        log.log(Log.INFO, "iStage %d" % iStage)
 
         thisTopic = self.eventTopicList[iStage-1]
         thisTopic = thisTopic.strip()
-        self.LOGFILE.write("Python Pipeline handleEvents thisTopic ")
-        self.LOGFILE.write(thisTopic)
-        self.LOGFILE.write("\n")
+        log.log(Log.DEBUG, "processing topic " + thisTopic)
 
         if (thisTopic != "None"):
             fileStr = StringIO()
@@ -287,19 +295,12 @@ class Pipeline:
             eventReceiver    = self.eventReceiverList[iStage-1]
             eventTransmitter = events.EventTransmitter(self.activemqBroker, sliceTopic)
 
-            print 'Python Pipeline handleEvents - waiting on receive...\n'
-            self.LOGFILE.write("Python Pipeline handleEvents - waiting on receive...\n")
-            self.LOGFILE.flush()
+            log.log(Log.INFO, "waiting on receive...")
 
             inputParamPropertyPtrType = eventReceiver.receive(800000)
 
-            if (inputParamPropertyPtrType.get() != None): 
-                self.LOGFILE.write("Python Pipeline handleEvents -  received event...\n")
-                self.LOGFILE.flush()
-                print 'Python Pipeline handleEvents - received event.\n'
-                self.LOGFILE.write("Python Pipeline handleEvents -  Sending event to Slices\n")
-                self.LOGFILE.flush()
-                print 'Python Pipeline handleEvents - Sending event to Slices.\n'
+            if (inputParamPropertyPtrType.get() != None):
+                log.log(Log.INFO, "received event; sending it to Slices")
 
                 # Pipeline  does not disassemble the payload of the event.
                 # It knows nothing of the contents.
@@ -307,15 +308,14 @@ class Pipeline:
                 self.populateClipboard(inputParamPropertyPtrType, iStage, thisTopic)
                 eventTransmitter.publish("sliceevent1", inputParamPropertyPtrType)
 
-                print 'Python Pipeline handleEvents : Sent event to Slices '
-                self.LOGFILE.write("Python Pipeline handleEvents -  Sent event to Slices\n")
-                self.LOGFILE.flush()
+                log.log(Log.DEBUG, "event sent")
 
     def populateClipboard(self, inputParamPropertyPtrType, iStage, eventTopic):
         """
         Place the event payload onto the Clipboard 
         """
-        print 'Python Pipeline populateClipboard'
+        log = Log(self.log, "populateClipboard");
+        log.log(Log.DEBUG,'Python Pipeline populateClipboard');
 
         queue = self.queueList[iStage-1]
         clipboard = queue.getNextDataset()
@@ -324,8 +324,11 @@ class Pipeline:
         # It knows nothing of the contents.
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertyPtrType)
-        print 'Python Pipeline populateClipboard : Added DataPropertyPtrType to clipboard '
-        # print 'Python Pipeline populateClipboard()', inputParamPropertyPtrType.toString('=',1)
+
+        LogRec(log, Log.DEBUG) << 'Added DataPropertyPtrType to clipboard ' \
+                    << inputParamPropertyPtrType                            \
+                    << Log.endr
+
         queue.addDataset(clipboard)
 
 # print __doc__

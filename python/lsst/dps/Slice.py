@@ -3,7 +3,7 @@
 from lsst.dps.Queue import Queue
 from lsst.dps.Stage import Stage
 from lsst.dps.Clipboard import Clipboard
-
+from lsst.mwi.logging import Log, LogRec
 
 import lsst.mwi.policy as policy
 import lsst.mwi.exceptions as ex
@@ -53,20 +53,20 @@ class Slice:
         self.pipelinePolicyName = pipelinePolicyName
         self.universeSize = self.cppSlice.getUniverseSize()
         self._rank = self.cppSlice.getRank()
-        self.LOGFILE = open("SlicePython_" + str(self._rank) + ".log","w")
-        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : Opened log \n")
-        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : universeSize is " + str(self.universeSize))
-        self.LOGFILE.write("Python Slice " + str(self._rank) + " __init__ : runId is " + str(self._runId))
-        self.LOGFILE.write(str(self.universeSize))
-        self.LOGFILE.write("\n")
-        self.LOGFILE.flush()
 
+        # set up the logger
+        events.EventLog.setDefaultLog();
+        self.log = Log(Log.getDefaultLog(), "dps.slice")
+        initlog = Log(self.log, "init")
+        LogRec(initlog, Log.INFO) << "Initializing Slice " + str(self._runId) \
+              << DataProperty("universeSize", self.universeSize)              \
+              << DataProperty("runId", self._runId) << endr
 
     def __del__(self):
         """
         Delete the Slice object: cleanup 
         """
-        print 'Python Slice being deleted'
+        self.log.log(Log.DEBUG, 'Python Slice being deleted')
 
     def configureSlice(self):
         """
@@ -87,23 +87,17 @@ class Slice:
         # Process Application Stages
         fullStageList = p.getArray("appStages")
 
-        self.LOGFILE.write("appStages")
-        self.LOGFILE.write("\n")
+        lr = LogRec(self.log, Log.INFO)
+        lr << "Loading stages"
         for item in fullStageList:
-            self.LOGFILE.write(item)
-            self.LOGFILE.write("\n")
-        self.LOGFILE.write("end appStages")
-        self.LOGFILE.write("\n")
+            lr << DataProperty("appStage", item)
+        lr << Log.endr
 
         # filePolicy = open('pipeline.policy', 'r')
         # fullStageList = filePolicy.readlines()
         self.nStages = len(fullStageList)
 
-        self.LOGFILE.write("fullStageList")
-        self.LOGFILE.write("\n")
         for astage in fullStageList:
-            self.LOGFILE.write(astage)
-            self.LOGFILE.write("\n")
             fullStage = astage.strip()
             tokenList = astage.split('.')
             classString = tokenList.pop()
@@ -120,8 +114,11 @@ class Slice:
         self.eventTopicList = p.getArray("eventTopics")
         self.sliceEventTopicList = p.getArray("eventTopics")
 
-        self.LOGFILE.write("eventTopics")
-        self.LOGFILE.write("\n")
+        lr = LogRec(self.log, Log.INFO)
+        lr << "Loading event topics"
+        for item in self.eventTopicList:
+            lr << DataProperty("eventTopic", item)
+        lr << Log.endr
 
         count = 0
         for item in self.eventTopicList:
@@ -129,11 +126,11 @@ class Slice:
             self.sliceEventTopicList[count] = newitem
             count += 1
 
-        for item in self.sliceEventTopicList:
-            self.LOGFILE.write(item)
-            self.LOGFILE.write("\n")
-        self.LOGFILE.write("end eventTopics")
-        self.LOGFILE.write("\n")
+        lr = LogRec(self.log, Log.INFO)
+        lr << "Loaded event topics"
+        for item in self.eventTopicList:
+            lr << DataProperty("eventTopic", item)
+        lr << Log.endr
 
         # Process Stage Policies
         self.stagePolicyList = p.getArray("stagePolicies")
@@ -202,10 +199,15 @@ class Slice:
         MPI Bcast and Barrier calls.
         """
 
+        looplog = Log(self.log, "loop", Log.INFO);
+        proclog = Log(self.log, "process", Log.INFO);
+
         count = 0
         while True:
             count += 1
-            print 'Python Slice startStagesLoop : count ', count
+            LogRec(looplog, Log.INFO) \
+                       << "starting stage loop number " + count \
+                       << DataProperty(count) << LogRec.endr
 
             self.cppSlice.invokeShutdownTest()
 
@@ -217,7 +219,9 @@ class Slice:
                 self.handleEvents(iStage)
 
                 stageObject = self.stageList[iStage-1]
+                looplog.log(Log.INFO, "Getting pre-process signal from Pipeline")
                 self.cppSlice.invokeBcast(iStage)
+                proclog.log(Log.INFO, "Starting process")
 
                 # Important try - except construct 
                 try:
@@ -230,31 +234,33 @@ class Slice:
                 except:
                     # Log / Report the Exception
                     excInfo = sys.exc_info()
-                    print "ERROR: Rank ", self._rank, " System Exception info: ", sys.exc_info()
-                    self.LOGFILE.write("ERROR: System Exception info: " + str(excInfo) + "\n") 
-                    self.LOGFILE.flush()
+                    proclog.log(Log.FAIL, "Rank "+ self._rank + \
+                                          " threw uncaught exception: " + \
+                                          str(excInfo));
+
                     # Flag that an exception occurred to guide the framework to skip processing
                     self.errorFlagged = 1
                     # Post the cliphoard that the Stage failed to transfer to the output queue
                     self.postOutputClipboard(iStage)
 
+                proclog.log(Log.INFO, "Ending process")
+                looplog.log(Log.INFO, "Getting post-process signal from Pipeline")
                 self.cppSlice.invokeBarrier(iStage)
 
             else:
-                print 'Python Slice startStagesLoop : Stage loop iteration is over'
+                looplog.log("completed loop number " + count)
 
-            print 'Python Slice startStagesLoop : Retrieving finalClipboard for deletion'
+            self.log.log(Log.DEBUG, 'Retrieving finalClipboard for deletion')
 
             # If no error/exception was flagged, 
             # then clear the final Clipboard in the final Queue
             if self.errorFlagged == 0:
                 finalQueue = self.queueList[self.nStages]
                 finalClipboard = finalQueue.getNextDataset()
-                print 'Python Slice startStagesLoop : Deleting finalClipboard'
+                self.log.log(Log.DEBUG, "deleting final clipboard")
                 finalClipboard.__del__()
-                print 'Python Slice startStagesLoop : Deleted finalClipboard'
 
-        print 'Python Slice startStagesLoop : Full Slice Stage loop is over'
+        self.log.log(Log.INFO, "Shutting down pipeline");
 
     def shutdown(self): 
         """
@@ -266,29 +272,31 @@ class Slice:
         """
         Handles Events: transmit or receive events as specified by Policy
         """
-        print 'Python Slice handleEvents : rank %i iStage %i' % (self._rank, iStage)
+        log = Log(self.log, "handleEvents");
+        log.log(Log.INFO, 'rank %i iStage %i' % (self._rank, iStage))
         
         thisTopic = self.eventTopicList[iStage-1]
+        log.log(Log.DEBUG, "processing topic " + thisTopic)
 
         if (thisTopic != "None"):
             sliceTopic = self.sliceEventTopicList[iStage-1]
             x = events.EventReceiver(self.activemqBroker, sliceTopic)
 
-            print 'Python Slice handleEvents rank : ',self._rank, ' - waiting on receive...\n'
+            log.log(Log.INFO, 'waiting on receive...')
             inputParamPropertyPtrType = x.receive(8000000)
-            print 'Python Slice handleEvents rank : ',self._rank,' - received event.\n'
 
             self.populateClipboard(inputParamPropertyPtrType, iStage, thisTopic)
 
-            print 'Python Slice handleEvents rank : ',self._rank,' Added DataPropertyPtrType to clipboard '
+            log.log(Log.INFO, 'Added DataPropertyPtrType to clipboard')
         else:
-            print 'Python Slice handleEvents : rank %i iStage %i : No event to handle' % (self._rank, iStage)
+            log.log(Log.INFO, 'No event to handle')
 
     def populateClipboard(self, inputParamPropertyPtrType, iStage, eventTopic):
         """
         Place the event payload onto the Clipboard
         """
-        print 'Python Slice populateClipboard'
+        log = Log(self.log, "populateClipboard");
+        log.log(Log.DEBUG,'Python Pipeline populateClipboard');
 
         queue = self.queueList[iStage-1]
         clipboard = queue.getNextDataset()
@@ -297,7 +305,10 @@ class Slice:
         # It knows nothing of the contents. 
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertyPtrType)
-        print 'Python Slice populateClipboard rank : ',self._rank,' Added DataPropertyPtrType to clipboard '
+        LogRec(log, Log.DEBUG) << 'Added DataPropertyPtrType to clipboard ' \
+#                    + inputParamPropertyPtrType.toString('=',1)             \
+                    << inputParamPropertyPtrType                            \
+                    << Log.endr
 
         queue.addDataset(clipboard)
 
