@@ -14,6 +14,7 @@ are given in the AdditionalData sub-Policy.
 """
 
 import lsst.dps.Stage
+import lsst.dps.Utils
 import lsst.mwi.data
 import lsst.mwi.policy
 import lsst.mwi.persistence
@@ -75,51 +76,6 @@ def massage(location, additionalData):
     lsst.mwi.utils.Trace("dps.IOStage", 3, "\tnew location: " + newLoc)
     return newLoc
 
-def createAdditionalData(stage, stagePolicy, clipboard):
-    """
-    Extract additionalData values, as specified by policy, from the clipboard.
-    """
-
-    dataProperty = \
-        lsst.mwi.data.SupportFactory.createPropertyNode("additionalData")
-
-    # Parse array of "key=clipboard-key" or
-    # "key=clipboard-key.dataproperty-key" mappings
-    if stagePolicy.exists('AdditionalData'):
-        dataPairs = stagePolicy.getStringArray('AdditionalData')
-        for pair in dataPairs:
-            (rename, name) = pair.split("=")
-            if name.find(".") != -1:
-                (clipKey, dpKey) = name.split(".", 1)
-                data = clipboard.get(clipKey).findUnique(dpKey).getValue()
-            else:
-                data = clipboard.get(name)
-            leaf = lsst.mwi.data.DataProperty(rename, data)
-            lsst.mwi.utils.Trace("dps.IOStage", 3, \
-                    "AdditionalData item: " + pair)
-            dataProperty.addProperty(leaf)
-
-    # Add the predefined runId, sliceId, and universeSize keys
-
-    runId = stage.getRun()
-    leaf = lsst.mwi.data.DataProperty('runId', runId)
-    dataProperty.addProperty(leaf)
-
-    sliceId = stage.getRank()
-    leaf = lsst.mwi.data.DataProperty('sliceId', sliceId)
-    dataProperty.addProperty(leaf)
-
-    ccdId = "%02d" % (stage.getRank() + 1)
-    leaf = lsst.mwi.data.DataProperty('ccdId', ccdId)
-    dataProperty.addProperty(leaf)
-
-    universeSize = stage.getUniverseSize()
-    leaf = lsst.mwi.data.DataProperty('universeSize', universeSize)
-    dataProperty.addProperty(leaf)
-
-    lsst.mwi.utils.Trace("dps.IOStage", 3, "additionalData:\n" + \
-        dataProperty.toString('\t', True))
-    return dataProperty
 
 class OutputStage (lsst.dps.Stage.Stage):
     """
@@ -185,7 +141,8 @@ class OutputStage (lsst.dps.Stage.Stage):
                 self.outputQueue.addDataset(clipboard)
                 continue
 
-            additionalData = createAdditionalData(self, self._policy, clipboard)
+            additionalData = lsst.dps.Utils.createAdditionalData(self, \
+                    self._policy, clipboard)
 
             # Create a persistence object using policy, if present.
             if self._policy.exists('Persistence'):
@@ -324,7 +281,8 @@ class InputStage (lsst.dps.Stage.Stage):
                 self.outputQueue.addDataset(clipboard)
                 continue
 
-            additionalData = createAdditionalData(self, self._policy, clipboard)
+            additionalData = lsst.dps.Utils.createAdditionalData(self, \
+                    self._policy, clipboard)
 
             # Create a persistence object using policy, if present.
             if self._policy.exists('Persistence'):
