@@ -51,16 +51,9 @@ class Pipeline:
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
 
-        # set up the logger
-        events.EventLog.createDefaultLog(self._runId, self._rank);
-        self.log = Log(Log.getDefaultLog(), "dps.pipeline")
-        initlog = Log(self.log, "init")
-        LogRec(initlog, Log.INFO) << "Initializing Pipeline" \
-              << DataProperty("universeSize", self.universeSize) << endr
-
         # we'll use these in our logging
-        self.statstart = DataProperty("STATUS", string("start"))
-        self.statend = DataProperty("STATUS", string("end"))
+        self.statstart = DataProperty("STATUS", str("start"))
+        self.statend = DataProperty("STATUS", str("end"))
         
 
     def __del__(self):
@@ -73,7 +66,7 @@ class Pipeline:
         """
         Configure the Pipeline by reading a Policy File
         """
-        self.log.log(Log.DEBUG, "configuring pipeline");
+        ### self.log.log(Log.DEBUG, "configuring pipeline");
         # self.sliceTopic = "slicedata"
 
         # path1 = os.environ['LSST_POLICY_DIR']
@@ -91,6 +84,17 @@ class Pipeline:
         else:
             self.activemqBroker = "lsst8.ncsa.uiuc.edu"   # default value
 
+	eventSystem = events.EventSystem.getDefaultEventSystem()
+	eventSystem.createTransmitter(self.activemqBroker, "LSSTLogging")
+        events.EventLog.createDefaultLog(self._runId, -1);
+
+        self.log = Log(Log.getDefaultLog(), "dps.pipeline")
+        initlog = Log(self.log, "init")
+        LogRec(initlog, Log.INFO) << "Initializing Pipeline" \
+              << DataProperty("universeSize", self.universeSize) << LogRec.endr
+
+        # cppPipeline.configure()
+
         # Process Application Stages
         fullStageList = p.getArray("appStages")
 
@@ -98,7 +102,7 @@ class Pipeline:
         lr << "Loading stages"
         for item in fullStageList:
             lr << DataProperty("appStage", item)
-        lr << Log.endr
+        lr << LogRec.endr
 
         # filePolicy = open('pipeline.policy', 'r')
         # fullStageList = filePolicy.readlines()
@@ -126,7 +130,7 @@ class Pipeline:
         lr << "Loading event topics"
         for item in self.eventTopicList:
             lr << DataProperty("appStage", item)
-        lr << Log.endr
+        lr << LogRec.endr
 
         self.log.log(Log.INFO, "runID is " + self._runId)
 
@@ -224,14 +228,14 @@ class Pipeline:
 
             val = eventReceiver.receive(100)
             if ((val.get() != None) or ((self.executionMode == 1) and (count == 1))):
-                self.log(Log.INFO, "terminating slices")
+                LogRec(looplog, Log.INFO)  << "terminating slices "
                 self.cppPipeline.invokeShutdown()
                 break
             else:
                 count += 1
                 loopnum = DataProperty("loopNumber", count);
                 LogRec(looplog, Log.INFO)                        \
-                       << "starting stage loop number " + count  \
+                       << "starting stage loop number " + str(count)  \
                        << loopnum  << self.statstart << LogRec.endr
                 self.cppPipeline.invokeContinue()
                 self.startInitQueue()    # place an empty clipboard in the first Queue
@@ -254,7 +258,7 @@ class Pipeline:
            
                 else:
                     LogRec(looplog, Log.INFO)                        \
-                           << "starting stage loop number " + count  \
+                           << "starting stage loop number " + str(count)  \
                            << loopnum << self.statend << LogRec.endr
 
             self.log.log(Log.DEBUG, 'Retrieving finalClipboard for deletion')
@@ -325,9 +329,9 @@ class Pipeline:
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertyPtrType)
 
-        LogRec(log, Log.DEBUG) << 'Added DataPropertyPtrType to clipboard ' \
-                    << inputParamPropertyPtrType                            \
-                    << Log.endr
+        # LogRec(log, Log.DEBUG) << 'Added DataPropertyPtrType to clipboard ' \
+        #             << inputParamPropertyPtrType                            \
+        #            << LogRec.endr
 
         queue.addDataset(clipboard)
 

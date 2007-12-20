@@ -9,6 +9,7 @@ import lsst.mwi.policy as policy
 import lsst.mwi.exceptions as ex
 
 import lsst.mwi.data as datap
+from lsst.mwi.data import DataProperty
 
 import lsst.events as events
 
@@ -54,13 +55,6 @@ class Slice:
         self.universeSize = self.cppSlice.getUniverseSize()
         self._rank = self.cppSlice.getRank()
 
-        # set up the logger
-        events.EventLog.createDefaultLog(self._runId, self._rank);
-        self.log = Log(Log.getDefaultLog(), "dps.slice")
-        initlog = Log(self.log, "init")
-        LogRec(initlog, Log.INFO) << "Initializing Slice " + str(self._runId) \
-              << DataProperty("universeSize", self.universeSize)              \
-              << DataProperty("runId", self._runId) << endr
 
     def __del__(self):
         """
@@ -84,6 +78,17 @@ class Slice:
         else:
             self.activemqBroker = "lsst8.ncsa.uiuc.edu"   # default value
 
+        eventSystem = events.EventSystem.getDefaultEventSystem()
+        eventSystem.createTransmitter(self.activemqBroker, "LSSTLogging")
+        events.EventLog.createDefaultLog(self._runId, self._rank);
+
+        # set up the logger
+        self.log = Log(Log.getDefaultLog(), "dps.slice")
+        initlog = Log(self.log, "init")
+        LogRec(initlog, Log.INFO) << "Initializing Slice " + str(self._runId) \
+              << DataProperty("universeSize", self.universeSize)              \
+              << DataProperty("runId", self._runId) << LogRec.endr
+
         # Process Application Stages
         fullStageList = p.getArray("appStages")
 
@@ -91,7 +96,7 @@ class Slice:
         lr << "Loading stages"
         for item in fullStageList:
             lr << DataProperty("appStage", item)
-        lr << Log.endr
+        lr << LogRec.endr
 
         # filePolicy = open('pipeline.policy', 'r')
         # fullStageList = filePolicy.readlines()
@@ -118,7 +123,7 @@ class Slice:
         lr << "Loading event topics"
         for item in self.eventTopicList:
             lr << DataProperty("eventTopic", item)
-        lr << Log.endr
+        lr << LogRec.endr
 
         count = 0
         for item in self.eventTopicList:
@@ -130,7 +135,7 @@ class Slice:
         lr << "Loaded event topics"
         for item in self.eventTopicList:
             lr << DataProperty("eventTopic", item)
-        lr << Log.endr
+        lr << LogRec.endr
 
         # Process Stage Policies
         self.stagePolicyList = p.getArray("stagePolicies")
@@ -206,8 +211,8 @@ class Slice:
         while True:
             count += 1
             LogRec(looplog, Log.INFO) \
-                       << "starting stage loop number " + count \
-                       << DataProperty(count) << LogRec.endr
+                       << "starting stage loop number " + str(count) \
+                       << DataProperty("loopnum", count) << LogRec.endr
 
             self.cppSlice.invokeShutdownTest()
 
@@ -234,7 +239,7 @@ class Slice:
                 except:
                     # Log / Report the Exception
                     excInfo = sys.exc_info()
-                    proclog.log(Log.FAIL, "Rank "+ self._rank + \
+                    proclog.log(Log.FATAL, "Rank "+ str(self._rank) + \
                                           " threw uncaught exception: " + \
                                           str(excInfo));
 
@@ -248,7 +253,7 @@ class Slice:
                 self.cppSlice.invokeBarrier(iStage)
 
             else:
-                looplog.log("completed loop number " + count)
+                looplog.log(Log.INFO, "completed loop number " + str(count))
 
             self.log.log(Log.DEBUG, 'Retrieving finalClipboard for deletion')
 
@@ -305,10 +310,9 @@ class Slice:
         # It knows nothing of the contents. 
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertyPtrType)
-        LogRec(log, Log.DEBUG) << 'Added DataPropertyPtrType to clipboard ' \
-#                    + inputParamPropertyPtrType.toString('=',1)             \
-                    << inputParamPropertyPtrType                            \
-                    << Log.endr
+        # LogRec(log, Log.DEBUG) << 'Added DataPropertyPtrType to clipboard ' \
+        #             << inputParamPropertyPtrType                            \
+        #            << LogRec.endr
 
         queue.addDataset(clipboard)
 
