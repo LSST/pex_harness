@@ -110,7 +110,7 @@ class Pipeline:
             tokenList = astage.split('.')
             classString = tokenList.pop()
             classString = classString.strip()
-            self.stangeNames.append(classString)
+            self.stageNames.append(classString)
 
             package = ".".join(tokenList)
 
