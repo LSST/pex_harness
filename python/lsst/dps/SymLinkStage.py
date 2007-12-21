@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- python -*-
 
-"""
-SymLinkStage provides a generic mechanism for symbolically linking files or
-directories.
-"""
-
 import lsst.dps.Stage
 import lsst.dps.Utils
 import lsst.mwi.utils
@@ -15,13 +10,15 @@ from lsst.mwi.logging import Log
 
 class SymLinkStage (lsst.dps.Stage.Stage):
     """
-    A Stage that symlinks files or directories.
+    SymLinkStage provides a generic mechanism for symbolically linking files
+    or directories based on path templates from a Policy and data from the
+    clipboard or stage information.
     """
 
     def preprocess(self):
         """
-        Persist the requested data in the master process before any (subclass)
-        processing, if desired.
+        Perform the link in the master process.  Desirable if the link is to
+        be made once per pipeline execution.
         """
         self.activeClipboard = self.inputQueue.getNextDataset()
         if self._policy.exists('RunMode') and \
@@ -30,7 +27,8 @@ class SymLinkStage (lsst.dps.Stage.Stage):
         
     def process(self):
         """
-        Persist the requested data in the slice processes.
+        Perform the link in the slice processes.  Necessary if the link to be
+        made depends on the slice number.
         """
         self.activeClipboard = self.inputQueue.getNextDataset()
         self.outputQueue.addDataset(self.activeClipboard)
@@ -42,8 +40,8 @@ class SymLinkStage (lsst.dps.Stage.Stage):
         
     def postprocess(self):
         """
-        Persist the requested data in the master process after any (subclass)
-        processing, if desired.
+        Perform the link in the master process.  Functionally equivalent to
+        performing it in preprocess().
         """
         if self._policy.exists('RunMode') and \
             self._policy.getString('RunMode') == 'postprocess':
@@ -53,8 +51,9 @@ class SymLinkStage (lsst.dps.Stage.Stage):
  
     def _link(self):
         """
-        Persist the requested data in the master process before any
-        (subclass) processing, if desired.
+        Link one or more sourcePaths (from policy) to destPaths after
+        formatting each with additionalData derived from the clipboard and
+        stage information.
         """
         if not self._policy.exists('Links'):
             mylog = Log(Log.defaultLog(), "dps.SymLinkStage")
@@ -72,9 +71,9 @@ class SymLinkStage (lsst.dps.Stage.Stage):
             lsst.mwi.utils.Trace("dps.SymLinkStage", 3, \
                     "linking %s to %s" % (sourcePath, destPath))
             parentDir = os.path.dirname(destPath)
+            if parentDir and not os.path.exists(parentDir):
+                os.makedirs(parentDir)
             try:
-                if parentDir and not os.path.exists(parentDir):
-                    os.makedirs(parentDir)
                 os.symlink(sourcePath, destPath)
             except OSError, e:
                 # ignore "file exists" but re-raise anything else
