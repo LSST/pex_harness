@@ -3,7 +3,7 @@
 from lsst.dps.Queue import Queue
 from lsst.dps.Stage import Stage
 from lsst.dps.Clipboard import Clipboard
-from lsst.mwi.logging import Log, LogRec
+from lsst.mwi.logging import Log, LogRec, cout
 
 import lsst.mwi.policy as policy
 
@@ -86,9 +86,11 @@ class Pipeline:
 
 	eventSystem = events.EventSystem.getDefaultEventSystem()
 	eventSystem.createTransmitter(self.activemqBroker, "LSSTLogging")
-        events.EventLog.createDefaultLog(self._runId, -1);
+        events.EventLog.createDefaultLog(self._runId, -1)
 
         self.log = Log(Log.getDefaultLog(), "dps.pipeline")
+        self.log.addDestination(cout, Log.DEBUG);
+        
         initlog = Log(self.log, "init")
         LogRec(initlog, Log.INFO) << "Initializing Pipeline" \
               << DataProperty("universeSize", self.universeSize) << LogRec.endr
