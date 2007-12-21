@@ -9,7 +9,9 @@ import lsst.mwi.policy as policy
 import lsst.mwi.exceptions as ex
 
 import lsst.mwi.data as datap
-from lsst.mwi.data import DataProperty
+from lsst.mwi.data import *
+
+from lsst.mwi.exceptions import *
 
 import lsst.events as events
 
@@ -88,6 +90,12 @@ class Slice:
         LogRec(initlog, Log.INFO) << "Initializing Slice " + str(self._runId) \
               << DataProperty("universeSize", self.universeSize)              \
               << DataProperty("runId", self._runId) << LogRec.endr
+
+        # Check for eventTimeout
+        if (p.exists('eventTimeout')):
+            self.eventTimeout = p.getInt('eventTimeout')
+        else:
+            self.eventTimeout = 10000000   # default value
 
         # Process Application Stages
         fullStageList = p.getArray("appStages")
@@ -228,7 +236,7 @@ class Slice:
                 self.cppSlice.invokeBcast(iStage)
                 proclog.log(Log.INFO, "Starting process")
 
-                # Important try - except construct 
+                # Important try - except construct around stage process() 
                 try:
                     # If no error/exception has been flagged, run process()
                     # otherwise, simply pass along the Clipboard 
@@ -236,13 +244,49 @@ class Slice:
                         stageObject.process()
                     else:
                         self.transferClipboard(iStage)
+  
+                    ### raise LsstRuntime("Gregs terrible Runtime error: ouch")
+                except LsstExceptionStack,e:
+                    # except LsstRuntime,e:
+                    # Log / Report the Exception
+                    excInfo = sys.exc_info()
+                    proclog.log(Log.FATAL, "Rank "+ str(self._rank) + \
+                                          " threw uncaught exception: " + \
+                                          str(excInfo));
+                    # Acquire the entire exception stack
+                    stackPtr = e.getStack()
+                    lastPtr = e.getLast()
+
+                    stackString = stackPtr.toString("stack: ", 1)
+                    proclog.log(Log.FATAL, "Rank "+ str(self._rank) + \
+                                          " uncaught exception stack: " + \
+                                          stackString);
+
+                    # Get exception properties
+                    properties = lastPtr.getChildren()
+
+                    # print "lastptr  to STRING", lastPtr.toString('=', 1)
+                    index = 0
+                    for j in properties:
+                        print " index ", index
+                        if j.isNode():
+                            proclog.log(Log.FATAL, "Rank "+ str(self._rank) + " Index " + \
+                                str(index) +  " (branch): " + j.getName())
+                        else:
+                            proclog.log(Log.FATAL, "Rank "+ str(self._rank) + " Index " + \
+                                str(index) +  "  :" + j.getName())
+                        index=+ 1
+
+                    # Flag that an exception occurred to guide the framework to skip processing
+                    self.errorFlagged = 1
+                    # Post the cliphoard that the Stage failed to transfer to the output queue
+                    self.postOutputClipboard(iStage)
                 except:
                     # Log / Report the Exception
                     excInfo = sys.exc_info()
                     proclog.log(Log.FATAL, "Rank "+ str(self._rank) + \
                                           " threw uncaught exception: " + \
                                           str(excInfo));
-
                     # Flag that an exception occurred to guide the framework to skip processing
                     self.errorFlagged = 1
                     # Post the cliphoard that the Stage failed to transfer to the output queue
@@ -288,7 +332,7 @@ class Slice:
             x = events.EventReceiver(self.activemqBroker, sliceTopic)
 
             log.log(Log.INFO, 'waiting on receive...')
-            inputParamPropertyPtrType = x.receive(8000000)
+            inputParamPropertyPtrType = x.receive(self.eventTimeout)
 
             self.populateClipboard(inputParamPropertyPtrType, iStage, thisTopic)
 

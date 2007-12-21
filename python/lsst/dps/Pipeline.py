@@ -97,6 +97,12 @@ class Pipeline:
 
         # cppPipeline.configure()
 
+        # Check for eventTimeout
+        if (p.exists('eventTimeout')):
+            self.eventTimeout = p.getInt('eventTimeout')
+        else:
+            self.eventTimeout = 10000000   # default value
+
         # Process Application Stages
         fullStageList = p.getArray("appStages")
 
@@ -303,7 +309,7 @@ class Pipeline:
 
             log.log(Log.INFO, "waiting on receive...")
 
-            inputParamPropertyPtrType = eventReceiver.receive(800000)
+            inputParamPropertyPtrType = eventReceiver.receive(self.eventTimeout)
 
             if (inputParamPropertyPtrType.get() != None):
                 log.log(Log.INFO, "received event; sending it to Slices")

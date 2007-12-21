@@ -6,7 +6,7 @@ pwd=`pwd`
 # echo LSST_POLICY_DIR ${LSST_POLICY_DIR} 
 
 # Command line arguments 
-# echo $@  echo $#
+echo $@  echo $#
 if [ "$#" != 2 ]; then
     echo "------------------------------------------"
     echo "Usage:  run.sh <policy-file-name> <runId>"

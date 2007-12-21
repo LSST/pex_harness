@@ -43,7 +43,6 @@ public:
     ~Slice(); // destructor
 
     void initialize();
-    void start();
     void invokeBcast(int iStage);
     void invokeBarrier(int iStage);
     void invokeShutdownTest();
@@ -57,7 +56,6 @@ private:
     void initializeLogger();
     void initializeMPI();
     void configureSlice();
-    void initializeStages();
 
     int _pid;
     int _rank;
@@ -68,8 +66,6 @@ private:
     int nStages;
     int universeSize;
     int bufferSize;
-    FILE *Fp_logger;
-    char logfile[50];
 
 };
 
