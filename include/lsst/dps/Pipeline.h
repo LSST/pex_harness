@@ -24,7 +24,7 @@ using namespace std;
 
 namespace lsst {
 
-    namespace dps {
+namespace dps {
 
 typedef vector<Stage> StageVector;   //  Stage& 
 typedef vector<Queue*> QueueVector; 
@@ -89,12 +89,10 @@ private:
     int rank;
     int size;
     int universeSize;
-    FILE *Fp_logger;
-    char logfile[50];
 
 };
 
-    } // namespace dps 
+} // namespace dps 
 
 } // namespace lsst
 
