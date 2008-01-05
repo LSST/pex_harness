@@ -3,15 +3,15 @@
 
 import lsst.mwi.data
 import lsst.mwi.utils
+import lsst.mwi.exceptions
 
 def getDPValue(dp):
+    """
+    Extract a Python value from a DataProperty of unknown type by trying each
+    type in turn until we don't get an exception.
+    """
     try:
         value = dp.getValueString()
-        return value
-    except:
-        pass
-    try:
-        value = dp.getValueInt64()
         return value
     except:
         pass
@@ -21,7 +21,7 @@ def getDPValue(dp):
     except:
         pass
     try:
-        value = dp.getValueFloat()
+        value = dp.getValueDouble()
         return value
     except:
         pass
@@ -30,11 +30,23 @@ def getDPValue(dp):
         return value
     except:
         pass
-    raise Runtime, 'Unknown DataProperty value type in dps.Utils'
+    try:
+        value = dp.getValueInt64()
+        return value
+    except:
+        pass
+    try:
+        value = dp.getValueFloat()
+        return value
+    except:
+        pass
+    raise lsst.mwi.exceptions.LsstRuntime, 'Unknown DataProperty value type'
 
 def createAdditionalData(stage, stagePolicy, clipboard):
     """
     Extract additionalData values, as specified by policy, from the clipboard.
+    Also create predefined keys for runId, sliceId, ccdId, and universeSize.
+    This routine effectively performs slice-to-CCD mappings in DC2.
     """
 
     dataProperty = \
@@ -59,7 +71,7 @@ def createAdditionalData(stage, stagePolicy, clipboard):
             lsst.mwi.utils.Trace("dps.Utils.createAdditionalData", 3, \
                     "AdditionalData item: " + pair)
 
-    # Add the predefined runId, sliceId, and universeSize keys
+    # Add the predefined runId, sliceId, ccdId, and universeSize keys
 
     leaf = lsst.mwi.data.DataProperty('runId', stage.getRun())
     dataProperty.addProperty(leaf)
@@ -80,6 +92,9 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     return dataProperty
 
 def dataPropertyToDict(dataProperty):
+    """
+    Convert a DataProperty to a Python dictionary.
+    """
     dict = {}
     for i in dataProperty.getChildren():
         dict[i.getName()] = getDPValue(i)
