@@ -85,7 +85,7 @@ class OutputStage (lsst.dps.Stage.Stage):
     def __init__(self, stageId = -1, policy = None):
 
         lsst.dps.Stage.Stage.__init__(self, stageId, policy)
-        self.log = Log(Log.getDefaultLog(), "dps.iostage.input")
+        self.log = Log(Log.getDefaultLog(), "dps.iostage.output")
 
     def preprocess(self):
         """
