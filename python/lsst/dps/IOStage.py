@@ -82,6 +82,11 @@ class OutputStage (lsst.dps.Stage.Stage):
     A Stage that persists data.
     """
 
+    def __init__(self, stageId = -1, policy = None):
+
+        lsst.dps.Stage.Stage.__init__(self, stageId, policy)
+        self.log = Log(Log.getDefaultLog(), "dps.iostage.input")
+
     def preprocess(self):
         """
         Persist the requested data in the master process before any
@@ -136,8 +141,7 @@ class OutputStage (lsst.dps.Stage.Stage):
             if not self._policy.exists('OutputItems'):
                 # Propagate the clipboard to the output queue, but otherwise
                 # do nothing.
-                mylog = Log(Log.defaultLog(), "IOStage")
-                mylog.log(Log.WARN, "No OutputItems found")
+                self.log.log(Log.WARN, "No OutputItems found")
                 self.outputQueue.addDataset(clipboard)
                 continue
 
@@ -194,6 +198,8 @@ class OutputStage (lsst.dps.Stage.Stage):
                     storageName = policy.getString('Storage')
                     location = policy.getString('Location')
                     location = massage(location, additionalData)
+                    self.log.log(Log.INFO,
+                                 "persisting %s as %s" % (item, location));
 
                     locProp.deleteAll(storageName)
                     locProp.addProperty( \
@@ -220,6 +226,11 @@ class InputStage (lsst.dps.Stage.Stage):
     """
     A Stage that retrieves data.
     """
+
+    def __init__(self, stageId = -1, policy = None):
+
+        lsst.dps.Stage.Stage.__init__(self, stageId, policy)
+        self.log = Log(Log.getDefaultLog(), "dps.iostage.input")
 
     def preprocess(self):
         """
@@ -276,8 +287,7 @@ class InputStage (lsst.dps.Stage.Stage):
             if not self._policy.exists('InputItems'):
                 # Propagate the clipboard to the output queue, but otherwise
                 # do nothing.
-                mylog = Log(Log.defaultLog(), "IOStage")
-                mylog.log(Log.WARN, "No InputItems found")
+                self.log.log(Log.WARN, "No InputItems found")
                 self.outputQueue.addDataset(clipboard)
                 continue
 
@@ -334,6 +344,8 @@ class InputStage (lsst.dps.Stage.Stage):
                     storageName = policy.getString('Storage')
                     location = policy.getString('Location')
                     location = massage(location, additionalData)
+                    self.log.log(Log.INFO,
+                                 "loading %s as %s" % (location, item));
                     logLoc = lsst.mwi.persistence.LogicalLocation(location)
                     storage = persistence.getRetrieveStorage(storageName, \
                             logLoc)
