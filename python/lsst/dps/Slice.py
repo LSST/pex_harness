@@ -48,6 +48,7 @@ class Slice:
         self.stagePolicyList = []
         self.sliceEventTopicList = []
         self.eventTopicList = []
+        self.eventReceiverList = []
         self.shutdownTopic = "triggerShutdownEvent_slice"
         import slice
         self.cppSlice = slice.Slice()
@@ -146,6 +147,12 @@ class Slice:
         for item in self.eventTopicList:
             lr << DataProperty("eventTopic", item)
         lr << LogRec.endr
+
+        # Make a List of corresponding eventReceivers for the eventTopics
+        # eventReceiverList    
+        for topic in self.sliceEventTopicList:
+            eventReceiver = events.EventReceiver(self.activemqBroker, topic)
+            self.eventReceiverList.append(eventReceiver)
 
         # Process Stage Policies
         self.stagePolicyList = p.getArray("stagePolicies")
@@ -321,7 +328,8 @@ class Slice:
 
         if (thisTopic != "None"):
             sliceTopic = self.sliceEventTopicList[iStage-1]
-            x = events.EventReceiver(self.activemqBroker, sliceTopic)
+            # x = events.EventReceiver(self.activemqBroker, sliceTopic)
+            x  = self.eventReceiverList[iStage-1]
 
             log.log(Log.INFO, 'waiting on receive...')
             inputParamPropertyPtrType = x.receive(self.eventTimeout)
