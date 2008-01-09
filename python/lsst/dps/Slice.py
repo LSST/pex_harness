@@ -17,6 +17,7 @@ import lsst.events as events
 
 import os
 import sys
+import traceback
 
 
 """
@@ -86,6 +87,7 @@ class Slice:
 
         # set up the logger
         self.log = Log(Log.getDefaultLog(), "dps.slice")
+        self.log.setThreshold(Log.DEBUG)
         initlog = Log(self.log, "init")
         LogRec(initlog, Log.INFO) << "Initializing Slice " + str(self._runId) \
               << DataProperty("universeSize", self.universeSize)              \
@@ -247,46 +249,36 @@ class Slice:
   
                     ### raise LsstRuntime("Gregs terrible Runtime error: ouch")
                 except LsstExceptionStack,e:
-                    # except LsstRuntime,e:
+
                     # Log / Report the Exception
-                    excInfo = sys.exc_info()
-                    proclog.log(Log.FATAL, "Rank "+ str(self._rank) + \
-                                          " threw uncaught exception: " + \
-                                          str(excInfo));
+                    tb = traceback.format_exception(sys.exc_info()[0],
+                                        sys.exc_info()[1],
+                                        sys.exc_info()[2])
+                    proclog.log(Log.FATAL, tb[-1].strip())
+                    proclog.log(Log.WARN, "".join(tb[0:-1]))
+
                     # Acquire the entire exception stack
                     stackPtr = e.getStack()
                     lastPtr = e.getLast()
 
                     stackString = stackPtr.toString("stack: ", 1)
-                    proclog.log(Log.FATAL, "Rank "+ str(self._rank) + \
-                                          " uncaught exception stack: " + \
-                                          stackString);
-
-                    # Get exception properties
-                    properties = lastPtr.getChildren()
-
-                    # print "lastptr  to STRING", lastPtr.toString('=', 1)
-                    index = 0
-                    for j in properties:
-                        print " index ", index
-                        if j.isNode():
-                            proclog.log(Log.FATAL, "Rank "+ str(self._rank) + " Index " + \
-                                str(index) +  " (branch): " + j.getName())
-                        else:
-                            proclog.log(Log.FATAL, "Rank "+ str(self._rank) + " Index " + \
-                                str(index) +  "  :" + j.getName())
-                        index=+ 1
+                    lr = LogRec(proclog, Log.WARN)
+                    lr << "Exception stack: " + stackString \
+                       << lastPtr.get() << LogRec.endr
 
                     # Flag that an exception occurred to guide the framework to skip processing
                     self.errorFlagged = 1
                     # Post the cliphoard that the Stage failed to transfer to the output queue
                     self.postOutputClipboard(iStage)
+
                 except:
                     # Log / Report the Exception
-                    excInfo = sys.exc_info()
-                    proclog.log(Log.FATAL, "Rank "+ str(self._rank) + \
-                                          " threw uncaught exception: " + \
-                                          str(excInfo));
+                    tb = traceback.format_exception(sys.exc_info()[0],
+                                        sys.exc_info()[1],
+                                        sys.exc_info()[2])
+                    proclog.log(Log.FATAL, tb[-1].strip())
+                    proclog.log(Log.WARN, "".join(tb[0:-1]))
+
                     # Flag that an exception occurred to guide the framework to skip processing
                     self.errorFlagged = 1
                     # Post the cliphoard that the Stage failed to transfer to the output queue
