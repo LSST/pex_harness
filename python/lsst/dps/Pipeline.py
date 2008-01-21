@@ -6,13 +6,18 @@ from lsst.dps.Clipboard import Clipboard
 from lsst.mwi.logging import Log, LogRec, cout
 
 import lsst.mwi.policy as policy
+import lsst.mwi.exceptions as ex
 
 import lsst.mwi.data as datap
-from lsst.mwi.data import DataProperty
+from lsst.mwi.data import *
+
+from lsst.mwi.exceptions import *
 
 import lsst.events as events
 
 import os
+import sys
+import traceback
 
 from cStringIO import StringIO
 
@@ -248,21 +253,112 @@ class Pipeline:
                 self.cppPipeline.invokeContinue()
                 self.startInitQueue()    # place an empty clipboard in the first Queue
 
+                self.errorFlagged = 0
                 for iStage in range(1, self.nStages+1):
 
                     stage = self.stageList[iStage-1]
 
                     self.handleEvents(iStage)
 
-                    prelog.log(Log.INFO, "Starting preprocess", self.statstart)
-                    stage.preprocess()
-                    prelog.log(Log.INFO, "Ending preprocess", self.statend)
+                    # Important try - except construct around stage preprocess() 
+                    try:
+                        # If no error/exception has been flagged, run preprocess()
+                        # otherwise, simply pass along the Clipboard 
+                        if (self.errorFlagged == 0):
+                            prelog.log(Log.INFO, "Starting preprocess", self.statstart)
+                            stage.preprocess()
+                            prelog.log(Log.INFO, "Ending preprocess", self.statend)
+                        else:
+                            self.transferClipboard(iStage)
+
+                    except LsstExceptionStack,e:
+
+                        # Log / Report the Exception
+                        tb = traceback.format_exception(sys.exc_info()[0],
+                                        sys.exc_info()[1],
+                                        sys.exc_info()[2])
+                        prelog.log(Log.FATAL, tb[-1].strip())
+                        prelog.log(Log.WARN, "".join(tb[0:-1]))
+        
+                        # Acquire the entire exception stack
+                        stackPtr = e.getStack()
+                        lastPtr = e.getLast()
+        
+                        stackString = stackPtr.toString("stack: ", 1)
+                        lr = LogRec(prelog, Log.WARN)
+                        lr << "Exception stack: " + stackString \
+                           << lastPtr.get() << LogRec.endr
+
+                        # Flag that an exception occurred to guide the framework to skip processing
+                        self.errorFlagged = 1
+                        # Post the cliphoard that the Stage failed to transfer to the output queue
+                        self.postOutputClipboard(iStage)
+
+                    except:
+                        # Log / Report the Exception
+                        tb = traceback.format_exception(sys.exc_info()[0],
+                                        sys.exc_info()[1],
+                                        sys.exc_info()[2])
+                        prelog.log(Log.FATAL, tb[-1].strip())
+                        prelog.log(Log.WARN, "".join(tb[0:-1]))
+
+                        # Flag that an exception occurred to guide the framework to skip processing
+                        self.errorFlagged = 1
+                        # Post the cliphoard that the Stage failed to transfer to the output queue
+                        self.postOutputClipboard(iStage)
+
+                    # Done try - except around stage preprocess 
 
                     self.cppPipeline.invokeProcess(iStage)
 
-                    postlog.log(Log.INFO,"Starting postprocess",self.statstart)
-                    stage.postprocess()
-                    postlog.log(Log.INFO, "Ending postprocess", self.statend)
+                    # Important try - except construct around stage postprocess() 
+                    try:
+                        # If no error/exception has been flagged, run postprocess()
+                        # otherwise, simply pass along the Clipboard 
+                        if (self.errorFlagged == 0):
+                            postlog.log(Log.INFO,"Starting postprocess",self.statstart)
+                            stage.postprocess()
+                            postlog.log(Log.INFO, "Ending postprocess", self.statend)
+                        else:
+                            self.transferClipboard(iStage)
+
+                    except LsstExceptionStack,e:
+
+                        # Log / Report the Exception
+                        tb = traceback.format_exception(sys.exc_info()[0],
+                                        sys.exc_info()[1],
+                                        sys.exc_info()[2])
+                        postlog.log(Log.FATAL, tb[-1].strip())
+                        postlog.log(Log.WARN, "".join(tb[0:-1]))
+        
+                        # Acquire the entire exception stack
+                        stackPtr = e.getStack()
+                        lastPtr = e.getLast()
+        
+                        stackString = stackPtr.toString("stack: ", 1)
+                        lr = LogRec(postlog, Log.WARN)
+                        lr << "Exception stack: " + stackString \
+                           << lastPtr.get() << LogRec.endr
+
+                        # Flag that an exception occurred to guide the framework to skip processing
+                        self.errorFlagged = 1
+                        # Post the cliphoard that the Stage failed to transfer to the output queue
+                        self.postOutputClipboard(iStage)
+
+                    except:
+                        # Log / Report the Exception
+                        tb = traceback.format_exception(sys.exc_info()[0],
+                                        sys.exc_info()[1],
+                                        sys.exc_info()[2])
+                        postlog.log(Log.FATAL, tb[-1].strip())
+                        postlog.log(Log.WARN, "".join(tb[0:-1]))
+
+                        # Flag that an exception occurred to guide the framework to skip processing
+                        self.errorFlagged = 1
+                        # Post the cliphoard that the Stage failed to transfer to the output queue
+                        self.postOutputClipboard(iStage)
+
+                    # Done try - except around stage preprocess 
            
                 else:
                     LogRec(looplog, Log.INFO)                        \
@@ -342,6 +438,25 @@ class Pipeline:
         #            << LogRec.endr
 
         queue.addDataset(clipboard)
+
+    def postOutputClipboard(self, iStage):
+        """
+        Place an empty Clipboard in the output queue for designated stage
+        """
+        clipboard = Clipboard()
+        queue2 = self.queueList[iStage]
+        queue2.addDataset(clipboard)
+
+    def transferClipboard(self, iStage):
+        """
+        Move the Clipboard from the input queue to output queue for the designated stage
+        """
+        # clipboard = Clipboard()
+        queue1 = self.queueList[iStage-1]
+        queue2 = self.queueList[iStage]
+        clipboard = queue1.getNextDataset()
+        if (clipboard != None):
+            queue2.addDataset(clipboard)
 
 # print __doc__
 

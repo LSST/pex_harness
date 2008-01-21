@@ -33,7 +33,13 @@ class Queue:
         the Clipboard from the dataset list in the process (pop).
         This method comprises the InputQueue interface
         """
-        clipboard = self.datasetList.pop(0)
+        if not self.datasetList:
+            # Code here for the case where the list is empty
+            clipboard = None
+        else:
+            # Code here for the case where the list is NOT empty
+            clipboard = self.datasetList.pop(0)
+
         return clipboard
 
     #------------------------------------------------------------------------
