@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
-# event generator
-# acts as orchestrator for DC2
+# event generator for DC2
 
 import lsst.events as events
 import lsst.mwi.data as datap
@@ -27,6 +26,10 @@ if __name__ == "__main__":
         dec = datap.DataProperty("FOVDec", float( d[2] ))
         filter = datap.DataProperty("filterName", d[3] )
         visitTime = datap.DataProperty("visitTime", float( d[4] ))
+        dateObs = datap.DataProperty("dateObs", d[5] )
+        airMass = datap.DataProperty("airMass", float( d[6] ))
+        exposureTime = datap.DataProperty("exposureTime", float( d[7] ))
+        equinox = datap.DataProperty("equinox", float( d[8] ))
 
         root.addProperty(exposureId)
         root.addProperty(visitId)
@@ -34,7 +37,10 @@ if __name__ == "__main__":
         root.addProperty(dec)
         root.addProperty(filter)
         root.addProperty(visitTime)
+        root.addProperty(dateObs)
+        root.addProperty(airMass)
+        root.addProperty(exposureTime)
+        root.addProperty(equinox)
 
-        #print exposure, ra, dec, filter, float( d[4] )
         x.publish("log", root)
 
