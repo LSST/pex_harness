@@ -12,7 +12,7 @@ pass to the persistence framework.  This data comes from the clipboard passed
 to the stage; DataProperty names of the additional data items to be retrieved
 are given in the AdditionalData sub-Policy.
 """
-
+import sys
 import lsst.dps.Stage
 import lsst.dps.Utils
 import lsst.mwi.data
@@ -33,7 +33,7 @@ def massage(location, additionalData):
     if location.find('%{') == -1:
         lsst.mwi.utils.Trace("dps.IOStage", 3, "\tNo substitutions")
         return location
-    vars = re.compile(r'\%\{(\w+)(\+1)?(=([^}]+))?\}')
+    vars = re.compile(r'\%\{(\w+)(\+\d+)?(=([^}]+))?\}')
 
     def replace(match):
         """
@@ -43,6 +43,15 @@ def massage(location, additionalData):
         """
         dp = additionalData.findUnique(match.group(1))
 	if dp:
+            if match.group(1) == "ccdId" and match.group(2):
+                try:
+                    ival = int(dp.getValueString())
+                    incr = int(match.group(2)[1:])
+                    ival += incr
+                    return "%02d" % ival
+                except:
+                    pass
+                
             try:
                 value = dp.getValueString()
                 return value
@@ -51,14 +60,22 @@ def massage(location, additionalData):
             try:
                 value = dp.getValueInt64()
                 if match.group(2):
-                    value += 1
+                    try:
+                        incr = int(match.group(2)[1:])
+                        value += incr
+                    except:
+                        pass
                 return repr(value)
             except:
                 pass
             try:
                 value = dp.getValueInt()
                 if match.group(2):
-                    value += 1
+                    try:
+                        incr = int(match.group(2)[1:])
+                        value += incr
+                    except:
+                        pass
                 return repr(value)
             except:
                 pass
@@ -70,7 +87,8 @@ def massage(location, additionalData):
         if match.group(4):
             return match.group(4)
         else:
-            raise Runtime, 'Unknown substitution in IOStage'
+            raise RuntimeError, 'Unknown substitution in IOStage: ' + \
+                  match.group(0)
 
     newLoc = vars.sub(replace, location)
     lsst.mwi.utils.Trace("dps.IOStage", 3, "\tnew location: " + newLoc)
