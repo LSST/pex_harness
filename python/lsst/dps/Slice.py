@@ -268,7 +268,7 @@ class Slice:
                     stackPtr = e.getStack()
                     lastPtr = e.getLast()
 
-                    stackString = stackPtr.toString("stack: ", 1)
+                    stackString = stackPtr.toString("", True)
                     lr = LogRec(proclog, Log.WARN)
                     lr << "Exception stack: " + stackString \
                        << lastPtr.get() << LogRec.endr
