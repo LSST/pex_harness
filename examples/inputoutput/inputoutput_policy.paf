@@ -1,0 +1,18 @@
+# inputoutput_policy.paf
+#
+# This policy file executes the Pipeline within a scenario where it peforms 
+# a simple test of IOStage.InputStage
+# It initially blocks to receive an event of topic triggerIpdpEvent, which we 
+# take to be a simple event carrying a "visitId" which is a string. 
+# The value received in the event is then used by point to an appropriate data file
+# In this example the data is retrieved as   PythonType: "lsst.mwi.data.DataProperty"
+# with  Storage: "BoostStorage", as opposed to actual FitsStorage. 
+# 
+# The required event is issued with the script triggerIpdpEventTransmit.py 
+#
+activemqBroker: "lsst4.ncsa.uiuc.edu" 
+shutdownTopic: "triggerShutdownEvent" 
+appStages: "lsst.dps.IOStage.InputStage" "lsst.dpsexamples.ipdp.IPDPStage"  
+eventTopics: "triggerIpdpEvent" "None" 
+stagePolicies: "policy/inputipdp.policy" "None" 
+
