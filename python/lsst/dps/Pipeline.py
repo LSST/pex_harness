@@ -94,6 +94,7 @@ class Pipeline:
         events.EventLog.createDefaultLog(self._runId, -1)
 
         self.log = Log(Log.getDefaultLog(), "dps.pipeline")
+        self.log.setThreshold(Log.DEBUG)
         self.log.addDestination(cout, Log.DEBUG);
         
         initlog = Log(self.log, "init")
