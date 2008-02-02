@@ -213,14 +213,14 @@ class Pipeline:
         Place an empty Clipboard in the first Queue
         """
         clipboard = Clipboard()
-        self.clipboardList.append(clipboard)
+        #self.clipboardList.append(clipboard)
 
-        print "Python Pipeline Clipboard check \n"
-        acount=0
-        for clip in self.clipboardList:
-            acount+=1
-            print acount
-            print str(clip)
+        #print "Python Pipeline Clipboard check \n"
+        #acount=0
+        #for clip in self.clipboardList:
+        #    acount+=1
+        #    print acount
+        #    print str(clip)
 
         queue1 = self.queueList[0]
         queue1.addDataset(clipboard)
