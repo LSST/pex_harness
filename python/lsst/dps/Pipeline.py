@@ -360,9 +360,13 @@ class Pipeline:
                         self.postOutputClipboard(iStage)
 
                     # Done try - except around stage preprocess 
-
-                # Done iStage for loop
            
+                else:
+                    # Done iStage for loop
+                    LogRec(looplog, Log.INFO)                        \
+                           << "ending stage loop number " + str(count)  \
+                           << loopnum << self.statend << LogRec.endr
+
             # Uncomment to print a list of Citizens after each visit 
             # print datap.Citizen_census(0,0), "Objects:"
             # print datap.Citizen_census(datap.cout,0)
