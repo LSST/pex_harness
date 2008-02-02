@@ -48,7 +48,7 @@ def massage(location, additionalData):
                     ival = int(dp.getValueString())
                     incr = int(match.group(2)[1:])
                     ival += incr
-                    return "%02d" % ival
+                    return "%03d" % ival
                 except:
                     pass
                 
