@@ -365,10 +365,16 @@ class Pipeline:
                            << "starting stage loop number " + str(count)  \
                            << loopnum << self.statend << LogRec.endr
 
+            # Uncomment to print a list of Citizens after each visit 
+            # print datap.Citizen_census(0,0), "Objects:"
+            # print datap.Citizen_census(datap.cout,0)
+
             self.log.log(Log.DEBUG, 'Retrieving finalClipboard for deletion')
             finalQueue = self.queueList[self.nStages]
             finalClipboard = finalQueue.getNextDataset()
             self.log.log(Log.DEBUG, "deleting final clipboard")
+            # delete entries on the clipboard
+            finalClipboard.close()
             del finalClipboard
 
         self.log.log(Log.INFO, "Shutting down pipeline");

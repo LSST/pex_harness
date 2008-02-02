@@ -306,7 +306,8 @@ class Slice:
                 finalQueue = self.queueList[self.nStages]
                 finalClipboard = finalQueue.getNextDataset()
                 self.log.log(Log.DEBUG, "deleting final clipboard")
-                finalClipboard.__del__()
+                finalClipboard.close()
+                del finalClipboard
 
         self.log.log(Log.INFO, "Shutting down pipeline");
 
