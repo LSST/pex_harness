@@ -84,11 +84,8 @@ def createAdditionalData(stage, stagePolicy, clipboard):
         formula = re.sub(r'@slice', r'stage.getRank()', formula)
         ccdId = eval(formula)
     else:
-        if stagePolicy.exists('CcdOffset'):
-            incr = stagePolicy.get('CcdOffset')
-        else:
-            incr = 1
-        ccdId = "%03d" % (stage.getRank() + incr)
+        incr = stagePolicy.get('CcdOffset', 0)
+        ccdId = "%03d" % (stage.getRank() + 1 + incr)
     leaf = lsst.mwi.data.DataProperty('ccdId', ccdId)
     dataProperty.addProperty(leaf)
 
