@@ -5,7 +5,7 @@
 # It initially blocks to receive an event of topic triggerIpdpEvent, which we 
 # take to be a simple event carrying a "visitId" which is a string. 
 # The value received in the event is then used by point to an appropriate data file
-# In this example the data is retrieved as   PythonType: "lsst.mwi.data.DataProperty"
+# In this example the data is retrieved as   PythonType: "lsst.daf.base.DataProperty"
 # with  Storage: "BoostStorage", as opposed to actual FitsStorage. 
 # 
 # The required event is issued with the script triggerIpdpEventTransmit.py 

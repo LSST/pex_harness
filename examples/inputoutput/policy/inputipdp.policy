@@ -3,7 +3,7 @@ RunMode: "process"
 InputItems: {
     inputImage: {
         Type: "DataProperty"
-        PythonType: "lsst.mwi.data.DataProperty"
+        PythonType: "lsst.daf.base.DataProperty"
         StoragePolicy: {
             Storage: "BoostStorage"
             Location: "inputImage.%{visitId}.%{sliceId}"

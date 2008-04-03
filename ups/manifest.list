@@ -1,4 +1,6 @@
->merge: events
->merge: mwi
+>merge: daf_base
+>merge: daf_persistence
+>merge: pex_logging
+>merge: ctrl_events
 >merge: mpich2
 >self

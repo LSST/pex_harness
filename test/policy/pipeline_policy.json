@@ -10,7 +10,7 @@
 #
 
 {
-    "appStages":[ "lsst.dps.IOStage.InputStage", "lsst.dps.test.IPDPExampleStage.IPDPStage" ] , 
+    "appStages":[ "lsst.pex.harness.IOStage.InputStage", "lsst.pex.harness.test.IPDPExampleStage.IPDPStage" ] , 
     "eventTopics":[ "IpdpImageEvent", "None" ],
     "stagePolicies":[ "policy/inputipdp.policy", "None" ]
 }

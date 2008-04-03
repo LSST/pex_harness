@@ -1,7 +1,7 @@
 // -*- lsst-c++ -*-
 /** \file Stage.cc
   *
-  * \ingroup dps
+  * \ingroup harness
   *
   * \brief   Stage provides a super class for a particular ApplicationStage to inherit.
   *
@@ -16,9 +16,9 @@
   * \author  Greg Daues, NCSA
   */
 
-#include "lsst/dps/Stage.h"
+#include "lsst/pex/harness/Stage.h"
 
-using namespace lsst::dps;
+using namespace lsst::pex::harness;
 
 Stage::Stage() {
 }

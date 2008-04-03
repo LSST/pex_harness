@@ -1,7 +1,7 @@
 // -*- lsst-c++ -*-
 /** \file Slice.cc
   *
-  * \ingroup dps
+  * \ingroup harness
   *
   * \brief   Slice represents a single parallel worker program.
   *
@@ -12,9 +12,9 @@
   * \author  Greg Daues, NCSA
   */
 
-#include "lsst/dps/Slice.h"
+#include "lsst/pex/harness/Slice.h"
 
-using namespace lsst::dps;
+using namespace lsst::pex::harness;
 
 Slice::Slice() {
 }

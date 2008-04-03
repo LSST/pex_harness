@@ -2,8 +2,8 @@
 
 # event generator for DC2
 
-import lsst.events as events
-import lsst.mwi.data as datap
+import lsst.ctrl.events as events
+import lsst.daf.base as datap
 
 import sys
 
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     for image in sys.stdin:
         d = image.split()
         
-        root = datap.SupportFactory.createPropertyNode("root")
+        root = datap.DataProperty.createPropertyNode("root")
         exposureId = datap.DataProperty("exposureId", int( d[0] ))
         visitId = datap.DataProperty("visitId", int( d[0] ))
         ra = datap.DataProperty("FOVRA", float( d[1] ))

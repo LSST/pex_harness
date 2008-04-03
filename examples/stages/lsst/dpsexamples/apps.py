@@ -4,9 +4,9 @@
 Test Application Stages
 """
 
-from lsst.dps.Stage import Stage
+from lsst.pex.harness.Stage import Stage
 
-import lsst.mwi.data as datap
+import lsst.daf.base as datap
 
 class App1Stage(Stage):
 
@@ -20,7 +20,7 @@ class App1Stage(Stage):
 
         self.activeClipboard = self.inputQueue.getNextDataset()
 
-        root = datap.SupportFactory.createPropertyNode("root");
+        root = datap.DataProperty.createPropertyNode("root");
 
         visitId  = datap.DataProperty("visitId", 1)
         FOVRa    = datap.DataProperty("FOVRa", 273.48066298343)

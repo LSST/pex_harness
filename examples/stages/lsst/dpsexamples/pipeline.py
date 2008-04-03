@@ -4,9 +4,9 @@
 Test Application Stages for proto association pipeline
 """
 
-from lsst.dps.Stage import Stage
+from lsst.pex.harness.Stage import Stage
 
-import lsst.mwi.data as datap
+import lsst.daf.base as datap
 
 class LoadStage(Stage):
 

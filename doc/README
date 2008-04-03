@@ -3,12 +3,12 @@ LSST DPS README
 Greg Daues    NCSA 
 Sept 07, 2007 
 
-Running the MPI Pipeline Harness in lsst.dps 
+Running the MPI Pipeline Harness in lsst.pex.harness 
 r2677 (trunk) Pipeline Harness 
 
-1. Build lsst.dps
+1. Build lsst.pex.harness
 
-    First build the dps/ with scons and run the appropriate declare and 
+    First build the harness/ with scons and run the appropriate declare and 
 setup with eups. After the build there will be a working directory bin/ 
 that contains
 
@@ -69,16 +69,16 @@ Clipboards of the Pipeline and the Slices.
 
 
 
-r2328 (trunk) Running the MPI Pipeline Harness in lsst.dps  (Old) 
+r2328 (trunk) Running the MPI Pipeline Harness in lsst.pex.harness  (Old) 
 -----------------------------------------------------------------------
 
 The Pipeline harness currently runs in a single demo mode
 (as Policies have not yet been configured to allow for more 
 flexibility).  The steps for running the demo are :
 
- 1. Build dps 
+ 1. Build harness 
 
-    Build the dps/ trunk with scons and run the appropriate declare and 
+    Build the harness/ trunk with scons and run the appropriate declare and 
 setup with eups. After the build there will be a working directory bin/ 
 that contains
 
@@ -112,13 +112,13 @@ nslices=3
    The current "pipeline.policy" does not follow the policy standard.
 At this time one simply enters a list of application stages with 
 full package name and classname. The default list contains test 
-application stages distributed with the lsst.dps package: 
+application stages distributed with the lsst.pex.harness package: 
 
-lsst.dps.test.A1Stage.App1Stage
-lsst.dps.test.A2Stage.App2Stage
-lsst.dps.test.A3Stage.App3Stage
-lsst.dps.test.A4Stage.App4Stage
-lsst.dps.test.A5Stage.App5Stage
+lsst.pex.harness.test.A1Stage.App1Stage
+lsst.pex.harness.test.A2Stage.App2Stage
+lsst.pex.harness.test.A3Stage.App3Stage
+lsst.pex.harness.test.A4Stage.App4Stage
+lsst.pex.harness.test.A5Stage.App5Stage
 
 5.  Execute  run.sh 
 

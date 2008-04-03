@@ -1,14 +1,14 @@
 #! /usr/bin/env python
 
-import lsst.mwi.data as datap
-import lsst.events as events
+import lsst.daf.base as datap
+import lsst.ctrl.events as events
 import time
 
 if __name__ == "__main__":
     print "starting...\n"
     externalEventTransmitter = events.EventTransmitter("lsst8.ncsa.uiuc.edu", "triggerIpdpEvent")
 
-    root = datap.SupportFactory.createPropertyNode("root");
+    root = datap.DataProperty.createPropertyNode("root");
 
     VISITID = datap.DataProperty("visitid", "fov391")
 

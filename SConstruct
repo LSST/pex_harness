@@ -1,15 +1,19 @@
 import os, glob, os.path
 import lsst.SConsUtils as scons
 
-env = scons.makeEnv("dps",
+env = scons.makeEnv("pex_harness",
                     r"$HeadURL$",
                     [["python", "Python.h"],
                      ["boost", "boost/archive/text_oarchive.hpp", "boost_serialization:C++"],
                      ["boost", "boost/version.hpp", "boost_filesystem:C++"],
                      ["boost", "boost/regex.hpp", "boost_regex:C++"],
+                     ["daf_base",  "lsst/daf/base/DataProperty.h", "daf_base:C++" ],
+                     ["daf_persistence", "lsst/daf/persistence.h", "daf_persistence:C++"],
+                     ["pex_logging", "lsst/pex/logging/Trace.h", "pex_logging:C++"],
+                     ["ctrl_events", "lsst/ctrl/events/Events.h", "ctrl_events:C++"],
+                     ["afw:, "lsst/afw/afwExceptions.h:],
                      ["seal",  "SealBase/config.h", "lcg_SealBase:C++" ],
                      ["coral", "RelationalAccess/ConnectionService.h", "lcg_RelationalService:C++"],
-                     ["mwi", "lsst/mwi/data.h", "boost_filesystem boost_regex boost_serialization lcg_RelationalService lcg_SealBase mwi:C++"]
                      ])
 
 
@@ -21,7 +25,7 @@ env = scons.makeEnv("dps",
 env.Replace(CXX = 'mpicxx')
 env.Append(CXXFLAGS = "-DMPICH_IGNORE_CXX_SEEK")
 
-for d in Split("doc src lib python/lsst/dps/swig"):
+for d in Split("doc src lib python/lsst/pex/harness/swig"):
     SConscript(os.path.join(d, "SConscript"))
 
 env['IgnoreFiles'] = r"(~$|\.pyc$|^\.svn$|\.o$)"

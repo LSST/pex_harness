@@ -1,15 +1,15 @@
 #! /usr/bin/env python
 
-from lsst.dps.Queue import Queue
-from lsst.dps.Stage import Stage
-from lsst.dps.Clipboard import Clipboard
-from lsst.dps.Slice import Slice
+from lsst.pex.harness.Queue import Queue
+from lsst.pex.harness.Stage import Stage
+from lsst.pex.harness.Clipboard import Clipboard
+from lsst.pex.harness.Slice import Slice
 
-import lsst.mwi.policy as policy
+import lsst.pex.policy as policy
 
-import lsst.mwi.data as datap
+import lsst.daf.base as datap
 
-import lsst.events as events
+import lsst.ctrl.events as events
 
 import os
 import sys

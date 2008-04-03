@@ -3,7 +3,7 @@
 # This policy file executes the Pipeline with no Events received. 
 #
 {
-    "appStages":[ "lsst.dps.test.A1Stage.App1Stage", "lsst.dps.test.A2Stage.App2Stage", "lsst.dps.test.A3Stage.App3Stage", "lsst.dps.test.A4Stage.App4Stage" ] , 
+    "appStages":[ "lsst.pex.harness.test.A1Stage.App1Stage", "lsst.pex.harness.test.A2Stage.App2Stage", "lsst.pex.harness.test.A3Stage.App3Stage", "lsst.pex.harness.test.A4Stage.App4Stage" ] , 
     "eventTopics":[ "None", "None", "None", "None" ] ,
     "stagePolicies":[ "None", "None" , "None" , "None" ]
 }

@@ -1,7 +1,7 @@
 // -*- lsst-c++ -*-
 /** \file Queue.cc
   *
-  * \ingroup dps
+  * \ingroup harness
   *
   * \brief   Queue provides the interface for a Stage to access and post image data.
   *
@@ -14,9 +14,9 @@
   * \author  Greg Daues, NCSA
   */
 
-#include "lsst/dps/Queue.h"
+#include "lsst/pex/harness/Queue.h"
 
-using namespace lsst::dps;
+using namespace lsst::pex::harness;
 
 /*****************************************************************************/
 /** Initialize the Queue structure.

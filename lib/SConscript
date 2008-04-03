@@ -4,7 +4,7 @@ Import("env")
 
 env.Replace(SHLIBPREFIX=["lib"]);
 
-env.SharedLibrary('dps', map(lambda str: "../src/" + str,
+env.SharedLibrary('pex_harness', map(lambda str: "../src/" + str,
                           ["Pipeline.cc", 
                            "Slice.cc", 
                            "Queue.cc", 

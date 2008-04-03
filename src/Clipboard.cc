@@ -1,7 +1,7 @@
 // -*- lsst-c++ -*-
 /** \file Clipboard.cc
   *
-  * \ingroup dps 
+  * \ingroup harness 
   *
   * \brief Container for transport of Image Data between Pipeline Stages 
   *
@@ -13,9 +13,9 @@
   * \author Greg Daues, NCSA
   */
 
-#include "lsst/dps/Clipboard.h"
+#include "lsst/pex/harness/Clipboard.h"
 
-using namespace lsst::dps;
+using namespace lsst::pex::harness;
 
 /*****************************************************************************/
 /** Initialize the Clipboard structure.

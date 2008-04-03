@@ -1,7 +1,7 @@
 // -*- lsst-c++ -*-
 /** \file Pipeline.cc
   *
-  * \ingroup dps
+  * \ingroup harness
   *
   * \brief   Pipeline class manages the operation of a multi-stage parallel pipeline.
   *
@@ -13,10 +13,10 @@
   * \author  Greg Daues, NCSA
   */
 
-#include "lsst/dps/Pipeline.h"
-#include "lsst/dps/Stage.h"
+#include "lsst/pex/harness/Pipeline.h"
+#include "lsst/pex/harness/Stage.h"
 
-using namespace lsst::dps;
+using namespace lsst::pex::harness;
 
 Pipeline::Pipeline() {
 }

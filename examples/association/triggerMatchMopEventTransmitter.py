@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-import lsst.mwi.data as datap
-import lsst.events as events
+import lsst.daf.base as datap
+import lsst.ctrl.events as events
 import time
 
 if __name__ == "__main__":
@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     externalEventTransmitter = events.EventTransmitter(activemqBroker, "triggerMatchMopEvent")
 
-    root = datap.SupportFactory.createPropertyNode("root");
+    root = datap.DataProperty.createPropertyNode("root");
 
     visitId  = datap.DataProperty("visitId", 1)
 

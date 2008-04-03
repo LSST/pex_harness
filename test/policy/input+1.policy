@@ -3,7 +3,7 @@ RunMode: "postprocess"
 InputItems: {
     theProperty: {
         Type: "DataProperty"
-        PythonType: "lsst.mwi.data.DataProperty"
+        PythonType: "lsst.daf.base.DataProperty"
         StoragePolicy: {
             Storage: "BoostStorage"
             Location: "theProperty.%{visitId}.%{sliceId+1}"

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-import lsst.mwi.data as datap
-import lsst.events as events
+import lsst.daf.base as datap
+import lsst.ctrlevents as events
 import time
 
 if __name__ == "__main__":
@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     externalEventTransmitter = events.EventTransmitter("lsst8.ncsa.uiuc.edu", shutdownTopic )
 
-    root = datap.SupportFactory.createPropertyNode("root");
+    root = datap.DataProperty.createPropertyNode("root");
 
     externalEventTransmitter.publish("eventtype", root)
 

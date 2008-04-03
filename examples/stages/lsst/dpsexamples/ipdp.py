@@ -4,7 +4,7 @@
 Test Application Stage 2
 """
 
-from lsst.dps.Stage import Stage
+from lsst.pex.harness.Stage import Stage
 
 
 class IPDPStage(Stage):
@@ -19,7 +19,7 @@ class IPDPStage(Stage):
 
         inputImage = self.activeClipboard.get("inputImage"); 
 
-        # inputImageDataPropertyPtrType = lsst.mwi.data.DataPropertyPtrType(inputImage)
+        # inputImageDataPropertyPtrType = lsst.daf.base.DataPropertyPtrType(inputImage)
         print 'Python IPDPStage process(): _rank %i stageId %i value %s' % (self._rank, self.stageId, inputImage)
 
         self.outputQueue.addDataset(self.activeClipboard)
