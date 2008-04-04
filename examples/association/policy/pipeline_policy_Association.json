@@ -7,7 +7,7 @@
 # triggerAssociationEventTransmitter.py  and triggerMatchMopEventTransmitter.py, respectively. 
 #
 {
-    "appStages":[ "lsst.dpsexamples.pipeline.LoadStage", "lsst.dpsexamples.pipeline.MatchDiaSourceStage", "lsst.dpsexamples.pipeline.MatchMopStage", "lsst.dpsexamples.pipeline.StoreStage" ] , 
+    "appStages":[ "lsst.pex.harness.examples.pipeline.LoadStage", "lsst.pex.harness.examples.pipeline.MatchDiaSourceStage", "lsst.pex.harness.examples.pipeline.MatchMopStage", "lsst.pex.harness.examples.pipeline.StoreStage" ] , 
     "eventTopics":[ "triggerAssociationEvent", "None", "triggerMatchMopEvent", "None" ] ,
     "stagePolicies":[ "None", "None" , "None" , "None" ]
 }

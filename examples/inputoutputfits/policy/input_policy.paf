@@ -3,10 +3,10 @@ RunMode: "process"
 InputItems: {
     InputImage: {
         Type: "MaskedImageF"
-        PythonType: "lsst.fw.Core.fwLib.MaskedImageF"
+        PythonType: "lsst.afw.Core.afwLib.MaskedImageF"
         StoragePolicy: {
             Storage: "FitsStorage"
-            Location: "/share/lsst9/work/stack/DC2/fwData/%{exposureId}p_1_MI"
+            Location: "/share/lsst9/work/stack/DMS/afwdata/%{exposureId}p_1_MI"
         }
     }
 }

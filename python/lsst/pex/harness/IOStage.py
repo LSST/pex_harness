@@ -339,7 +339,7 @@ class InputStage (lsst.pex.harness.Stage.Stage):
                 print "i importing: importPackage importClassString ", \
                        i, importPackage, importClassString, "\n"
 
-                # For example  importPackage -> lsst.fw.Core.fwLib  
+                # For example  importPackage -> lsst.afw.Core.afwLib  
                 #              importClassString -> MaskedImageF
                 importType = __import__(importPackage, globals(), locals(), \
                                        [importClassString], -1)

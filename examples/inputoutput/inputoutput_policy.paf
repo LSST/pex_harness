@@ -12,7 +12,7 @@
 #
 activemqBroker: "lsst4.ncsa.uiuc.edu" 
 shutdownTopic: "triggerShutdownEvent" 
-appStages: "lsst.dps.IOStage.InputStage" "lsst.dpsexamples.ipdp.IPDPStage"  
+appStages: "lsst.pex.harness.IOStage.InputStage" "lsst.pex.harness.examples.ipdp.IPDPStage"  
 eventTopics: "triggerIpdpEvent" "None" 
 stagePolicies: "policy/inputipdp.policy" "None" 
 

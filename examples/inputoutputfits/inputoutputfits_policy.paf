@@ -2,6 +2,6 @@
 #
 #
 executionMode: "oneloop" 
-appStages: "lsst.dps.IOStage.InputStage" "lsst.dpsexamples.ipdp.ImageprocStage" "lsst.dps.IOStage.OutputStage"  
+appStages: "lsst.pex.harness.IOStage.InputStage" "lsst.pex.harness.examples.ipdp.ImageprocStage" "lsst.pex.harness.IOStage.OutputStage"  
 eventTopics: "triggerImageprocEvent" "None" "None" 
 stagePolicies: "policy/input_policy.paf" "None" "policy/output_policy.paf" 
