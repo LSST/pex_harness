@@ -1,0 +1,9 @@
+# -*- python -*-
+Import("env")
+
+sdir = "../../../src/"
+
+env.Append(SWIGFLAGS=["-c++", "-python", "-Iinclude"])
+
+env.LoadableModuleIncomplete("_harnessLib", Split("harnessLib.i"), LIBS=["pex_harness"])  
+
