@@ -4,6 +4,7 @@ from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.Stage import Stage
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.logging import Log, LogRec
+from lsst.pex.harness import harnessLib as slice
 
 import lsst.pex.policy as policy
 import lsst.pex.exceptions as ex
@@ -50,7 +51,6 @@ class Slice:
         self.eventTopicList = []
         self.eventReceiverList = []
         self.shutdownTopic = "triggerShutdownEvent_slice"
-        import slice
         self.cppSlice = slice.Slice()
         # self.cppSlice.setRunId(runId)
         self.cppSlice.initialize()

@@ -4,6 +4,7 @@ from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.Stage import Stage
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.logging import Log, LogRec, cout
+from lsst.pex.harness import harnessLib as pipeline
 
 import lsst.pex.policy as policy
 import lsst.pex.exceptions as ex
@@ -47,7 +48,6 @@ class Pipeline:
         self.eventReceiverList = []
         self.clipboardList = []
         self.executionMode = 0
-        import pipeline
         self.cppPipeline = pipeline.Pipeline()
         self.cppPipeline.setRunId(runId)
         self.cppPipeline.setPolicyName(pipelinePolicyName)
