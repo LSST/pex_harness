@@ -20,7 +20,7 @@ env = scons.makeEnv("pex_harness",
 env.Replace(CXX = 'mpicxx')
 env.Append(CXXFLAGS = "-DMPICH_IGNORE_CXX_SEEK")
 
-for d in Split("doc src lib python/lsst/pex/harness/swig"):
+for d in Split("doc src lib python/lsst/pex/harness"):
     SConscript(os.path.join(d, "SConscript"))
 
 env['IgnoreFiles'] = r"(~$|\.pyc$|^\.svn$|\.o$)"
