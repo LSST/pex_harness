@@ -1,0 +1,6 @@
+# eventstage.paf
+#
+#
+keysToPublish: "outgoingEvent=outgoingKey"
+RunMode: "postprocess"
+

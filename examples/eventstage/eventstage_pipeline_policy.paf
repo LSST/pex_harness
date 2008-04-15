@@ -3,9 +3,9 @@
 # This policy file executes the Pipeline within a scenario that utilizes 
 # the Event stage for issueing .
 
-activemqBroker: "lsst4.ncsa.uiuc.edu"  
+activemqBroker: "lsst8.ncsa.uiuc.edu"  
 executionMode: "oneloop"
-appStages: "lsst.pex.harness.examples.apps.App1Stage" "lsst.pex.harness.EventStage.EventStage"   
+appStages: "lsst.pexhexamples.apps.App1Stage" "lsst.pex.harness.EventStage.EventStage"   
 eventTopics: "None" "None"   
 stagePolicies: "None" "policy/eventstage.paf" 
 

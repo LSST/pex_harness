@@ -1,9 +1,8 @@
 #!/bin/sh
 
 pwd=`pwd`
-# LSST_POLICY_DIR=${pwd}/policy
-# export LSST_POLICY_DIR
-# echo LSST_POLICY_DIR ${LSST_POLICY_DIR} 
+PYTHONPATH=${pwd}/../stages:${PYTHONPATH}
+export PYTHONPATH
 
 # Command line arguments 
 # echo $@  echo $#
