@@ -7,7 +7,7 @@ import time
 if __name__ == "__main__":
     print "starting...\n"
 
-    activemqBroker = "lsst4.ncsa.uiuc.edu"
+    activemqBroker = "lsst8.ncsa.uiuc.edu"
 
     eventRec = events.EventReceiver(activemqBroker, "outgoingEvent")
 
