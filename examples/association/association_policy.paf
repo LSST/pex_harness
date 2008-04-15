@@ -6,9 +6,10 @@
 # triggerAssociationEventTransmitter.py  and triggerMatchMopEventTransmitter.py, respectively. 
 #
 # executionMode: "oneloop" ,
-activemqBroker: "lsst4.ncsa.uiuc.edu" 
 # shutdownTopic: "triggerShutdownEvent" 
-shutdownTopic: "shutdownGreg" 
-appStages: "lsst.pex.harness.examples.pipeline.LoadStage" "lsst.pex.harness.examples.pipeline.MatchDiaSourceStage" "lsst.pex.harness.examples.pipeline.MatchMopStage" "lsst.pex.harness.examples.pipeline.StoreStage"  
+#
+activemqBroker: "lsst4.ncsa.uiuc.edu" 
+shutdownTopic: "triggerShutdownA" 
+appStages: "lsst.pexhexamples.pipeline.LoadStage" "lsst.pexhexamples.pipeline.MatchDiaSourceStage" "lsst.pexhexamples.pipeline.MatchMopStage" "lsst.pexhexamples.pipeline.StoreStage"  
 eventTopics: "triggerAssociationEvent" "None" "triggerMatchMopEvent" "None" 
 stagePolicies: "None" "None" "None" "None" 

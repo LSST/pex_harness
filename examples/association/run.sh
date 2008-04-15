@@ -1,9 +1,8 @@
 #!/bin/sh
 
 pwd=`pwd`
-# LSST_POLICY_DIR=${pwd}/policy
-# export LSST_POLICY_DIR
-# echo LSST_POLICY_DIR ${LSST_POLICY_DIR} 
+PYTHONPATH=${pwd}/../stages:${PYTHONPATH}
+export PYTHONPATH
 
 # Command line arguments 
 echo $@  echo $#
@@ -23,8 +22,8 @@ runId=${2}
 # Increase nodes for a larger parallel execution. 
 # For example, for two nodes with 4 cpus we could set nodes=2 
 # and nslices=3 (pipeline itself takes one cpu) 
-nodes=2
-nslices=3
+nodes=1
+nslices=1
 # --------------------------------------------------------- 
 
 # Add 1 to the number of slices to get the universe size 
