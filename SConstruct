@@ -8,8 +8,6 @@ env = scons.makeEnv("pex_harness",
                      ["boost", "boost/archive/text_oarchive.hpp", "boost_serialization:C++"],
                      ["boost", "boost/version.hpp", "boost_filesystem:C++"],
                      ["boost", "boost/regex.hpp", "boost_regex:C++"],
-                     ["seal",  "SealBase/config.h", "lcg_SealBase:C++" ],
-                     ["coral", "RelationalAccess/ConnectionService.h", "lcg_RelationalService:C++"],
                      ])
 
 
