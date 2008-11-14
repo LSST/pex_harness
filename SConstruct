@@ -1,5 +1,6 @@
-import os, glob, os.path
+import os, glob, os.path, sys
 import lsst.SConsUtils as scons
+import eups
 
 env = scons.makeEnv("pex_harness",
                     r"$HeadURL$",
@@ -17,8 +18,14 @@ env = scons.makeEnv("pex_harness",
 # incdir = pwd + "/include"
 # env.Replace(CPPPATH=incdir + ":" + pyincdir) 
 
-env.Replace(CXX = 'mpicxx')
+mpiroot = eups.productDir('mpich2')
+if not mpiroot:
+    print('Please, setup mpich2')
+    sys.exit(1)
+
+env.Replace(CXX = os.path.join(mpiroot, 'bin', 'mpicxx'))
 env.Append(CXXFLAGS = "-DMPICH_IGNORE_CXX_SEEK")
+env.Append(CXXFLAGS = "-L%s" %(os.path.join(mpiroot, "lib")))
 
 for d in Split("doc src lib python/lsst/pex/harness"):
     SConscript(os.path.join(d, "SConscript"))
