@@ -5,38 +5,33 @@ import lsst.daf.base
 import lsst.pex.logging
 import lsst.pex.exceptions
 
-def getDPValue(dp):
+def getPSValue(ps, name):
     """
-    Extract a Python value from a DataProperty of unknown type by trying each
-    type in turn until we don't get an exception.
+    Extract a Python value from a PropertySet of unknown type by trying each
+    Python-compatible type in turn until we don't get an exception.
     """
     try:
-        value = dp.getValueString()
+        value = ps.getAsString(name)
         return value
     except:
         pass
     try:
-        value = dp.getValueInt()
+        value = dp.getAsBool(name)
         return value
     except:
         pass
     try:
-        value = dp.getValueDouble()
+        value = dp.getAsInt(name)
         return value
     except:
         pass
     try:
-        value = dp.getValueBool()
+        value = dp.getAsInt64(name)
         return value
     except:
         pass
     try:
-        value = dp.getValueInt64()
-        return value
-    except:
-        pass
-    try:
-        value = dp.getValueFloat()
+        value = dp.getAsDouble(name)
         return value
     except:
         pass
@@ -49,9 +44,7 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     This routine effectively performs slice-to-CCD mappings in DC2.
     """
 
-    dataProperty = \
-        lsst.daf.base.DataProperty.createPropertyNode("additionalData")
-
+    additionalData = lsst.daf.base.PropertySet()
     # Parse array of "key=clipboard-key" or
     # "key=clipboard-key.dataproperty-key" mappings
     if stagePolicy.exists('AdditionalData'):
@@ -59,25 +52,19 @@ def createAdditionalData(stage, stagePolicy, clipboard):
         for pair in dataPairs:
             (rename, name) = pair.split("=")
             if name.find(".") != -1:
-                (clipKey, dpKey) = name.split(".", 1)
-                dp = clipboard.get(clipKey).findUnique(dpKey)
-                data = dp.getValue()
-                value = getDPValue(dp)
+                (clipKey, psKey) = name.split(".", 1)
+                data = getPSValue(clipboard.get(clipKey), psKey)
             else:
-                value = clipboard.get(name)
-                data = value
-            leaf = lsst.daf.base.DataProperty(rename, data)
-            dataProperty.addProperty(leaf)
+                data = clipboard.get(name)
+            additionalData.set(rename, data)
             lsst.pex.logging.Trace("pex.harness.Utils.createAdditionalData", 3, \
                     "AdditionalData item: " + pair)
 
     # Add the predefined runId, sliceId, ccdId, and universeSize keys
 
-    leaf = lsst.daf.base.DataProperty('runId', stage.getRun())
-    dataProperty.addProperty(leaf)
-
-    leaf = lsst.daf.base.DataProperty('sliceId', stage.getRank())
-    dataProperty.addProperty(leaf)
+    additionalData.set('runId', stage.getRun())
+    additionalData.set('sliceId', stage.getRank())
+    additionalData.set('universeSize', stage.getUniverseSize())
 
     if stagePolicy.exists('CcdFormula'):
         formula = stagePolicy.get('CcdFormula')
@@ -86,22 +73,18 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     else:
         incr = stagePolicy.get('CcdOffset', 1)
         ccdId = "%03d" % (stage.getRank() + incr)
-    leaf = lsst.daf.base.DataProperty('ccdId', ccdId)
-    dataProperty.addProperty(leaf)
-
-    leaf = lsst.daf.base.DataProperty('universeSize', stage.getUniverseSize())
-    dataProperty.addProperty(leaf)
+    additionalData.set('ccdId', ccdId)
 
     lsst.pex.logging.Trace("pex.harness.Utils.createAdditionalData", 3, \
             "additionalData:\n" + dataProperty.toString('\t', True))
 
-    return dataProperty
+    return additionalData
 
-def dataPropertyToDict(dataProperty):
+def propertySetToDict(propertySet):
     """
     Convert a DataProperty to a Python dictionary.
     """
     dict = {}
-    for i in dataProperty.getChildren():
-        dict[i.getName()] = getDPValue(i)
+    for i in propertySet.names():
+        dict[i] = getPSValue(propertySet, i)
     return dict
