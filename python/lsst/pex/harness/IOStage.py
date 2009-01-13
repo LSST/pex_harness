@@ -37,7 +37,7 @@ def massage(location, additionalData):
 
     def replace(match):
         """
-        Get the value of a DataProperty key in match.group(1), using
+        Get the value of a PropertySet key in match.group(1), using
         match.group(3) as a default if not found.
         """
         if not additionalData.exists(match.group(1)):

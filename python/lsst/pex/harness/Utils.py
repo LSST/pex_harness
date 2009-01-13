@@ -5,38 +5,6 @@ import lsst.daf.base
 import lsst.pex.logging
 import lsst.pex.exceptions
 
-def getPSValue(ps, name):
-    """
-    Extract a Python value from a PropertySet of unknown type by trying each
-    Python-compatible type in turn until we don't get an exception.
-    """
-    try:
-        value = ps.getAsString(name)
-        return value
-    except:
-        pass
-    try:
-        value = dp.getAsBool(name)
-        return value
-    except:
-        pass
-    try:
-        value = dp.getAsInt(name)
-        return value
-    except:
-        pass
-    try:
-        value = dp.getAsInt64(name)
-        return value
-    except:
-        pass
-    try:
-        value = dp.getAsDouble(name)
-        return value
-    except:
-        pass
-    raise lsst.pex.exceptions.LsstRuntime, 'Unknown DataProperty value type'
-
 def createAdditionalData(stage, stagePolicy, clipboard):
     """
     Extract additionalData values, as specified by policy, from the clipboard.
@@ -53,7 +21,7 @@ def createAdditionalData(stage, stagePolicy, clipboard):
             (rename, name) = pair.split("=")
             if name.find(".") != -1:
                 (clipKey, psKey) = name.split(".", 1)
-                data = getPSValue(clipboard.get(clipKey), psKey)
+                data = clipboard.get(clipKey).get(psKey)
             else:
                 data = clipboard.get(name)
             additionalData.set(rename, data)
@@ -82,9 +50,9 @@ def createAdditionalData(stage, stagePolicy, clipboard):
 
 def propertySetToDict(propertySet):
     """
-    Convert a DataProperty to a Python dictionary.
+    Convert a PropertySet to a Python dictionary.
     """
     dict = {}
     for i in propertySet.names():
-        dict[i] = getPSValue(propertySet, i)
+        dict[i] = propertySet.get(i)
     return dict

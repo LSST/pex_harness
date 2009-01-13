@@ -60,7 +60,7 @@ class SymLinkStage (lsst.pex.harness.Stage.Stage):
             mylog.log(Log.WARN, "No Links found")
             return
 
-        additionalData = lsst.pex.harness.Utils.dataPropertyToDict( \
+        additionalData = lsst.pex.harness.Utils.propertySetToDict( \
                 lsst.pex.harness.Utils.createAdditionalData(self, \
                     self._policy, self.activeClipboard))
 
