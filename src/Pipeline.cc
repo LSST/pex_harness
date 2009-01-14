@@ -16,8 +16,6 @@
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Stage.h"
 
-using namespace lsst::pex::harness;
-
 Pipeline::Pipeline() {
 }
 
@@ -26,8 +24,6 @@ Pipeline::~Pipeline() {
 
 void Pipeline::initialize() {
 
-    initializeLogger();
-
     initializeMPI();
 
     configurePipeline();
@@ -35,11 +31,59 @@ void Pipeline::initialize() {
     return;
 }
 
+
+Log Pipeline::initializeLogger(Log defaultLog,  bool isLocalLogMode) {
+
+    _pid = getpid();
+    char* _host = getenv("HOST");
+
+    pipelineLog = defaultLog;
+
+    if(isLocalLogMode) {
+        /* Make a log file name coded to the rank    */
+        std::stringstream logfileBuffer;
+        std::string logfile;
+
+        logfileBuffer << "Pipeline";
+        logfileBuffer << _pid;
+        logfileBuffer << ".log";
+
+        logfileBuffer >> logfile;
+
+        /* Make output file stream   */
+        outlog =  new ofstream(logfile.c_str());
+
+        boost::shared_ptr<LogFormatter> brief(new BriefFormatter(true));
+        boost::shared_ptr<LogDestination> tempPtr(new LogDestination(outlog, brief));
+        destPtr = tempPtr;
+        pipelineLog.addDestination(destPtr);
+    }
+
+    Log localLog(pipelineLog, "Pipeline.initializeLogger()");       // localLog: a child log
+
+    localLog.log(Log::INFO,
+        boost::format("Pipeline Logger Initialized : _pid %d ") % _pid);
+
+    string* s1 = new string("datapropertyTest");
+    PropertySet ps3;
+    ps3.set("pipeline_keya", string("TestValue"));
+
+    localLog.log(Log::INFO, *s1, ps3 );
+
+    return pipelineLog;
+}
+
+
+/* 
 void Pipeline::initializeLogger() {
 
     _pid = getpid();
+
+    pipelineLog = Log::getDefaultLog();
+
     return;
 }
+*/ 
 
 void Pipeline::initializeMPI() {
   
@@ -188,6 +232,48 @@ void Pipeline::invokeContinue() {
 
     return;
 
+}
+
+void Pipeline::invokeSyncSlices() {
+
+    /* 
+    pipelineLog.log(Log::INFO,
+     boost::format("Top Isend loop: rank %d destSlice %d") % rank % destSlice);
+    */ 
+    pipelineLog.log(Log::INFO,
+        boost::format("Start invokeSyncSlices: rank %d ") % rank);
+
+    mpiError = MPI_Barrier(sliceIntercomm);
+    if (mpiError != MPI_SUCCESS) {
+        MPI_Finalize();
+        exit(1);
+    }
+    pipelineLog.log(Log::INFO,
+        boost::format("synced with Barrier: rank %d ") % rank);
+
+    char procCommand[bufferSize];
+    strcpy(procCommand, "SYNC");  
+
+    pipelineLog.log(Log::INFO,
+        boost::format("Start Bcast rank %d ") % rank);
+
+    mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
+    if (mpiError != MPI_SUCCESS) {
+        MPI_Finalize();
+        exit(1);
+    }
+
+    pipelineLog.log(Log::INFO,
+        boost::format("End Bcast rank %d ") % rank);
+
+    mpiError = MPI_Barrier(sliceIntercomm);
+    if (mpiError != MPI_SUCCESS) {
+        MPI_Finalize();
+        exit(1);
+    }
+
+    pipelineLog.log(Log::INFO,
+        boost::format("End invokeSyncSlices rank %d ") % rank);
 }
 
 void Pipeline::invokeProcess(int iStage) {
