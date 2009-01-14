@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 
-import lsst.daf.base as datap
+import threading
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
+
 import lsst.ctrl.events as events
 import time
 
@@ -8,11 +11,11 @@ if __name__ == "__main__":
     print "starting...\n"
 
     shutdownTopic = "triggerShutdownA"
-    activemqBroker = "lsst4.ncsa.uiuc.edu"
+    activemqBroker = "lsst8.ncsa.uiuc.edu"
 
     externalEventTransmitter = events.EventTransmitter(activemqBroker, shutdownTopic )
 
-    root = datap.DataProperty.createPropertyNode("root");
+    root = PropertySet()
 
-    externalEventTransmitter.publish("eventtype", root)
+    externalEventTransmitter.publish(root)
 
