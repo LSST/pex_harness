@@ -10,9 +10,21 @@
 # 
 # The required event is issued with the script triggerIpdpEventTransmit.py 
 #
-activemqBroker: "lsst4.ncsa.uiuc.edu" 
+
+localLogMode: "Yes"`
+executionMode: "oneloop"
+activemqBroker: "lsst8.ncsa.uiuc.edu" 
 shutdownTopic: "triggerShutdownEvent" 
-appStages: "lsst.pex.harness.IOStage.InputStage" "lsst.pex.harness.examples.ipdp.IPDPStage"  
-eventTopics: "triggerIpdpEvent" "None" 
-stagePolicies: "policy/inputipdp.policy" "None" 
+
+appStage: { 
+     stageName: "lsst.pex.harness.IOStage.InputStage" 
+     eventTopic: "triggerIpdpEvent"
+     stagePolicy: "policy/inputipdp.policy"
+}
+
+appStage: { 
+     stageName: "lsst.dpsexamples.ipdp.IPDPStage" 
+     eventTopic: "None"
+     stagePolicy: "None"
+}
 
