@@ -7,7 +7,10 @@ Stage for publishing events, pulling contents off the Clipboard according to Pol
 from lsst.pex.harness.Stage import Stage
 from lsst.pex.logging import Log
 
-import lsst.daf.base as datap
+import threading
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
+
 import lsst.pex.logging as logging
 import lsst.ctrl.events as events
 import time
@@ -72,15 +75,14 @@ class EventStage(Stage):
             pos = key.find("=")
             if pos > 0:
                 eventName = key[:pos]
-                dataPropertyName = key[pos+1:]
+                propertySetName = key[pos+1:]
             else:
                 eventName = key
-                dataPropertyName = key
-	    logging.Trace("EventStage", 4, "eventName=%s, dataPropertyName=%s" % (eventName, dataPropertyName))
+                propertySetName = key
+	    logging.Trace("EventStage", 4, "eventName=%s, propertySetName=%s" % (eventName, propertySetName))
 
-            dpPtrType = self.activeClipboard.get(dataPropertyName)
-            logging.Trace("EventStage", 4, "Got dataProperty %s" % dpPtrType.toString())
-            oneEventTransmitter = events.EventTransmitter(\
-                                         "lsst8.ncsa.uiuc.edu", eventName)
-            oneEventTransmitter.publish("eventtype", dpPtrType)
+            psPtr = self.activeClipboard.get(propertySetName)
+            logging.Trace("EventStage", 4, "Got propertySet %s" % psPtr.toString(False))
+            oneEventTransmitter = events.EventTransmitter("lsst8.ncsa.uiuc.edu", eventName)
+            oneEventTransmitter.publish(psPtr)
             logging.Trace("EventStage", 4, 'Python pipeline.EventStage published event %s' % key)
