@@ -215,7 +215,7 @@ class MatchMopStage(Stage):
             if (key == "triggerMatchMopEvent"):
                 for name in nameList:
                     if (name == "visitId"):
-                        self.visitId = dpPtr.getInt(name)
+                        self.visitId = propertySet.getInt(name)
                         print 'Python pipeline.MatchMopStage process() ', self._rank, key, name, self.visitId
 
         self.outputQueue.addDataset(self.activeClipboard)
