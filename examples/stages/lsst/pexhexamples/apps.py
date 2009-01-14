@@ -6,7 +6,8 @@ Test Application Stages
 
 from lsst.pex.harness.Stage import Stage
 
-import lsst.daf.base as datap
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
 
 class App1Stage(Stage):
 
@@ -20,17 +21,13 @@ class App1Stage(Stage):
 
         self.activeClipboard = self.inputQueue.getNextDataset()
 
-        root = datap.DataProperty.createPropertyNode("root");
+        propertySet = dafBase.PropertySet()
 
-        visitId  = datap.DataProperty("visitId", 1)
-        FOVRa    = datap.DataProperty("FOVRa", 273.48066298343)
-        FOVDec   = datap.DataProperty("FOVDec", -27.125)
+        propertySet.setInt("visitId", 1)
+        propertySet.setDouble("FOVRa", 273.48066298343)
+        propertySet.setDouble("FOVDec", -27.125)
 
-        root.addProperty(visitId)
-        root.addProperty(FOVRa)
-        root.addProperty(FOVDec)
-
-        self.activeClipboard.put("outgoingKey", root)
+        self.activeClipboard.put("outgoingKey", propertySet)
 
 
     #------------------------------------------------------------------------
@@ -42,4 +39,97 @@ class App1Stage(Stage):
         self.outputQueue.addDataset(self.activeClipboard)
 
 
+class SyncSetupStage(Stage):
+
+    #------------------------------------------------------------------------
+    def preprocess(self): 
+        """
+        Execute the needed preprocessing code for this Stage
+        """
+	print 'Python apps.SyncSetupStage preprocess : stageId %i' % self.stageId
+	print 'Python apps.SyncSetupStage preprocess : _rank %i' % self._rank
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        propertySet = dafBase.PropertySet()
+
+        propertySet.setInt("redHerring", self._rank)
+
+        self.activeClipboard.put("redKey", propertySet)
+
+    #------------------------------------------------------------------------
+    def process(self): 
+        """
+        Execute the needed processing code for this Stage
+        """
+	print 'Python apps.SyncSetupStage process : stageId %i' % self.stageId
+	print 'Python apps.SyncSetupStage process : _rank %i' % self._rank
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        propertySet = dafBase.PropertySet()
+
+        propertySet.setInt("sliceRank", self._rank)
+
+        self.activeClipboard.put("rankKey", propertySet)
+
+        self.activeClipboard.setShared("rankKey", True)
+
+        self.outputQueue.addDataset(self.activeClipboard)
+
+    #------------------------------------------------------------------------
+    def postprocess(self): 
+        """
+        Execute the needed postprocessing code for SyncSetupStage
+        """
+	print 'Python apps.SyncSetupStage postprocess : stageId %i' % self.stageId
+	print 'Python apps.SyncSetupStage postprocess : _rank %i' % self._rank
+        self.outputQueue.addDataset(self.activeClipboard)
+
+class SyncTestStage(Stage):
+
+    #------------------------------------------------------------------------
+    def preprocess(self): 
+        """
+        Execute the needed preprocessing code for this Stage
+        """
+	print 'Python apps.SyncTestStage preprocess : stageId %i' % self.stageId
+	print 'Python apps.SyncTestStage preprocess : _rank %i' % self._rank
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+
+    #------------------------------------------------------------------------
+    def process(self): 
+        """
+        Execute the needed processing code for this Stage
+        """
+	print 'Python apps.SyncTestStage process AAAA : stageId %i' % self.stageId
+	print 'Python apps.SyncTestStage process BBBB : _rank %i' % self._rank
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        keys = self.activeClipboard.getKeys()
+
+        for key in keys:
+            propertySet = self.activeClipboard.get(key)
+            print 'Python apps.SyncTestStage process: XXXX stageId %i key %s' % (self.stageId, key)
+            nameList = propertySet.names()
+            print 'Python apps.SyncTestStage process: YYYY stageId %i key %s' % (self.stageId, key)
+
+            for name in nameList:
+                 iValue = propertySet.getInt(name)
+                 print 'Python apps.SyncTestStage process: Y ', self._rank, key, name, iValue
+
+
+        self.outputQueue.addDataset(self.activeClipboard)
+
+    #------------------------------------------------------------------------
+    def postprocess(self): 
+        """
+        Execute the needed postprocessing code for SyncTestStage
+        """
+	print 'Python apps.SyncTestStage postprocess : stageId %i' % self.stageId
+	print 'Python apps.SyncTestStage postprocess : _rank %i' % self._rank
+        self.outputQueue.addDataset(self.activeClipboard)
 
