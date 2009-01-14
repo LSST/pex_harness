@@ -8,18 +8,63 @@
   * \author  Greg Daues, NCSA
   */
 
-#ifndef LSST_DPS_SLICE_H
-#define LSST_DPS_SLICE_H
+#ifndef LSST_PEX_HARNESS_SLICE_H
+#define LSST_PEX_HARNESS_SLICE_H
 
-using namespace std;
-
-#include "mpi.h"
 #include "Stage.h"
 
 #include <string>
-#include <iostream>
 #include <unistd.h>
+#include <list>
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <istream>
+#include <ostream>
+#include <sstream>
+
+#include "lsst/pex/policy/Policy.h"
+#include "lsst/utils/Utils.h"
+
+#include "lsst/daf/base/PropertySet.h"
+#include "lsst/pex/logging/Component.h"
+#include "lsst/pex/logging/LogRecord.h"
+#include "lsst/pex/logging/LogDestination.h"
+#include "lsst/pex/logging/LogFormatter.h"
+#include "lsst/pex/logging/Log.h"
+#include "lsst/pex/logging/DualLog.h"
+#include "lsst/pex/logging/ScreenLog.h"
+#include "lsst/ctrl/events/EventLog.h"
+#include "lsst/pex/exceptions.h"
+
+#include <boost/mpi.hpp>
+#include <boost/mpi/allocator.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "mpi.h"
+
+using namespace lsst::daf::base;
+using namespace lsst::pex::harness;
+
+using namespace std;
+using namespace lsst;
+using namespace boost;
+
+using lsst::daf::base::PropertySet;
+using lsst::pex::logging::ScreenLog;
+using lsst::pex::logging::Log;
+using lsst::pex::logging::LogRecord;
+using lsst::pex::logging::LogRec;
+using lsst::pex::logging::LogFormatter;
+using lsst::pex::logging::LogDestination;
+using lsst::pex::logging::BriefFormatter;
+using lsst::pex::logging::Rec;
+using lsst::ctrl::events::EventLog;
+
 
 namespace lsst {
 
@@ -45,6 +90,7 @@ public:
     ~Slice(); // destructor
 
     void initialize();
+    Log initializeLogger(Log defaultLog, bool isLocalLogMode);
     void invokeBcast(int iStage);
     void invokeBarrier(int iStage);
     void invokeShutdownTest();
@@ -52,22 +98,38 @@ public:
     void setRank(int rank);
     int getRank();
     int getUniverseSize();
-
+    void setTopology(char* topology);
+    char* getTopology();
+    void setRunId(char* runId);
+    char* getRunId();
+    void calculateNeighbors();
+    const char* getNeighbors();
+    PropertySet::Ptr syncSlices(PropertySet::Ptr dpt);
 
 private:
-    void initializeLogger();
     void initializeMPI();
     void configureSlice();
 
     int _pid;
     int _rank;
+    char* _topology;
+    char* _runId;
 
     MPI_Comm sliceIntercomm;
+    MPI_Comm topologyIntracomm;
+    boost::mpi::communicator world;
     StageVector stageVector;
     int mpiError;
     int nStages;
     int universeSize;
     int bufferSize;
+    list <int> neighborList;
+    string neighborString;
+
+    Log sliceLog;
+    boost::shared_ptr<LogDestination> destPtr; 
+    ofstream* outlog; 
+
 
 };
 
@@ -77,5 +139,5 @@ private:
 
 } // namespace lsst
 
-#endif // LSST_DPS_SLICE_H
+#endif // LSST_PEX_HARNESS_SLICE_H
 
