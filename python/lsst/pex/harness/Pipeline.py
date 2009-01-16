@@ -228,13 +228,17 @@ class Pipeline:
 
         # Log the input topology
         if (p.exists('topology')):
-            topology = p.getString("topology")
-            psTopology  = dafBase.PropertySet()
-            psTopology.setString("topology", topology)
+            # Retrieve the topology policy and set it in C++
+            topologyPolicy = p.get('topology')
+            # Diagnostic print
+            self.topology   =  topologyPolicy.getString('type')
             lr = LogRec(log, Log.INFO)
-            lr << "Read Slice topology"
-            lr << psTopology
+            lr << "Read topology"
+            psTop0  = dafBase.PropertySet()
+            psTop0.setString("topology_type", self.topology)
+            lr << psTop0
             lr << LogRec.endr
+
 
         
         lr = LogRec(log, Log.INFO)

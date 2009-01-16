@@ -238,18 +238,27 @@ class Slice:
         for item in fullStageList:
             self.stagePolicyList.append(item.getString("stagePolicy"))
 
-        # Process topology
+        # Process topology policy
         if (p.exists('topology')):
-            self.topology = p.getString('topology')
-            self.cppSlice.setTopology(self.topology);
+            # Retrieve the topology policy and set it in C++
+            topologyPolicy = p.get('topology')
+            self.cppSlice.setTopology(topologyPolicy);
+            # Diagnostic print
+            self.topology   =  topologyPolicy.getString('type')
+            lr = LogRec(log, Log.INFO)
+            lr << "Read topology"
+            psTop0  = dafBase.PropertySet()
+            psTop0.setString("topology_type", self.topology)
+            lr << psTop0
+            lr << LogRec.endr
             # Calculate this Slice's neighbors 
             self.cppSlice.calculateNeighbors();
             neighborString = self.cppSlice.getNeighbors();
             lr = LogRec(log, Log.INFO)
             lr << "Calculated Slice neighbors"
-            psTopic  = dafBase.PropertySet()
-            psTopic.setString("xleft xright yleft yright", neighborString)
-            lr << psTopic
+            psTop  = dafBase.PropertySet()
+            psTop.setString("xleft xright yleft yright", neighborString)
+            lr << psTop
             lr << LogRec.endr
 
 
