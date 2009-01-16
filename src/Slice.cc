@@ -14,10 +14,10 @@
 
 
 #include "lsst/pex/harness/Slice.h"
+#include <lsst/pex/policy/Policy.h>
 
 namespace dafBase = lsst::daf::base;
-
-/* include "lsst/daf/persistence/PropertySetFormatter.h"   */ 
+namespace pexPolicy = lsst::pex::policy;
 
 class gps_position
 {
@@ -251,12 +251,8 @@ int Slice::getUniverseSize() {
     return universeSize;
 }
 
-void Slice::setTopology(char* topology) {
-    _topology = topology;
-}
-
-char* Slice::getTopology() {
-    return _topology;
+void Slice::setTopology(pexPolicy::Policy::Ptr policy) {
+    _topologyPolicy = policy;
 }
 
 void Slice::setRunId(char* runId) {
@@ -288,15 +284,20 @@ void Slice::calculateNeighbors() {
 
     Log localLog(sliceLog, "Slice.calculateNeighbors()");  
 
+    std::string typeTopology; 
+    if (_topologyPolicy->exists("type")) {
+        typeTopology = _topologyPolicy->getString("type");  
+    }
+
     localLog.log(Log::INFO,
-        boost::format("Checking the topology: %s ") % _topology);
+        boost::format("Checking the topology: %s ") % typeTopology);
 
     int wrank = world.rank();
 
     localLog.log(Log::INFO,
-        boost::format("Checking the topology 2: %d  %d ") % _rank % wrank );
+        boost::format("Checking the ranks within communicators: sliceIntercomm world  %d  %d ") % _rank % wrank );
 
-    if ( strcmp(_topology, "ring") == 0) {  
+    if (typeTopology == "ring") {  
         int commSize, isPeriodic;
         int right_nbr, left_nbr;
         isPeriodic = 1;
@@ -308,16 +309,16 @@ void Slice::calculateNeighbors() {
         neighborList.push_back(right_nbr);
     }   
 
-    if ( strcmp(_topology, "focalplane33") == 0) {  
+    if (typeTopology == "focalplane") {  
         int commSize[2], isPeriodic[2];
         int rightx, leftx;
         int righty, lefty;
         isPeriodic[0] = 1;
         isPeriodic[1] = 1;
-        // commSize[0] = 3;
-        // commSize[1] = 3;
-        commSize[0] = 4;
-        commSize[1] = 4;
+
+        commSize[0] = _topologyPolicy->getInt("param1");
+        commSize[1] = _topologyPolicy->getInt("param2");
+
         MPI_Cart_create(MPI_COMM_WORLD, 2, commSize, isPeriodic, 0, &topologyIntracomm );
         MPI_Cart_shift( topologyIntracomm, 0, 1, &leftx, &rightx );
         MPI_Cart_shift( topologyIntracomm, 1, 1, &lefty, &righty );
@@ -326,7 +327,6 @@ void Slice::calculateNeighbors() {
         neighborList.push_back(rightx);
         neighborList.push_back(lefty);
         neighborList.push_back(righty);
-
 
         /* 
         sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
