@@ -49,6 +49,7 @@
 
 using namespace lsst::daf::base;
 using namespace lsst::pex::harness;
+using namespace lsst::pex::policy;
 
 using namespace std;
 using namespace lsst;
@@ -98,8 +99,7 @@ public:
     void setRank(int rank);
     int getRank();
     int getUniverseSize();
-    void setTopology(char* topology);
-    char* getTopology();
+    void setTopology(Policy::Ptr policy); 
     void setRunId(char* runId);
     char* getRunId();
     void calculateNeighbors();
@@ -112,7 +112,7 @@ private:
 
     int _pid;
     int _rank;
-    char* _topology;
+    Policy::Ptr _topologyPolicy; 
     char* _runId;
 
     MPI_Comm sliceIntercomm;
