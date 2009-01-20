@@ -6,6 +6,8 @@ Test Application Stages
 
 from lsst.pex.harness.Stage import Stage
 
+import lsst.pex.harness.Utils
+
 import lsst.daf.base as dafBase
 from lsst.daf.base import *
 
@@ -70,6 +72,7 @@ class SyncSetupStage(Stage):
         propertySet = dafBase.PropertySet()
 
         propertySet.setInt("sliceRank", self._rank)
+        propertySet.setString("Level", "Debug")
 
         self.activeClipboard.put("rankKey", propertySet)
 
@@ -118,8 +121,10 @@ class SyncTestStage(Stage):
             print 'Python apps.SyncTestStage process: YYYY stageId %i key %s' % (self.stageId, key)
 
             for name in nameList:
-                 iValue = propertySet.getInt(name)
-                 print 'Python apps.SyncTestStage process: Y ', self._rank, key, name, iValue
+                 # iValue = propertySet.getInt(name)
+                 ## iValue = propertySet.get()
+                 # print 'Python apps.SyncTestStage process: Y ', self._rank, key, name, iValue
+                 print 'Python apps.SyncTestStage process: Y ', self._rank, key, name
 
 
         self.outputQueue.addDataset(self.activeClipboard)
