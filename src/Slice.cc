@@ -266,9 +266,6 @@ char* Slice::getRunId() {
 const char* Slice::getNeighbors() {
     std::stringstream ss;
 
-    /* 
-    std::list<int>::iterator iter=NULL;
-    */
     std::list<int>::iterator iter;
     for(iter = neighborList.begin(); iter != neighborList.end(); )
     {
@@ -279,6 +276,17 @@ const char* Slice::getNeighbors() {
     ss >> neighborString;
     return neighborString.c_str();
 };
+
+std::vector<int> Slice::getNeighborList() {
+    std::vector<int> neighborVec;
+    std::list<int>::iterator iter;
+    for(iter = neighborList.begin(); iter != neighborList.end(); )
+    {
+       neighborVec.push_back(*iter);
+       iter++;
+    }
+    return neighborVec;
+}
 
 void Slice::calculateNeighbors() {
 
@@ -338,29 +346,12 @@ void Slice::calculateNeighbors() {
 
 }
 
-
-/* PropertySet Slice::syncSlices(PropertySet ps0) {  */ 
-
 PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
 
     Log localLog(sliceLog, "Slice.syncSlices()");    
 
-    /*
-    sliceLog.log(Log::INFO,
-        boost::format("Enter C++ syncSlices(): _rank %d") % _rank);
-    */ 
-
-    localLog.log(Log::INFO, boost::format("Calling Barrier: %d ") % _rank);
-
-    mpiError = MPI_Barrier(sliceIntercomm);
-    if (mpiError != MPI_SUCCESS){
-        MPI_Finalize();
-        exit(1);
-    }
-
     char syncCommand[bufferSize];
-
-    localLog.log(Log::INFO, boost::format("Calling Bcast: %d ") % _rank);
+    localLog.log(Log::INFO, boost::format("InterSlice Communcation Command Bcast: rank %d ") % _rank);
 
     mpiError = MPI_Bcast(syncCommand, bufferSize, MPI_CHAR, 0, sliceIntercomm);
     if (mpiError != MPI_SUCCESS){
@@ -368,9 +359,8 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
         exit(1);
     }
 
-    /* Sync the Slices here */ 
+    /* Ptr for the return values received from other Slices */ 
 
-    /* Loop over the Data Properties that need to be shared */ 
     PropertySet::Ptr retPtr(new dafBase::PropertySet);
 
     /*   If we are passed PropertySet, then do this: 
@@ -378,102 +368,134 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     */ 
 
     /* If passed a PropertySet::Ptr then do this */  
-    /* lousy name 
-    std::vector<std::string> vPs0 = ps0Ptr->names();
-    */ 
+
     std::vector<std::string> psNames = ps0Ptr->names();
+    std::string keyToShare = psNames[0];
+    localLog.log(Log::INFO, boost::format("Using keyToShare: %s ") % keyToShare);
 
-    /*  Loop over vector using index 
-    for (int i = 0; i < vPs0.size(); i++)
-    {}
-    */ 
+    int numNeighbors; 
+    numNeighbors = neighborList.size();
 
-    /* Loop over the  nameSetType (vector?)   old stuff 
-    std::set<std::string> dpNames = dpt->findNames("^.");
-    */  
-
-    /*  Loop over vector using iterator 
-    std::set<std::string>::iterator iterSet;
-    for(iterSet = psNames.begin(); iterSet != psNames.end(); )
-    */ 
-
+    localLog.log(Log::INFO, boost::format("Number of Neighbors is: %d ") % numNeighbors);
+    
+    /*   Loop over the Properties ?
     for (vector<string>::const_iterator iterSet = psNames.begin(); iterSet != psNames.end(); )  
-    {
         std::string keyToShare = (*iterSet);
 
-        localLog.log(Log::INFO, boost::format("Using keyToShare: %s ") % keyToShare);
-
-        int count = 0;
-
-        PropertySet::Ptr recvPtr[4];
-        mpi::request reqs[8];
-
-        int destSlice;
-        std::list<int>::iterator iter;
-        for(iter = neighborList.begin(); iter != neighborList.end(); iter++)
-        {
-            destSlice = (*iter);
-
-            localLog.log(Log::INFO, boost::format("Communicating value to Slice %d ") % destSlice);
-
-            reqs[count] = world.isend(destSlice, 0, ps0Ptr);
-
-            count++;
-        }
-
-        localLog.log(Log::INFO, boost::format("After isends: %d ") % _rank);
-
-
-        int srcSlice;
-        for(iter = neighborList.begin(); iter != neighborList.end(); iter++)
-        {
-            srcSlice = (*iter);
-
-            /* perform Recvs */
-            localLog.log(Log::INFO, boost::format("Before recv call from Slice %d ") % srcSlice);
-            reqs[count] = world.irecv(srcSlice, 0, recvPtr[count-4]);
-            localLog.log(Log::INFO, boost::format("After recv from  Slice %d count %d ") % srcSlice %  count);
-
-            count++;
-
-       }
-
-       mpi::wait_all(reqs, reqs + 8);
-
-       localLog.log(Log::INFO, boost::format("Past wait_all %d ") % srcSlice);
-
-       int yy; 
-       for (yy = 0; yy < 4; yy++) {
-           /* 
-           localLog.log(Log::INFO, boost::format("Past wait_all %d yy %d str2 %s ") % _rank % yy % str2[yy]);
-           int ival = boost::any_cast<int>(recvPtr[yy]->getValue());
-           */ 
-           int ival = recvPtr[yy]->get<int>(keyToShare); 
-
-           localLog.log(Log::INFO, boost::format("Past wait_all %d yy %d ival %d  ") % _rank % yy % ival);
-           std::stringstream newkeyBuffer;
-           std::string newkey;
-
-           newkeyBuffer << keyToShare;
-           newkeyBuffer << "-";
-           newkeyBuffer << yy;
-
-           newkeyBuffer >> newkey;
-
-           retPtr->set<int>(newkey, ival);
-       }
-
-       mpiError = MPI_Barrier(sliceIntercomm);
-       if (mpiError != MPI_SUCCESS){
-           MPI_Finalize();
-           exit(1);
-       }
-      
        iterSet++;
     }
+    */ 
 
-    return retPtr;
+    int count = 0;
 
+    PropertySet::Ptr recvPtr[numNeighbors];
+    mpi::request reqs[2*numNeighbors];
+
+    int destSlice;
+    std::list<int>::iterator iter;
+    for(iter = neighborList.begin(); iter != neighborList.end(); iter++)
+    {
+        destSlice = (*iter);
+
+        localLog.log(Log::INFO, boost::format("Communicating value to Slice %d ") % destSlice);
+
+        reqs[count] = world.isend(destSlice, 0, ps0Ptr);
+
+        count++;
+    }
+
+    localLog.log(Log::INFO, boost::format("After isends: %d ") % _rank);
+
+
+    int srcSlice;
+    for(iter = neighborList.begin(); iter != neighborList.end(); iter++)
+    {
+        srcSlice = (*iter);
+
+        /* perform Recvs */
+        localLog.log(Log::INFO, boost::format("Before recv call from Slice %d ") % srcSlice);
+        reqs[count] = world.irecv(srcSlice, 0, recvPtr[count-numNeighbors]);
+        localLog.log(Log::INFO, boost::format("After recv from  Slice %d count %d ") % srcSlice %  count);
+
+        count++;
+
+    }
+
+    mpi::wait_all(reqs, reqs + 2*numNeighbors);
+
+    localLog.log(Log::INFO, boost::format("Past wait_all %d ") % srcSlice);
+
+    /* 
+    std::vector<boost::any> ptrVector;
+    int yy; 
+    for (yy = 0; yy < numNeighbors; yy++) {
+        ptrVector.push_back(recvPtr[yy]);
+    } 
+    */ 
+ 
+    int yy = 0; 
+    std::list<int>::iterator iterNeighbors;
+    for(iterNeighbors = neighborList.begin(); iterNeighbors != neighborList.end(); )
+    {
+        int ni =  (*iterNeighbors);
+        std::stringstream newkeyBuffer;
+        std::string newkey;
+        newkeyBuffer << "neighbor-";
+        newkeyBuffer << ni;
+        newkeyBuffer >> newkey;
+        retPtr->set<PropertySet::Ptr>(newkey, recvPtr[yy]); 
+
+        iterNeighbors++;
+        yy++;
+    }
+
+    /* 
+    int yy; 
+    for (yy = 0; yy < numNeighbors; yy++) {
+
+        std::stringstream newkeyBuffer;
+        std::string newkey;
+        newkeyBuffer << "neighbor-";
+        newkeyBuffer << yy;
+
+        newkeyBuffer >> newkey;
+
+        retPtr->set<PropertySet::Ptr>(newkey, recvPtr[yy]); 
+    } 
+    */
+
+    /* 
+    int yy; 
+    for (yy = 0; yy < numNeighbors; yy++) {
+
+        int ival = recvPtr[yy]->get<int>(keyToShare); 
+
+        localLog.log(Log::INFO, boost::format("Past wait_all %d yy %d ival %d  ") % _rank % yy % ival);
+        std::stringstream newkeyBuffer;
+        std::string newkey;
+
+        newkeyBuffer << keyToShare;
+        newkeyBuffer << "-";
+        newkeyBuffer << yy;
+
+        newkeyBuffer >> newkey;
+
+        retPtr->set<int>(newkey, ival); 
+    }
+    */ 
+    /* How to combine  retPtr->combine(recvPtr[yy]);  */ 
+
+    mpiError = MPI_Barrier(sliceIntercomm);
+    if (mpiError != MPI_SUCCESS){
+        MPI_Finalize();
+        exit(1);
+    }
+
+    /* return recvPtr; */ 
+
+    return retPtr; 
+
+    /* return ptrVector; */ 
 }
 
 
