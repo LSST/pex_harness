@@ -444,21 +444,48 @@ class Slice:
             lr << LogRec.endr
 
             for skey in sharedKeys:
+
                 psKey = dafBase.PropertySet()
                 psKey.setString("shared key", skey);
-
                 lr = LogRec(synclog, Log.INFO)
                 lr << "Executing C++ syncSlices : "
                 lr << psKey
                 lr << LogRec.endr
 
                 psPtr = clipboard.get(skey)
-                neighborkeyPtrType = self.cppSlice.syncSlices(psPtr);
-                neighborKey = skey + "-N" 
-                clipboard.put(neighborKey, neighborkeyPtrType, False);
+                newPtr = self.cppSlice.syncSlices(psPtr)
+                 
+                psValuesFromNeighbors = dafBase.PropertySet()
+                valuesFromNeighbors = newPtr.toString(False)
+                psValuesFromNeighbors.setString("Result", valuesFromNeighbors)
+
+                neighborList = self.cppSlice.getNeighborList()
+
+                for element in neighborList:
+                    neighborKey = skey + "-" + str(element)
+                    psKey = "neighbor-" + str(element)
+                    propertySetPtr = newPtr.getAsPropertySetPtr(psKey)
+                    psDebug = dafBase.PropertySet()
+                    testString = propertySetPtr.toString(False)
+                    psDebug.setString("Result2", testString)
+                    clipboard.put(neighborKey, propertySetPtr, False);
+                    lr = LogRec(synclog, Log.INFO)
+                    lr << "Element in neighborList "
+                    lr << neighborKey
+                    lr << LogRec.endr
+                    lr = LogRec(synclog, Log.INFO)
+                    lr << "Result2 String "
+                    lr << testString
+                    lr << LogRec.endr
+                    
+
+                # neighborKey = skey + "-N" 
+                # clipboard.put(neighborKey, neighborkeyPtrType, False);
                 lr = LogRec(synclog, Log.INFO)
                 lr << "Executed C++ syncSlices : "
                 lr << psKey
+                lr << "---------------"
+                lr << psValuesFromNeighbors
                 lr << LogRec.endr
 
 
