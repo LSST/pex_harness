@@ -1,7 +1,2 @@
-22 serialization::archive 3 1 0
-0 1 0
-1 6 sample 1 0 0 2 0 1 0
-2
-3 3 str 0 115 3 foo 0
-4
-5 3 num 0 105 42
+22 serialization::archive 5 0 0 1 0
+0 0 0 1 0 4 foo3 115 1 0 21 This is a Fits string

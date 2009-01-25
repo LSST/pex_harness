@@ -11,7 +11,7 @@
 # The required event is issued with the script triggerIpdpEventTransmit.py 
 #
 
-localLogMode: "Yes"`
+localLogMode: "Yes"
 executionMode: "oneloop"
 activemqBroker: "lsst8.ncsa.uiuc.edu" 
 shutdownTopic: "triggerShutdownEvent" 
