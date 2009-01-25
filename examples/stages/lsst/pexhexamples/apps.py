@@ -138,3 +138,37 @@ class SyncTestStage(Stage):
 	print 'Python apps.SyncTestStage postprocess : _rank %i' % self._rank
         self.outputQueue.addDataset(self.activeClipboard)
 
+
+class ImageprocStage(Stage):
+
+    #------------------------------------------------------------------------
+    def process(self):
+        """
+        Execute the needed processing code for this Stage
+        """
+        print 'Python ImageprocStage process : _rank %i stageId %d' % (self._rank, self.stageId)
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        key = "triggerImageprocEvent"
+        propertySet = self.activeClipboard.get(key)
+
+        nameList = propertySet.names()
+        for name in nameList:
+            print 'Python apps.ImageprocStage process() ', 'name', name
+
+        self.exposureId = propertySet.get("exposureid")
+        print 'Python apps.ImageprocStage process() ', key, "exposureid", self.exposureId
+        self.ccdId = propertySet.get("ccdid")
+        print 'Python apps.ImageprocStage process() ', key, "ccdid", self.ccdId
+
+        inputImage = self.activeClipboard.get('InputImage')
+
+        print inputImage
+        # print "inputImage cols=%r, rows=%r" % (inputImage.getCols(), inputImage.getRows())
+        # print 'Python ImageprocStage process(): _rank %i stageId %i value %s' % (self._rank, self.stageId, inputImage)
+
+        self.activeClipboard.put('OutputImage', inputImage)
+
+        self.outputQueue.addDataset(self.activeClipboard)
+
+
