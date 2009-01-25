@@ -37,7 +37,7 @@ def massage(location, additionalData):
 
     def replace(match):
         """
-        Get the value of a DataProperty key in match.group(1), using
+        Get the value of a PropertySet key in match.group(1), using
         match.group(3) as a default if not found.
         """
         if not additionalData.exists(match.group(1)):
@@ -192,8 +192,7 @@ class OutputStage (lsst.pex.harness.Stage.Stage):
                     self.log.log(Log.INFO,
                                  "persisting %s as %s" % (item, location));
 
-                    additionalData.addProperty(
-                            'StorageLocation.' + storageName, location)
+                    additionalData.add('StorageLocation.' + storageName, location)
 
                     logLoc = lsst.daf.persistence.LogicalLocation(location)
                     storage = persistence.getPersistStorage(storageName, \
@@ -341,16 +340,8 @@ class InputStage (lsst.pex.harness.Stage.Stage):
 
 
                 # Retrieve the item.
-                try: 
-                    itemData = persistence.unsafeRetrieve(itemType, storageList, additionalData)
-                except lsst.pex.exceptions.LsstCppException, e:
-                    t = e.args[0].getTraceback()
-
-                    print "Exception traceback: " + "File = " + t[0]._file \
-                        << "Line = "  + t[0]._line + "Func = " + t[0]._func \
-                        << "Message = " + t[0]._msg 
-
-
+                itemData = persistence.unsafeRetrieve(itemType, storageList, \
+                        additionalData)
 
                 # Cast the SWIGged Persistable to a more useful type.
                 pos = pythonType.rfind('.')
