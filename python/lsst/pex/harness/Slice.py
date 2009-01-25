@@ -12,9 +12,8 @@ import lsst.pex.exceptions as ex
 import lsst.daf.base as dafBase
 from lsst.daf.base import *
 
-from lsst.pex.exceptions import *
-
 import lsst.ctrl.events as events
+import lsst.pex.exceptions
 
 import os
 import sys
@@ -537,7 +536,7 @@ class Slice:
 
             # Use str(e) or  e.args[0].what() for message  
             lr = LogRec(proclog, Log.FATAL)
-            lr << "Exception " + "Type = " + e.args[0].getType() \
+            lr << "Exception " + "args[0] = " + e.args[0] \
                << "Message = " + str(e) \
                << LogRec.endr
 
