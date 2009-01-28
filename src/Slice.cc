@@ -263,24 +263,10 @@ char* Slice::getRunId() {
     return _runId;
 }
 
-const char* Slice::getNeighbors() {
-    std::stringstream ss;
-
-    std::list<int>::iterator iter;
-    for(iter = neighborList.begin(); iter != neighborList.end(); )
-    {
-       ss << (*iter);
-       ss << ",";
-       iter++;
-    }
-    ss >> neighborString;
-    return neighborString.c_str();
-};
-
-std::vector<int> Slice::getNeighborList() {
+std::vector<int> Slice::getRecvNeighborList() {
     std::vector<int> neighborVec;
     std::list<int>::iterator iter;
-    for(iter = neighborList.begin(); iter != neighborList.end(); )
+    for(iter = recvNeighborList.begin(); iter != recvNeighborList.end(); )
     {
        neighborVec.push_back(*iter);
        iter++;
@@ -315,7 +301,48 @@ void Slice::calculateNeighbors() {
 
         neighborList.push_back(left_nbr);
         neighborList.push_back(right_nbr);
+
+        string mode;
+        mode = _topologyPolicy->getString("param1");
+        if(mode == "clockwise") {
+            recvNeighborList.push_back(left_nbr);
+            sendNeighborList.push_back(right_nbr);
+            localLog.log(Log::INFO, boost::format("Mode is %s ") % mode );
+        }
+        if(mode == "counterclockwise") {
+            sendNeighborList.push_back(left_nbr);
+            recvNeighborList.push_back(right_nbr);
+            localLog.log(Log::INFO, boost::format("Mode is %s ") % mode );
+        }
     }   
+
+    if (typeTopology == "sliceleaders") {  
+        int modulus;
+        int leaderRank;
+        bool _isLeader;
+        modulus = _topologyPolicy->getInt("param1");
+        localLog.log(Log::INFO,
+               boost::format("sliceleaders  modulus %d  ") % modulus  );
+        int groupRank =  _rank % modulus;   /* groupRank is either 0,  or 1, 2, ,,,, N-1 */ 
+        if (groupRank == 0) {
+            _isLeader = true;
+            leaderRank = _rank;
+            for (int ii = 1; ii < modulus; ii++) {
+                neighborList.push_back(leaderRank+ii);
+                recvNeighborList.push_back(leaderRank+ii);
+            }
+            localLog.log(Log::INFO,
+               boost::format("sliceleaders  %d  %d is Leader ") % _rank % leaderRank );
+        } 
+        else {
+            _isLeader = false;
+            leaderRank = _rank - groupRank;
+            neighborList.push_back(leaderRank);
+            sendNeighborList.push_back(leaderRank);
+            localLog.log(Log::INFO,
+               boost::format("sliceleaders  %d  %d not a Leader ") % _rank % leaderRank );
+        }
+    }
 
     if (typeTopology == "focalplane") {  
         int commSize[2], isPeriodic[2];
@@ -335,6 +362,16 @@ void Slice::calculateNeighbors() {
         neighborList.push_back(rightx);
         neighborList.push_back(lefty);
         neighborList.push_back(righty);
+
+        sendNeighborList.push_back(leftx);
+        sendNeighborList.push_back(rightx);
+        sendNeighborList.push_back(lefty);
+        sendNeighborList.push_back(righty);
+
+        recvNeighborList.push_back(leftx);
+        recvNeighborList.push_back(rightx);
+        recvNeighborList.push_back(lefty);
+        recvNeighborList.push_back(righty);
 
         /* 
         sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
@@ -373,69 +410,63 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     std::string keyToShare = psNames[0];
     localLog.log(Log::INFO, boost::format("Using keyToShare: %s ") % keyToShare);
 
-    int numNeighbors; 
-    numNeighbors = neighborList.size();
+    int numRequests, numSendNeighbors, numRecvNeighbors; 
+    numSendNeighbors = sendNeighborList.size();
+    numRecvNeighbors = recvNeighborList.size();
+    numRequests = numSendNeighbors + numRecvNeighbors; 
 
-    localLog.log(Log::INFO, boost::format("Number of Neighbors is: %d ") % numNeighbors);
+    localLog.log(Log::INFO, 
+        boost::format("Number of Neighbors is: Send  %d Recv %d  ") % numSendNeighbors % numRecvNeighbors);
+    localLog.log(Log::INFO, 
+        boost::format("Number of Requests: %d ") % numRequests );
     
-    /*   Loop over the Properties ?
-    for (vector<string>::const_iterator iterSet = psNames.begin(); iterSet != psNames.end(); )  
-        std::string keyToShare = (*iterSet);
-
-       iterSet++;
-    }
-    */ 
-
     int count = 0;
 
-    PropertySet::Ptr recvPtr[numNeighbors];
-    mpi::request reqs[2*numNeighbors];
+    PropertySet::Ptr recvPtr[numRecvNeighbors];
+    mpi::request reqs[numRequests];
 
-    int destSlice;
-    std::list<int>::iterator iter;
-    for(iter = neighborList.begin(); iter != neighborList.end(); iter++)
+    int destSlice, sendCount;
+    sendCount = 0;
+    std::list<int>::iterator iterSend;
+    for(iterSend = sendNeighborList.begin(); iterSend != sendNeighborList.end(); iterSend++)
     {
-        destSlice = (*iter);
+        destSlice = (*iterSend);
 
         localLog.log(Log::INFO, boost::format("Communicating value to Slice %d ") % destSlice);
 
         reqs[count] = world.isend(destSlice, 0, ps0Ptr);
 
         count++;
+        sendCount++;
     }
 
     localLog.log(Log::INFO, boost::format("After isends: %d ") % _rank);
 
-
-    int srcSlice;
-    for(iter = neighborList.begin(); iter != neighborList.end(); iter++)
+    int srcSlice, recvCount;
+    recvCount=0;
+    std::list<int>::iterator iterRecv;
+   
+    for(iterRecv = recvNeighborList.begin(); iterRecv != recvNeighborList.end(); iterRecv++)
     {
-        srcSlice = (*iter);
+        srcSlice = (*iterRecv);
 
         /* perform Recvs */
         localLog.log(Log::INFO, boost::format("Before recv call from Slice %d ") % srcSlice);
-        reqs[count] = world.irecv(srcSlice, 0, recvPtr[count-numNeighbors]);
-        localLog.log(Log::INFO, boost::format("After recv from  Slice %d count %d ") % srcSlice %  count);
+        reqs[count] = world.irecv(srcSlice, 0, recvPtr[recvCount]);
+        localLog.log(Log::INFO, boost::format("After recv from  Slice %d recvCount %d ") % srcSlice %  recvCount);
 
         count++;
-
+        recvCount++;
     }
 
-    mpi::wait_all(reqs, reqs + 2*numNeighbors);
+    mpi::wait_all(reqs, reqs + sendCount + recvCount);
 
     localLog.log(Log::INFO, boost::format("Past wait_all %d ") % srcSlice);
 
-    /* 
-    std::vector<boost::any> ptrVector;
-    int yy; 
-    for (yy = 0; yy < numNeighbors; yy++) {
-        ptrVector.push_back(recvPtr[yy]);
-    } 
-    */ 
- 
+    /* Combine the array of recvPtr [] into a single retPtr */ 
     int yy = 0; 
     std::list<int>::iterator iterNeighbors;
-    for(iterNeighbors = neighborList.begin(); iterNeighbors != neighborList.end(); )
+    for(iterNeighbors = recvNeighborList.begin(); iterNeighbors != recvNeighborList.end(); )
     {
         int ni =  (*iterNeighbors);
         std::stringstream newkeyBuffer;
@@ -449,53 +480,14 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
         yy++;
     }
 
-    /* 
-    int yy; 
-    for (yy = 0; yy < numNeighbors; yy++) {
-
-        std::stringstream newkeyBuffer;
-        std::string newkey;
-        newkeyBuffer << "neighbor-";
-        newkeyBuffer << yy;
-
-        newkeyBuffer >> newkey;
-
-        retPtr->set<PropertySet::Ptr>(newkey, recvPtr[yy]); 
-    } 
-    */
-
-    /* 
-    int yy; 
-    for (yy = 0; yy < numNeighbors; yy++) {
-
-        int ival = recvPtr[yy]->get<int>(keyToShare); 
-
-        localLog.log(Log::INFO, boost::format("Past wait_all %d yy %d ival %d  ") % _rank % yy % ival);
-        std::stringstream newkeyBuffer;
-        std::string newkey;
-
-        newkeyBuffer << keyToShare;
-        newkeyBuffer << "-";
-        newkeyBuffer << yy;
-
-        newkeyBuffer >> newkey;
-
-        retPtr->set<int>(newkey, ival); 
-    }
-    */ 
-    /* How to combine  retPtr->combine(recvPtr[yy]);  */ 
-
     mpiError = MPI_Barrier(sliceIntercomm);
     if (mpiError != MPI_SUCCESS){
         MPI_Finalize();
         exit(1);
     }
 
-    /* return recvPtr; */ 
-
     return retPtr; 
 
-    /* return ptrVector; */ 
 }
 
 
