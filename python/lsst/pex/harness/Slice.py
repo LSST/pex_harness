@@ -252,14 +252,12 @@ class Slice:
             lr << LogRec.endr
             # Calculate this Slice's neighbors 
             self.cppSlice.calculateNeighbors();
-            neighborString = self.cppSlice.getNeighbors();
+            #
             lr = LogRec(log, Log.INFO)
             lr << "Calculated Slice neighbors"
-            psTop  = dafBase.PropertySet()
-            psTop.setString("xleft xright yleft yright", neighborString)
-            lr << psTop
+            # psTop  = dafBase.PropertySet()
+            # lr << psTop
             lr << LogRec.endr
-
 
         lr = LogRec(log, Log.INFO)
         lr << "End configureSlice"
@@ -444,11 +442,11 @@ class Slice:
 
             for skey in sharedKeys:
 
-                psKey = dafBase.PropertySet()
-                psKey.setString("shared key", skey);
+                psKeyToShare = dafBase.PropertySet()
+                psKeyToShare.setString("shared key", skey);
                 lr = LogRec(synclog, Log.INFO)
-                lr << "Executing C++ syncSlices : "
-                lr << psKey
+                lr << "Executing C++ syncSlices for keyToShare: "
+                lr << psKeyToShare
                 lr << LogRec.endr
 
                 psPtr = clipboard.get(skey)
@@ -456,34 +454,27 @@ class Slice:
                  
                 psValuesFromNeighbors = dafBase.PropertySet()
                 valuesFromNeighbors = newPtr.toString(False)
-                psValuesFromNeighbors.setString("Result", valuesFromNeighbors)
+                psValuesFromNeighbors.setString("Received PropertySet from C++", valuesFromNeighbors)
 
-                neighborList = self.cppSlice.getNeighborList()
+                neighborList = self.cppSlice.getRecvNeighborList()
 
                 for element in neighborList:
                     neighborKey = skey + "-" + str(element)
-                    psKey = "neighbor-" + str(element)
-                    propertySetPtr = newPtr.getAsPropertySetPtr(psKey)
-                    psDebug = dafBase.PropertySet()
+                    nKey = "neighbor-" + str(element)
+                    propertySetPtr = newPtr.getAsPropertySetPtr(nKey)
                     testString = propertySetPtr.toString(False)
-                    psDebug.setString("Result2", testString)
                     clipboard.put(neighborKey, propertySetPtr, False);
                     lr = LogRec(synclog, Log.INFO)
-                    lr << "Element in neighborList "
+                    lr << "Added  "
                     lr << neighborKey
-                    lr << LogRec.endr
-                    lr = LogRec(synclog, Log.INFO)
-                    lr << "Result2 String "
+                    lr << "to Clipboard. Contents:  "
                     lr << testString
                     lr << LogRec.endr
                     
 
-                # neighborKey = skey + "-N" 
-                # clipboard.put(neighborKey, neighborkeyPtrType, False);
                 lr = LogRec(synclog, Log.INFO)
-                lr << "Executed C++ syncSlices : "
-                lr << psKey
-                lr << "---------------"
+                lr << "Executed C++ syncSlices for keyToShare: "
+                lr << psKeyToShare
                 lr << psValuesFromNeighbors
                 lr << LogRec.endr
 
