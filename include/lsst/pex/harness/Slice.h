@@ -103,8 +103,7 @@ public:
     void setRunId(char* runId);
     char* getRunId();
     void calculateNeighbors();
-    const char* getNeighbors();
-    std::vector<int> getNeighborList();
+    std::vector<int> getRecvNeighborList();
     PropertySet::Ptr syncSlices(PropertySet::Ptr dpt);
 
 private:
@@ -125,6 +124,8 @@ private:
     int universeSize;
     int bufferSize;
     std::list<int> neighborList;
+    std::list<int> sendNeighborList;
+    std::list<int> recvNeighborList;
     string neighborString;
 
     Log sliceLog;
