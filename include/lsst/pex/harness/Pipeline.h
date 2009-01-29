@@ -16,9 +16,14 @@
 #include "Queue.h"
 
 #include <string>
-#include <iostream>
 #include <unistd.h>
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <istream>
+#include <ostream>
+#include <sstream>
+
 
 #include "lsst/pex/policy/Policy.h"
 #include "lsst/utils/Utils.h"
