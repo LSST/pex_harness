@@ -41,6 +41,7 @@ Log Pipeline::initializeLogger(Log defaultLog,  bool isLocalLogMode) {
 
     if(isLocalLogMode) {
         /* Make a log file name coded to the rank    */
+
         std::stringstream logfileBuffer;
         std::string logfile;
 
@@ -243,6 +244,7 @@ void Pipeline::invokeSyncSlices() {
     pipelineLog.log(Log::INFO,
         boost::format("Start invokeSyncSlices: rank %d ") % rank);
 
+   /* 
     mpiError = MPI_Barrier(sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
         MPI_Finalize();
@@ -251,11 +253,13 @@ void Pipeline::invokeSyncSlices() {
     pipelineLog.log(Log::INFO,
         boost::format("synced with Barrier: rank %d ") % rank);
 
-    char procCommand[bufferSize];
-    strcpy(procCommand, "SYNC");  
+   */
 
     pipelineLog.log(Log::INFO,
-        boost::format("Start Bcast rank %d ") % rank);
+        boost::format("InterSlice Communication Command Bcast rank %d ") % rank);
+
+    char procCommand[bufferSize];
+    strcpy(procCommand, "SYNC");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
