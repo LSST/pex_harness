@@ -51,9 +51,17 @@ import lsst.pex.harness
 
 
 %include "lsst/p_lsstSwig.i"
+%lsst_exceptions()
+
 %include "std_string.i"
 %include "std_set.i"
 %include "lsst/utils/Utils.h"
+
+%import "lsst/daf/base/baseLib.i"
+%import "lsst/pex/logging/loggingLib.i"
+%import "lsst/pex/policy/policyLib.i"
+
+
 %import "lsst/daf/base/Citizen.h"
 %import "lsst/daf/base/PropertySet.h"
 %import "lsst/daf/persistence/PropertySetFormatter.h"
