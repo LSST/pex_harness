@@ -47,21 +47,11 @@ Slice::~Slice() {
 }
 
 
-Log Slice::initializeLogger(Log defaultLog,  bool isLocalLogMode) {
+void Slice::initializeLogger(bool isLocalLogMode) {
 
     _pid = getpid();
     char* _host = getenv("HOST");
 
-    /*  Currentway
-    */ 
-    sliceLog = defaultLog;  
-
-    /* Newway
-    sliceLog = Log::getDefaultLog();
-    */ 
-
-    /* EventLog::createDefaultLog(_runId,  _rank, _host, Log::INFO, &preamble); */ 
- 
 
     if(isLocalLogMode) { 
         /* Make a log file name coded to the rank    */ 
@@ -78,36 +68,27 @@ Log Slice::initializeLogger(Log defaultLog,  bool isLocalLogMode) {
         /* ofstream outlog(logfile.c_str()); */ 
         outlog =  new ofstream(logfile.c_str());
 
-        /* if(!outlog) { cout << "Cannot open file.\n"; return 1; }    */ 
-
-        /* Make LogDestination : LogDestination filedest(&outlog, brief);    */ 
-
         boost::shared_ptr<LogFormatter> brief(new BriefFormatter(true));
         boost::shared_ptr<LogDestination> tempPtr(new LogDestination(outlog, brief));
         destPtr = tempPtr;
-        sliceLog.addDestination(destPtr);  
+        Log::getDefaultLog().addDestination(destPtr);
     } 
 
-    /* filedest.write(lr1);  
-    sliceLog.log(Log::INFO, "I'm writing a message.");
-    */ 
+    Log root = Log::getDefaultLog();
+    sliceLog = Log(root, "pex.harness.slice");
 
-    Log localLog(sliceLog, "Slice.initializeLogger()");       // localLog: a child log
+    Log localLog(sliceLog, "initializeLogger()");       // localLog: a child log
 
     localLog.log(Log::INFO,
         boost::format("Logger Initialized : _rank %d ") % _rank);
 
-    string* s1 = new string("propertysetTest"); 
+    string* s1 = new string("PropertySetTest"); 
     PropertySet ps3;
     ps3.set("keya", string("TestValue"));
 
     localLog.log(Log::INFO, *s1, ps3 );
 
-
-    /* sliceLog.addDestination(outlog, Log::INFO, brief); 
-     sliceLog.addDestination(outlog, Log::INFO);  */ 
-
-    return sliceLog;
+    return;
 }
 
 void Slice::initializeMPI() {
@@ -202,7 +183,7 @@ void Slice::invokeBcast(int iStage) {
     char runCommand[bufferSize];
     int kStage;
 
-    Log localLog(sliceLog, "Slice.invokeBcast()");    
+    Log localLog(sliceLog, "invokeBcast()");    
     localLog.log(Log::INFO, boost::format("Invoking Bcast: %d ") % iStage);
 
     mpiError = MPI_Bcast(runCommand, bufferSize, MPI_CHAR, 0, sliceIntercomm);
@@ -221,7 +202,7 @@ void Slice::invokeBcast(int iStage) {
 
 void Slice::invokeBarrier(int iStage) {
 
-    Log localLog(sliceLog, "Slice.invokeBarrier()");    
+    Log localLog(sliceLog, "invokeBarrier()");    
     localLog.log(Log::INFO, boost::format("Invoking Barrier: %d ") % iStage);
 
     mpiError = MPI_Barrier(sliceIntercomm);
@@ -276,7 +257,7 @@ std::vector<int> Slice::getRecvNeighborList() {
 
 void Slice::calculateNeighbors() {
 
-    Log localLog(sliceLog, "Slice.calculateNeighbors()");  
+    Log localLog(sliceLog, "calculateNeighbors()");  
 
     std::string typeTopology; 
     if (_topologyPolicy->exists("type")) {
@@ -385,7 +366,7 @@ void Slice::calculateNeighbors() {
 
 PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
 
-    Log localLog(sliceLog, "Slice.syncSlices()");    
+    Log localLog(sliceLog, "syncSlices()");    
 
     char syncCommand[bufferSize];
     localLog.log(Log::INFO, boost::format("InterSlice Communcation Command Bcast: rank %d ") % _rank);

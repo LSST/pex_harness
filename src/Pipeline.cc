@@ -32,12 +32,10 @@ void Pipeline::initialize() {
 }
 
 
-Log Pipeline::initializeLogger(Log defaultLog,  bool isLocalLogMode) {
+void Pipeline::initializeLogger(bool isLocalLogMode) {
 
     _pid = getpid();
     char* _host = getenv("HOST");
-
-    pipelineLog = defaultLog;
 
     if(isLocalLogMode) {
         /* Make a log file name coded to the rank    */
@@ -57,34 +55,25 @@ Log Pipeline::initializeLogger(Log defaultLog,  bool isLocalLogMode) {
         boost::shared_ptr<LogFormatter> brief(new BriefFormatter(true));
         boost::shared_ptr<LogDestination> tempPtr(new LogDestination(outlog, brief));
         destPtr = tempPtr;
-        pipelineLog.addDestination(destPtr);
+        Log::getDefaultLog().addDestination(destPtr);
     }
 
-    Log localLog(pipelineLog, "Pipeline.initializeLogger()");       // localLog: a child log
+    Log root = Log::getDefaultLog();
+    pipelineLog = Log(root, "pex.harness.pipeline");
+
+    Log localLog(pipelineLog, "initializeLogger()");       // localLog: a child log
 
     localLog.log(Log::INFO,
         boost::format("Pipeline Logger Initialized : _pid %d ") % _pid);
 
-    string* s1 = new string("datapropertyTest");
+    string* s1 = new string("PropertySetTest");
     PropertySet ps3;
     ps3.set("pipeline_keya", string("TestValue"));
 
     localLog.log(Log::INFO, *s1, ps3 );
 
-    return pipelineLog;
-}
-
-
-/* 
-void Pipeline::initializeLogger() {
-
-    _pid = getpid();
-
-    pipelineLog = Log::getDefaultLog();
-
     return;
 }
-*/ 
 
 void Pipeline::initializeMPI() {
   
