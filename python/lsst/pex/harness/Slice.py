@@ -93,36 +93,21 @@ class Slice:
         else:
             self.localLogMode = "No"   # default value
 
-
-        ## Current way 
-        root =  Log.getDefaultLog()
-
         if (self.localLogMode == "Yes"):
-            self.log = self.cppSlice.initializeLogger(root, True)
+            # Initialize the logger in C++ to add a ofstream
+            self.cppSlice.initializeLogger(True)
         else:
-            self.cppSlice.initializeLogger(root, False)
-            self.log = root;
+            self.cppSlice.initializeLogger(False)
 
-        ## New way 
-        ## root =  Log.getDefaultLog()
-
-        ## if (self.localLogMode == "Yes"):
-            ## self.cppSlice.initializeLogger(root, True)
-        ## else:
-            ## self.cppSlice.initializeLogger(root, False)
-        ## self.log =  Log.getDefaultLog()
-
-        # self.log.log(Log.INFO, "Back 2 in Python");
-
-        log = Log(self.log, "Slice.configureSlice")
-        lr = LogRec(log, Log.INFO)
-        lr << "Initialized the Log Destination in C++, back in Python"
-        lr << LogRec.endr
-
-
-        # set up the logger
-        # self.log = Log(Log.getDefaultLog(), "pex.harness.slice")
+        # The log for use in the Python Slice
+        root     =  Log.getDefaultLog()
+        self.log = Log(root, "pex.harness.slice")
         # self.log.setThreshold(Log.DEBUG)
+
+        log = Log(self.log, "configureSlice")
+        lr = LogRec(log, Log.INFO)
+        lr << "Initialized the Logger"
+        lr << LogRec.endr
 
         psUniv  = dafBase.PropertySet()
         psRunid = dafBase.PropertySet()
@@ -140,6 +125,7 @@ class Slice:
         lr << "Initialized logger for rank " + str(self._rank)
         lr << "universeSize " + str(self.universeSize)
         lr << LogRec.endr
+
 
         # Check for eventTimeout
         if (p.exists('eventTimeout')):
@@ -328,8 +314,7 @@ class Slice:
         MPI Bcast and Barrier calls.
         """
 
-        looplog = Log(self.log, "Slice.startStageLoop", Log.INFO);
-        proclog = Log(self.log, "Slice.tryProcess", Log.INFO);
+        looplog = Log(self.log, "startStagesLoop", Log.INFO);
 
         visitcount = 0
         while True:
@@ -360,7 +345,7 @@ class Slice:
                 psStage.setInt("iStage", iStage);
 
                 LogRec(looplog, Log.INFO) \
-                       << "Top Stage Loop" << loopnum  << psStage << LogRec.endr
+                       << "Top Stage Iteration" << loopnum  << psStage << LogRec.endr
 
                 lr = LogRec(looplog, Log.INFO)
                 lr << "Visit loop number " + str(visitcount) + " iStage " + str(iStage)
@@ -374,8 +359,10 @@ class Slice:
                     self.syncSlices(iStage) 
 
                 self.tryProcess(iStage, stageObject)
+
+                looplog = Log(self.log, "startStagesLoop", Log.INFO);
                 LogRec(looplog, Log.INFO) \
-                       << "Bottom Stage Loop" << loopnum << psStage << LogRec.endr
+                       << "Bottom Stage iteration" << loopnum << psStage << LogRec.endr
 
             else:
                 LogRec(looplog, Log.INFO) \
@@ -406,7 +393,7 @@ class Slice:
         """
         Shutdown the Slice execution
         """
-        shutlog = Log(self.log, "Slice.shutdown", Log.INFO);
+        shutlog = Log(self.log, "shutdown", Log.INFO);
         LogRec(shutlog, Log.INFO) << "Shutting down Slice" << LogRec.endr
         self.cppSlice.shutdown()
 
@@ -414,7 +401,7 @@ class Slice:
         """
         If needed, performs interSlice communication prior to Stage process
         """
-        synclog = Log(self.log, "Slice.syncSlices", Log.INFO);
+        synclog = Log(self.log, "syncSlices", Log.INFO);
 
         psStage  = dafBase.PropertySet()
         psStage.setInt("iStage", iStage);
@@ -492,7 +479,7 @@ class Slice:
         """
         # Important try - except construct around stage process() 
 
-        proclog = Log(self.log, "Slice.tryProcess", Log.INFO);
+        proclog = Log(self.log, "tryProcess", Log.INFO);
 
         stageObject = self.stageList[iStage-1]
         proclog.log(Log.INFO, "Getting process signal from Pipeline")
@@ -536,7 +523,8 @@ class Slice:
             # Post the cliphoard that the Stage failed to transfer to the output queue
             self.postOutputClipboard(iStage)
 
-        proclog.log(Log.INFO, "Ending process")
+        proclog = Log(self.log, "tryProcess", Log.INFO);
+        proclog.log(Log.INFO, "End of process")
         proclog.log(Log.INFO, "Getting end of process signal from Pipeline")
         self.cppSlice.invokeBarrier(iStage)
 
@@ -544,7 +532,7 @@ class Slice:
         """
         Handles Events: transmit or receive events as specified by Policy
         """
-        log = Log(self.log, "Slice.handleEvents");
+        log = Log(self.log, "handleEvents");
 
         psStage  = dafBase.PropertySet()
         psStage.setInt("iStage", iStage);
@@ -587,7 +575,7 @@ class Slice:
         """
         Place the event payload onto the Clipboard
         """
-        log = Log(self.log, "Slice.populateClipboard");
+        log = Log(self.log, "populateClipboard");
         log.log(Log.DEBUG,'Python Pipeline populateClipboard');
 
         queue = self.queueList[iStage-1]
@@ -597,9 +585,6 @@ class Slice:
         # It knows nothing of the contents. 
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertySetPtr)
-        # LogRec(log, Log.DEBUG) << 'Added PropertySetPtrType to clipboard ' \
-        #             << inputParamPropertySetPtr                            \
-        #            << LogRec.endr
 
         queue.addDataset(clipboard)
 

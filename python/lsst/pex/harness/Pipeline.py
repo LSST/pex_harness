@@ -99,20 +99,17 @@ class Pipeline:
         else:
             self.localLogMode = "No"   # default value
 
-        # root =  Log.getDefaultLog()
-        root = Log(Log.getDefaultLog(), "pex.harness.pipeline")
-
         if (self.localLogMode == "Yes"):
-            self.log = self.cppPipeline.initializeLogger(root, True)
-            # set the default Log somehow ??   Log.createDefaultLog(self.log)
+            # Initialize the logger in C++ to add a ofstream
+            self.cppPipeline.initializeLogger(True)
         else:
-            self.cppPipeline.initializeLogger(root, False)
-            self.log = root;
+            self.cppPipeline.initializeLogger(False)
 
-
+        # The log for use in the Python Pipeline
+        root     = Log.getDefaultLog()
+        self.log = Log(root, "pex.harness.pipeline")
         self.log.setThreshold(Log.DEBUG)
         self.log.addDestination(cout, Log.DEBUG);
-        
 
         psUniv  = dafBase.PropertySet()
         psRunid = dafBase.PropertySet()
@@ -121,7 +118,7 @@ class Pipeline:
 
         log = Log(self.log, "configurePipeline")
         lr = LogRec(log, Log.INFO)
-        lr << "Initialized logger" \
+        lr << "Initialized the Logger" \
            << psUniv.toString(False) << psRunid.toString(False)
         lr << LogRec.endr
 
@@ -323,10 +320,7 @@ class Pipeline:
 
         eventReceiver = events.EventReceiver(self.activemqBroker, self.shutdownTopic)
 
-        looplog = Log(self.log, "visit", Log.INFO)
-        prelog = Log(looplog, "preprocess", Log.INFO)
-        proclog = Log(looplog, "process", Log.INFO)
-        postlog = Log(looplog, "postprocess", Log.INFO)
+        looplog = Log(self.log, "startStagesLoop", Log.INFO)
 
         visitcount = 0 
         while True:
@@ -361,14 +355,14 @@ class Pipeline:
 
                     self.handleEvents(iStage)
 
-                    self.tryPreProcess(iStage, stage, prelog)
+                    self.tryPreProcess(iStage, stage)
 
                     if(self.isDataSharingOn):
-                        self.invokeSyncSlices(iStage, proclog) 
+                        self.invokeSyncSlices(iStage) 
 
                     self.cppPipeline.invokeProcess(iStage)
 
-                    self.tryPostProcess(iStage, stage, postlog)
+                    self.tryPostProcess(iStage, stage)
 
                     LogRec(looplog, Log.INFO) \
                         << "Bottom Stage Loop" \
@@ -403,19 +397,25 @@ class Pipeline:
         self.cppPipeline.shutdown()
 
 
-    def invokeSyncSlices(self, iStage, proclog):
+    def invokeSyncSlices(self, iStage):
         """
         If needed, calls the C++ Pipeline invokeSyncSlices
         """
-        proclog.log(Log.INFO, "Start invokeSyncSlices", self.statstart)
+
+        invlog = Log(self.log, "invokeSyncSlices", Log.INFO)
+
+        invlog.log(Log.INFO, "Start invokeSyncSlices", self.statstart)
         if(self.shareDataList[iStage-1]):
             self.cppPipeline.invokeSyncSlices(); 
-        proclog.log(Log.INFO, "End invokeSyncSlices", self.statend)
+        invlog.log(Log.INFO, "End invokeSyncSlices", self.statend)
 
-    def tryPreProcess(self, iStage, stage, prelog):
+    def tryPreProcess(self, iStage, stage):
         """
         Executes the try/except construct for Stage preprocess() call 
         """
+
+        prelog = Log(self.log, "tryPreProcess", Log.INFO)
+
         # Important try - except construct around stage preprocess() 
         try:
             # If no error/exception has been flagged, run preprocess()
@@ -423,6 +423,7 @@ class Pipeline:
             if (self.errorFlagged == 0):
                 prelog.log(Log.INFO, "Starting preprocess", self.statstart)
                 stage.preprocess()
+                prelog = Log(self.log, "tryPreProcess", Log.INFO)
                 prelog.log(Log.INFO, "Ending preprocess", self.statend)
             else:
                 self.transferClipboard(iStage)
@@ -455,7 +456,13 @@ class Pipeline:
         prelog.log(Log.INFO, "Ending tryPreProcess", self.statend)
         # Done try - except around stage preprocess 
 
-    def tryPostProcess(self, iStage, stage, postlog):
+    def tryPostProcess(self, iStage, stage):
+        """
+        Executes the try/except construct for Stage postprocess() call 
+        """
+
+        postlog = Log(self.log, "tryPostProcess", Log.INFO)
+
         # Important try - except construct around stage postprocess() 
         try:
             # If no error/exception has been flagged, run postprocess()
@@ -463,6 +470,7 @@ class Pipeline:
             if (self.errorFlagged == 0):
                 postlog.log(Log.INFO,"Starting postprocess",self.statstart)
                 stage.postprocess()
+                postlog = Log(self.log, "tryPostProcess", Log.INFO)
                 postlog.log(Log.INFO, "Ending postprocess", self.statend)
             else:
                 self.transferClipboard(iStage)
