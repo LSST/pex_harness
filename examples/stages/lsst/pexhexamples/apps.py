@@ -7,6 +7,7 @@ Test Application Stages
 from lsst.pex.harness.Stage import Stage
 
 import lsst.pex.harness.Utils
+from lsst.pex.logging import Log, LogRec
 
 import lsst.daf.base as dafBase
 from lsst.daf.base import *
@@ -51,6 +52,13 @@ class SyncSetupStage(Stage):
 	print 'Python apps.SyncSetupStage preprocess : stageId %i' % self.stageId
 	print 'Python apps.SyncSetupStage preprocess : _rank %i' % self._rank
 
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.apps.SyncSetupStage.preprocess")
+
+        lr = LogRec(log, Log.INFO)
+        lr << "Retrieving Clipboard"
+        lr << LogRec.endr
+
         self.activeClipboard = self.inputQueue.getNextDataset()
 
         propertySet = dafBase.PropertySet()
@@ -59,6 +67,10 @@ class SyncSetupStage(Stage):
 
         self.activeClipboard.put("redKey", propertySet)
 
+        lr = LogRec(log, Log.INFO)
+        lr << "Posted data to Clipboard"
+        lr << LogRec.endr
+
     #------------------------------------------------------------------------
     def process(self): 
         """
@@ -66,6 +78,13 @@ class SyncSetupStage(Stage):
         """
 	print 'Python apps.SyncSetupStage process : stageId %i' % self.stageId
 	print 'Python apps.SyncSetupStage process : _rank %i' % self._rank
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.apps.SyncSetupStage.process")
+
+        lr = LogRec(log, Log.INFO)
+        lr << "Retrieving Clipboard"
+        lr << LogRec.endr
 
         self.activeClipboard = self.inputQueue.getNextDataset()
 
@@ -78,6 +97,10 @@ class SyncSetupStage(Stage):
 
         self.activeClipboard.setShared("rankKey", True)
 
+        lr = LogRec(log, Log.INFO)
+        lr << "Posted data to be Shared on Clipboard"
+        lr << LogRec.endr
+
         self.outputQueue.addDataset(self.activeClipboard)
 
     #------------------------------------------------------------------------
@@ -87,7 +110,15 @@ class SyncSetupStage(Stage):
         """
 	print 'Python apps.SyncSetupStage postprocess : stageId %i' % self.stageId
 	print 'Python apps.SyncSetupStage postprocess : _rank %i' % self._rank
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.apps.SyncSetupStage.postprocess")
+
         self.outputQueue.addDataset(self.activeClipboard)
+
+        lr = LogRec(log, Log.INFO)
+        lr << "Posted Clipboard to outputQueue"
+        lr << LogRec.endr
 
 class SyncTestStage(Stage):
 
