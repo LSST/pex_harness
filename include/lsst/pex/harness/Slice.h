@@ -91,7 +91,7 @@ public:
     ~Slice(); // destructor
 
     void initialize();
-    Log initializeLogger(Log defaultLog, bool isLocalLogMode);
+    void initializeLogger(bool isLocalLogMode);
     void invokeBcast(int iStage);
     void invokeBarrier(int iStage);
     void invokeShutdownTest();

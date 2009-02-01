@@ -83,7 +83,7 @@ public:
     ~Pipeline(); // destructor
 
     void initialize();
-    Log initializeLogger(Log defaultLog, bool isLocalLogMode);
+    void initializeLogger(bool isLocalLogMode);
 
     void start();
     void startSlices();  
