@@ -8,8 +8,32 @@
 # executionMode: "oneloop" ,
 # shutdownTopic: "triggerShutdownEvent" 
 #
-activemqBroker: "lsst4.ncsa.uiuc.edu" 
+localLogMode: "Yes"  
+activemqBroker: "lsst8.ncsa.uiuc.edu" 
 shutdownTopic: "triggerShutdownA" 
-appStages: "lsst.pexhexamples.pipeline.LoadStage" "lsst.pexhexamples.pipeline.MatchDiaSourceStage" "lsst.pexhexamples.pipeline.MatchMopStage" "lsst.pexhexamples.pipeline.StoreStage"  
-eventTopics: "triggerAssociationEvent" "None" "triggerMatchMopEvent" "None" 
-stagePolicies: "None" "None" "None" "None" 
+
+appStage: { 
+     stageName: "lsst.pexhexamples.pipeline.LoadStage" 
+     eventTopic: "triggerAssociationEvent"  
+     stagePolicy: "None"
+}
+
+appStage: { 
+     stageName: "lsst.pexhexamples.pipeline.MatchDiaSourceStage" 
+     eventTopic: "None" 
+     stagePolicy: "None"
+}
+
+appStage: { 
+     stageName: "lsst.pexhexamples.pipeline.MatchMopStage" 
+     eventTopic: "triggerMatchMopEvent"
+     stagePolicy: "None"
+}
+
+appStage: { 
+     stageName: "lsst.pexhexamples.pipeline.StoreStage"  
+     eventTopic: "None" 
+     stagePolicy: "None"
+}
+
+

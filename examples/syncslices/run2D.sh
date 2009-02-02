@@ -4,9 +4,8 @@ pwd=`pwd`
 PYTHONPATH=${pwd}/../stages:${PYTHONPATH}
 export PYTHONPATH
 
-
 # Command line arguments 
-# echo $@  echo $#
+echo $@  echo $#
 if [ "$#" != 2 ]; then
     echo "------------------------------------------"
     echo "Usage:  run.sh <policy-file-name> <runId>"
@@ -24,7 +23,8 @@ runId=${2}
 # For example, for two nodes with 4 cpus we could set nodes=2 
 # and nslices=3 (pipeline itself takes one cpu) 
 nodes=1
-nslices=1
+# nslices=9
+nslices=16
 # --------------------------------------------------------- 
 
 # Add 1 to the number of slices to get the universe size 
@@ -37,7 +37,7 @@ echo "usize ${usize}"
 # MPI commands will be in PATH if mpich2 is in build
 echo "Running mpdboot"
 
-mpdboot --totalnum=${nodes} --file=nodelist.scr --verbose
+mpdboot --totalnum=${nodes} --file=nodelist.2D --verbose
 
 sleep 3s
 echo "Running mpdtrace"
@@ -46,7 +46,7 @@ sleep 2s
 
 echo "Running mpiexec"
 
-mpiexec -usize ${usize}  -machinefile nodelist.scr -np 1 runPipeline.py ${pipelinePolicyName} ${runId}
+mpiexec -usize ${usize}  -machinefile nodelist.2D -np 1 runPipeline.py ${pipelinePolicyName} ${runId}
 
 sleep 1s
 

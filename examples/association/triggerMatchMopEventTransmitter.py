@@ -1,21 +1,24 @@
 #! /usr/bin/env python
 
-import lsst.daf.base as datap
+import threading
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
+
 import lsst.ctrl.events as events
 import time
 
 if __name__ == "__main__":
     print "starting...\n"
 
-    activemqBroker = "lsst4.ncsa.uiuc.edu"
+    activemqBroker = "lsst8.ncsa.uiuc.edu"
 
     externalEventTransmitter = events.EventTransmitter(activemqBroker, "triggerMatchMopEvent")
 
-    root = datap.DataProperty.createPropertyNode("root");
+    root = PropertySet()
 
-    visitId  = datap.DataProperty("visitId", 1)
+    root.setInt("visitId", 1)
 
-    root.addProperty(visitId)
+    externalEventTransmitter.publish(root)
 
-    externalEventTransmitter.publish("eventtype", root)
+
 

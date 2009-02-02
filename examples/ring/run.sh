@@ -4,9 +4,8 @@ pwd=`pwd`
 PYTHONPATH=${pwd}/../stages:${PYTHONPATH}
 export PYTHONPATH
 
-
 # Command line arguments 
-# echo $@  echo $#
+echo $@  echo $#
 if [ "$#" != 2 ]; then
     echo "------------------------------------------"
     echo "Usage:  run.sh <policy-file-name> <runId>"
@@ -24,7 +23,7 @@ runId=${2}
 # For example, for two nodes with 4 cpus we could set nodes=2 
 # and nslices=3 (pipeline itself takes one cpu) 
 nodes=1
-nslices=1
+nslices=5
 # --------------------------------------------------------- 
 
 # Add 1 to the number of slices to get the universe size 

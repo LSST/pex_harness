@@ -9,7 +9,7 @@ sub-Policies with storage types and logical locations.
 
 Additional data may be provided to customize the LogicalLocation string and to
 pass to the persistence framework.  This data comes from the clipboard passed
-to the stage; DataProperty names of the additional data items to be retrieved
+to the stage; PropertySet names of the additional data items to be retrieved
 are given in the AdditionalData sub-Policy.
 """
 import sys
@@ -33,62 +33,42 @@ def massage(location, additionalData):
     if location.find('%{') == -1:
         lsst.pex.logging.Trace("pex.harness.IOStage", 3, "\tNo substitutions")
         return location
-    vars = re.compile(r'\%\{(\w+)(\+\d+)?(=([^}]+))?\}')
+    vars = re.compile(r'\%\{(\w+)(=([^}]+))?\}')
 
     def replace(match):
         """
-        Get the value of a DataProperty key in match.group(1), using
-        match.group(4) as a default if not found.
-        Add one to integer values if match.group(2) is "+1".
+        Get the value of a PropertySet key in match.group(1), using
+        match.group(3) as a default if not found.
         """
-        dp = additionalData.findUnique(match.group(1))
-	if dp:
-            if match.group(1) == "ccdId" and match.group(2):
-                try:
-                    ival = int(dp.getValueString())
-                    incr = int(match.group(2)[1:])
-                    ival += incr
-                    return "%03d" % ival
-                except:
-                    pass
-                
-            try:
-                value = dp.getValueString()
-                return value
-            except:
-                pass
-            try:
-                value = dp.getValueInt64()
-                if match.group(2):
-                    try:
-                        incr = int(match.group(2)[1:])
-                        value += incr
-                    except:
-                        pass
-                return repr(value)
-            except:
-                pass
-            try:
-                value = dp.getValueInt()
-                if match.group(2):
-                    try:
-                        incr = int(match.group(2)[1:])
-                        value += incr
-                    except:
-                        pass
-                return repr(value)
-            except:
-                pass
-            try:
-                value = dp.getValueFloat()
-                return repr(value)
-            except:
-                pass
-        if match.group(4):
-            return match.group(4)
-        else:
-            raise RuntimeError, 'Unknown substitution in IOStage: ' + \
-                  match.group(0)
+        if not additionalData.exists(match.group(1)):
+            if match.group(3):
+                return match.group(3)
+            else:
+                raise RuntimeError, 'Unknown substitution in IOStage: ' + \
+                        match.group(0)
+
+        try:
+            value = additionalData.getAsString(match.group(1))
+            return value
+        except:
+            pass
+        try:
+            value = additionalData.getAsInt(match.group(1))
+            return repr(value)
+        except:
+            pass
+        try:
+            value = additionalData.getAsInt64(match.group(1))
+            return repr(value)
+        except:
+            pass
+        try:
+            value = additionalData.getAsDouble(match.group(1))
+            return repr(value)
+        except:
+            pass
+
+        raise RuntimeError, 'Unknown type in IOStage: ' + match.group(0)
 
     newLoc = vars.sub(replace, location)
     lsst.pex.logging.Trace("pex.harness.IOStage", 3, "\tnew location: " + newLoc)
@@ -168,10 +148,10 @@ class OutputStage (lsst.pex.harness.Stage.Stage):
 
             # Create a persistence object using policy, if present.
             if self._policy.exists('Persistence'):
-                persistencePolicy = lsst.pex.policy.PolicyPtr( \
+                persistencePolicy = lsst.pex.policy.Policy( \
                         self._policy.getPolicy('Persistence'))
             else:
-                persistencePolicy = lsst.pex.policy.PolicyPtr()
+                persistencePolicy = lsst.pex.policy.Policy()
             persistence = lsst.daf.persistence.Persistence.getPersistence( \
                     persistencePolicy)
 
@@ -194,14 +174,7 @@ class OutputStage (lsst.pex.harness.Stage.Stage):
                         continue
 
                 # Add the item name to the additionalData.
-                additionalData.deleteAll('itemName', False)
-                additionalData.addProperty( \
-                        lsst.daf.base.DataProperty('itemName', item))
-
-                # Add a subproperty for storage locations.
-                locProp = lsst.daf.base.DataProperty.createPropertyNode( \
-                        "StorageLocation")
-                additionalData.addProperty(locProp)
+                additionalData.set('itemName', item)
 
                 # Get the item's StoragePolicy.
                 if itemPolicy.isArray('StoragePolicy'):
@@ -219,9 +192,7 @@ class OutputStage (lsst.pex.harness.Stage.Stage):
                     self.log.log(Log.INFO,
                                  "persisting %s as %s" % (item, location));
 
-                    locProp.deleteAll(storageName)
-                    locProp.addProperty( \
-                            lsst.daf.base.DataProperty(storageName, location))
+                    additionalData.add('StorageLocation.' + storageName, location)
 
                     logLoc = lsst.daf.persistence.LogicalLocation(location)
                     storage = persistence.getPersistStorage(storageName, \
@@ -314,10 +285,10 @@ class InputStage (lsst.pex.harness.Stage.Stage):
 
             # Create a persistence object using policy, if present.
             if self._policy.exists('Persistence'):
-                persistencePolicy = lsst.pex.policy.PolicyPtr( \
+                persistencePolicy = lsst.pex.policy.Policy( \
                         self._policy.getPolicy('Persistence'))
             else:
-                persistencePolicy = lsst.pex.policy.PolicyPtr()
+                persistencePolicy = lsst.pex.policy.Policy()
             persistence = lsst.daf.persistence.Persistence.getPersistence( \
                     persistencePolicy)
 
@@ -345,9 +316,7 @@ class InputStage (lsst.pex.harness.Stage.Stage):
                                        [importClassString], -1)
 
                 # Add the item name to the additionalData.
-                additionalData.deleteAll('itemName', False)
-                additionalData.addProperty( \
-                        lsst.daf.base.DataProperty('itemName', item))
+                additionalData.set('itemName', item)
 
                 # Get the item's StoragePolicy.
                 if itemPolicy.isArray('StoragePolicy'):

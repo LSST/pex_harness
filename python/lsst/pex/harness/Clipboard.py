@@ -16,6 +16,7 @@ class Clipboard:
         Initialize the Clipboard by defining an initial dictionary
         """
         self.dict = {}
+        self.isShared = {}
 
     #------------------------------------------------------------------------
     def __del__ (self):
@@ -39,6 +40,19 @@ class Clipboard:
         return self.dict.keys()
 
     #------------------------------------------------------------------------
+    def getSharedKeys (self):
+        """
+        Returns the shared keys of the python dictionary (in the form of a python 
+        list)
+        """
+        fullKeySet =  self.dict.keys()
+        sharedKeySet = []
+        for key in fullKeySet:
+            if (self.isShared[key] == True):
+                sharedKeySet.append(key) 
+        return sharedKeySet
+
+    #------------------------------------------------------------------------
     def get (self, key):
         """
         Return the value within the dictionary that corresponds to the 
@@ -47,10 +61,18 @@ class Clipboard:
         return self.dict[key]
 
     #------------------------------------------------------------------------
-    def put (self, key, value):
+    def put (self, key, value, isShareable=False):
         """
         Add an entry to the dictionary using the provided name/value pair 
+        Set the shared value as well if provided 
         """
-        self.dict[key] = value
+        self.dict[key]     = value
+        self.isShared[key] = isShareable
 
+    #------------------------------------------------------------------------
+    def setShared (self, key, isShareable):
+        """
+        Set the shared value for this key 
+        """
+        self.isShared[key] = isShareable
 

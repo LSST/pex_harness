@@ -1,9 +1,8 @@
 # -*- python -*-
 Import("env")
 
-sdir = "../../../src/"
+env.CheckSwig("python", ilang="c++", includedProducts="utils daf_base pex_exceptions pex_logging pex_policy")
+basicLibs = "daf_base pex_exceptions pex_logging pex_policy utils".split()
 
-env.Append(SWIGFLAGS=["-c++", "-python", "-Iinclude"])
-
-env.LoadableModuleIncomplete("_harnessLib", Split("harnessLib.i"), LIBS=["pex_harness"])  
+env.LoadableModuleIncomplete("_harnessLib", Split("harnessLib.i"), LIBS=basicLibs + ["pex_harness"])  
 

@@ -1,7 +1,25 @@
 # inputoutputfits_policy.paf
 #
 #
-executionMode: "oneloop" 
-appStages: "lsst.pex.harness.IOStage.InputStage" "lsst.pex.harness.examples.ipdp.ImageprocStage" "lsst.pex.harness.IOStage.OutputStage"  
-eventTopics: "triggerImageprocEvent" "None" "None" 
-stagePolicies: "policy/input_policy.paf" "None" "policy/output_policy.paf" 
+localLogMode: "Yes" 
+executionMode: "oneloop"
+activemqBroker: "lsst8.ncsa.uiuc.edu"
+
+appStage: {
+     stageName: "lsst.pex.harness.IOStage.InputStage"
+     eventTopic: "triggerImageprocEvent" 
+     stagePolicy: "policy/input_policy.paf" 
+}
+
+appStage: {
+     stageName: "lsst.pexhexamples.apps.ImageprocStage" 
+     eventTopic: "None" 
+     stagePolicy: "None" 
+}
+
+appStage: {
+     stageName: "lsst.pex.harness.IOStage.OutputStage"
+     eventTopic: "None" 
+     stagePolicy: "policy/output_policy.paf" 
+}
+

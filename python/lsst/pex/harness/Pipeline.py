@@ -7,18 +7,20 @@ from lsst.pex.logging import Log, LogRec, cout
 from lsst.pex.harness import harnessLib as pipeline
 
 import lsst.pex.policy as policy
-import lsst.pex.exceptions as ex
 
-import lsst.daf.base as datap
+import lsst.pex.exceptions
+from lsst.pex.exceptions import *
+
+import lsst.daf.base as dafBase
 from lsst.daf.base import *
 
-from lsst.pex.exceptions import *
 
 import lsst.ctrl.events as events
 
 import os
 import sys
 import traceback
+import threading
 
 from cStringIO import StringIO
 
@@ -46,6 +48,7 @@ class Pipeline:
         self.stagePolicyList = []
         self.eventTopicList = []
         self.eventReceiverList = []
+        self.shareDataList = []
         self.clipboardList = []
         self.executionMode = 0
         self.cppPipeline = pipeline.Pipeline()
@@ -57,8 +60,11 @@ class Pipeline:
         self.pipelinePolicyName = pipelinePolicyName
 
         # we'll use these in our logging
-        self.statstart = DataProperty("STATUS", str("start"))
-        self.statend = DataProperty("STATUS", str("end"))
+        self.statstart = dafBase.PropertySet()
+        self.statend   = dafBase.PropertySet()
+
+        self.statstart.setString("STATUS", str("start"))
+        self.statend.setString("STATUS", str("end"))
         
 
     def __del__(self):
@@ -71,13 +77,7 @@ class Pipeline:
         """
         Configure the Pipeline by reading a Policy File
         """
-        ### self.log.log(Log.DEBUG, "configuring pipeline");
-        # self.sliceTopic = "slicedata"
 
-        # path1 = os.environ['LSST_POLICY_DIR']
-        # print 'Python Pipeline path1', path1
-      
-        # 
         if(self.pipelinePolicyName == None):
             self.pipelinePolicyName = "pipeline_policy.paf"
         dictName = "pipeline_dict.paf"
@@ -93,15 +93,34 @@ class Pipeline:
 	eventSystem.createTransmitter(self.activemqBroker, "LSSTLogging")
         events.EventLog.createDefaultLog(self._runId, -1)
 
-        self.log = Log(Log.getDefaultLog(), "pex.harness.pipeline")
+        # Check for localLogMode
+        if (p.exists('localLogMode')):
+            self.localLogMode = p.getString('localLogMode')
+        else:
+            self.localLogMode = "No"   # default value
+
+        if (self.localLogMode == "Yes"):
+            # Initialize the logger in C++ to add a ofstream
+            self.cppPipeline.initializeLogger(True)
+        else:
+            self.cppPipeline.initializeLogger(False)
+
+        # The log for use in the Python Pipeline
+        root     = Log.getDefaultLog()
+        self.log = Log(root, "pex.harness.pipeline")
         self.log.setThreshold(Log.DEBUG)
         self.log.addDestination(cout, Log.DEBUG);
-        
-        initlog = Log(self.log, "init")
-        LogRec(initlog, Log.INFO) << "Initializing Pipeline" \
-              << DataProperty("universeSize", self.universeSize) << LogRec.endr
 
-        # cppPipeline.configure()
+        psUniv  = dafBase.PropertySet()
+        psRunid = dafBase.PropertySet()
+        psUniv.setInt("universeSize", self.universeSize)
+        psRunid.setString("runID", self._runId)
+
+        log = Log(self.log, "configurePipeline")
+        lr = LogRec(log, Log.INFO)
+        lr << "Initialized the Logger" \
+           << psUniv.toString(False) << psRunid.toString(False)
+        lr << LogRec.endr
 
         # Check for eventTimeout
         if (p.exists('eventTimeout')):
@@ -109,21 +128,37 @@ class Pipeline:
         else:
             self.eventTimeout = 10000000   # default value
 
-        # Process Application Stages
-        fullStageList = p.getArray("appStages")
+        # Check if inter-Slice communication, i.e., data sharing, is on
+        self.isDataSharingOn = False;
+        if (p.exists('shareDataOn')):
+            self.isDataSharingOn = p.getBool('shareDataOn', self.isDataSharingOn)
 
-        lr = LogRec(self.log, Log.INFO)
-        lr << "Loading stages"
-        for item in fullStageList:
-            lr << DataProperty("appStage", item)
+        psSharing  = dafBase.PropertySet()
+        psSharing.setBool("isDataSharingOn", self.isDataSharingOn)
+
+        lr = LogRec(log, Log.INFO)
+        lr << psSharing
         lr << LogRec.endr
 
-        # filePolicy = open('pipeline.policy', 'r')
-        # fullStageList = filePolicy.readlines()
+
+        # Process Application Stages
+        fullStageList = p.getArray("appStage")
+
+        lr = LogRec(log, Log.INFO)
+        lr << "Read Stage list"
+        count = 1
+        fullStageNameList = [ ]
+        for item in fullStageList:
+            fullStageNameList.append(item.getString("stageName"))
+            psAppStage  = dafBase.PropertySet()
+            psAppStage.setString("appStage" + str(count), item.getString("stageName"))
+            lr << psAppStage
+            count += 1
+        lr << LogRec.endr
 
         self.nStages = len(fullStageList)
         self.stageNames = [ ] 
-        for astage in fullStageList:
+        for astage in fullStageNameList:
             fullStage = astage.strip()
             tokenList = astage.split('.')
             classString = tokenList.pop()
@@ -137,16 +172,34 @@ class Pipeline:
             StageClass = getattr(AppStage, classString)
             self.stageClassList.append(StageClass) 
 
-        # Process Event Topics
-        self.eventTopicList = p.getArray("eventTopics")
 
-        lr = LogRec(self.log, Log.INFO)
-        lr << "Loading event topics"
-        for item in self.eventTopicList:
-            lr << DataProperty("appStage", item)
+        lr = LogRec(log, Log.INFO)
+        lr << "Imported Stages"
         lr << LogRec.endr
 
-        self.log.log(Log.INFO, "runID is " + self._runId)
+        # Process Event Topics
+        self.eventTopicList = []
+        for item in fullStageList:
+            self.eventTopicList.append(item.getString("eventTopic"))
+
+        # Process Share Data Schedule
+        self.shareDataList = []
+        for item in fullStageList:
+            shareDataStage = False
+            if (item.exists('shareData')):
+                shareDataStage = item.getBool('shareData', False)
+            self.shareDataList.append(shareDataStage)
+
+        lr = LogRec(log, Log.INFO)
+        lr << "Read event trigger topics"
+        count = 1
+        for item in self.eventTopicList:
+            psTopic  = dafBase.PropertySet()
+            psTopic.setString("eventTopic" + str(count), item)
+            lr << psTopic.toString(False)
+            count = count + 1
+        lr << LogRec.endr
+
 
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
@@ -156,7 +209,9 @@ class Pipeline:
 
         # Process Stage Policies
         # inputStagePolicy = policy.Policy.createPolicy("policy/inputStage.policy")
-        self.stagePolicyList = p.getArray("stagePolicies")
+        self.stagePolicyList = [ ]
+        for item in fullStageList:
+            self.stagePolicyList.append(item.getString("stagePolicy"))
 
         # Check for executionMode of oneloop 
         if (p.exists('executionMode') and (p.getString('executionMode') == "oneloop")):
@@ -168,7 +223,24 @@ class Pipeline:
         else:
             self.shutdownTopic = "triggerShutdownEvent"
 
-        self.log.log(Log.DEBUG, "configuration done")
+        # Log the input topology
+        if (p.exists('topology')):
+            # Retrieve the topology policy and set it in C++
+            topologyPolicy = p.get('topology')
+            # Diagnostic print
+            self.topology   =  topologyPolicy.getString('type')
+            lr = LogRec(log, Log.INFO)
+            lr << "Read topology"
+            psTop0  = dafBase.PropertySet()
+            psTop0.setString("topology_type", self.topology)
+            lr << psTop0
+            lr << LogRec.endr
+
+
+        
+        lr = LogRec(log, Log.INFO)
+        lr << "End configurePipeline"
+        lr << LogRec.endr
 
     def initializeQueues(self):
         """
@@ -182,6 +254,11 @@ class Pipeline:
         """
         Initialize the Stage List for the Pipeline
         """
+        log = Log(self.log, "initializeStages")
+        lr = LogRec(log, Log.INFO)
+        lr << "Start initializeStages" 
+        lr << LogRec.endr
+
         for iStage in range(1, self.nStages+1):
             # Make a Policy object for the Stage Policy file
             policyFileName = self.stagePolicyList[iStage-1] 
@@ -200,14 +277,24 @@ class Pipeline:
             stageObject.setRun(self._runId)
             self.stageList.append(stageObject)
 
+        lr = LogRec(log, Log.INFO)
+        lr << "End initializeStages" 
+        lr << LogRec.endr
 
     def startSlices(self):
         """
         Initialize the Queue by defining an initial dataset list
         """
-        self.log.log(Log.DEBUG, "starting slices")
+        log = Log(self.log, "startSlices")
+        lr = LogRec(log, Log.INFO)
+        lr << "Start startSlices: spawning Slices" 
+        lr << LogRec.endr
+
         self.cppPipeline.startSlices()
-        self.log.log(Log.DEBUG, "slices started")
+
+        lr = LogRec(log, Log.INFO)
+        lr << "End startSlices" 
+        lr << LogRec.endr
 
     def startInitQueue(self):
         """
@@ -233,23 +320,22 @@ class Pipeline:
 
         eventReceiver = events.EventReceiver(self.activemqBroker, self.shutdownTopic)
 
-        looplog = Log(self.log, "visit", Log.INFO);
-        prelog = Log(looplog, "preprocess", Log.INFO);
-        postlog = Log(looplog, "postprocess", Log.INFO);
+        looplog = Log(self.log, "startStagesLoop", Log.INFO)
 
-        count = 0 
+        visitcount = 0 
         while True:
 
             val = eventReceiver.receive(100)
-            if ((val.get() != None) or ((self.executionMode == 1) and (count == 1))):
+            if ((val != None) or ((self.executionMode == 1) and (visitcount == 1))):
                 LogRec(looplog, Log.INFO)  << "terminating slices "
                 self.cppPipeline.invokeShutdown()
                 break
             else:
-                count += 1
-                loopnum = DataProperty("loopNumber", count);
+                visitcount += 1
+                loopnum  = dafBase.PropertySet()
+                loopnum.setInt("loopnum", visitcount)
                 LogRec(looplog, Log.INFO)                        \
-                       << "starting stage loop number " + str(count)  \
+                       << "Starting Visit Loop iteration: loopnum " + str(visitcount)  \
                        << loopnum  << self.statstart << LogRec.endr
                 self.cppPipeline.invokeContinue()
                 self.startInitQueue()    # place an empty clipboard in the first Queue
@@ -257,114 +343,35 @@ class Pipeline:
                 self.errorFlagged = 0
                 for iStage in range(1, self.nStages+1):
 
+                    psStage  = dafBase.PropertySet()
+                    psStage.setInt("iStage", iStage);
+
+                    LogRec(looplog, Log.INFO) \
+                        << "Top Stage Loop" \
+                        << loopnum \
+                        << psStage << LogRec.endr
+
                     stage = self.stageList[iStage-1]
 
                     self.handleEvents(iStage)
 
-                    # Important try - except construct around stage preprocess() 
-                    try:
-                        # If no error/exception has been flagged, run preprocess()
-                        # otherwise, simply pass along the Clipboard 
-                        if (self.errorFlagged == 0):
-                            prelog.log(Log.INFO, "Starting preprocess", self.statstart)
-                            stage.preprocess()
-                            prelog.log(Log.INFO, "Ending preprocess", self.statend)
-                        else:
-                            self.transferClipboard(iStage)
+                    self.tryPreProcess(iStage, stage)
 
-                    except LsstExceptionStack,e:
-
-                        # Log / Report the Exception
-                        tb = traceback.format_exception(sys.exc_info()[0],
-                                        sys.exc_info()[1],
-                                        sys.exc_info()[2])
-                        prelog.log(Log.FATAL, tb[-1].strip())
-                        prelog.log(Log.WARN, "".join(tb[0:-1]))
-        
-                        # Acquire the entire exception stack
-                        stackPtr = e.getStack()
-                        lastPtr = e.getLast()
-        
-                        stackString = stackPtr.toString("stack: ", 1)
-                        lr = LogRec(prelog, Log.WARN)
-                        lr << "Exception stack: " + stackString \
-                           << lastPtr.get() << LogRec.endr
-
-                        # Flag that an exception occurred to guide the framework to skip processing
-                        self.errorFlagged = 1
-                        # Post the cliphoard that the Stage failed to transfer to the output queue
-                        self.postOutputClipboard(iStage)
-
-                    except:
-                        # Log / Report the Exception
-                        tb = traceback.format_exception(sys.exc_info()[0],
-                                        sys.exc_info()[1],
-                                        sys.exc_info()[2])
-                        prelog.log(Log.FATAL, tb[-1].strip())
-                        prelog.log(Log.WARN, "".join(tb[0:-1]))
-
-                        # Flag that an exception occurred to guide the framework to skip processing
-                        self.errorFlagged = 1
-                        # Post the cliphoard that the Stage failed to transfer to the output queue
-                        self.postOutputClipboard(iStage)
-
-                    # Done try - except around stage preprocess 
+                    if(self.isDataSharingOn):
+                        self.invokeSyncSlices(iStage) 
 
                     self.cppPipeline.invokeProcess(iStage)
 
-                    # Important try - except construct around stage postprocess() 
-                    try:
-                        # If no error/exception has been flagged, run postprocess()
-                        # otherwise, simply pass along the Clipboard 
-                        if (self.errorFlagged == 0):
-                            postlog.log(Log.INFO,"Starting postprocess",self.statstart)
-                            stage.postprocess()
-                            postlog.log(Log.INFO, "Ending postprocess", self.statend)
-                        else:
-                            self.transferClipboard(iStage)
+                    self.tryPostProcess(iStage, stage)
 
-                    except LsstExceptionStack,e:
-
-                        # Log / Report the Exception
-                        tb = traceback.format_exception(sys.exc_info()[0],
-                                        sys.exc_info()[1],
-                                        sys.exc_info()[2])
-                        postlog.log(Log.FATAL, tb[-1].strip())
-                        postlog.log(Log.WARN, "".join(tb[0:-1]))
-        
-                        # Acquire the entire exception stack
-                        stackPtr = e.getStack()
-                        lastPtr = e.getLast()
-        
-                        stackString = stackPtr.toString("stack: ", 1)
-                        lr = LogRec(postlog, Log.WARN)
-                        lr << "Exception stack: " + stackString \
-                           << lastPtr.get() << LogRec.endr
-
-                        # Flag that an exception occurred to guide the framework to skip processing
-                        self.errorFlagged = 1
-                        # Post the cliphoard that the Stage failed to transfer to the output queue
-                        self.postOutputClipboard(iStage)
-
-                    except:
-                        # Log / Report the Exception
-                        tb = traceback.format_exception(sys.exc_info()[0],
-                                        sys.exc_info()[1],
-                                        sys.exc_info()[2])
-                        postlog.log(Log.FATAL, tb[-1].strip())
-                        postlog.log(Log.WARN, "".join(tb[0:-1]))
-
-                        # Flag that an exception occurred to guide the framework to skip processing
-                        self.errorFlagged = 1
-                        # Post the cliphoard that the Stage failed to transfer to the output queue
-                        self.postOutputClipboard(iStage)
-
-                    # Done try - except around stage preprocess 
-           
+                    LogRec(looplog, Log.INFO) \
+                        << "Bottom Stage Loop" \
+                        << loopnum \
+                        << psStage << LogRec.endr
                 else:
                     # Done iStage for loop
-                    LogRec(looplog, Log.INFO)                        \
-                           << "ending stage loop number " + str(count)  \
+                    LogRec(looplog, Log.INFO)            \
+                           << "End Visit Loop iteration"   \
                            << loopnum << self.statend << LogRec.endr
 
             # Uncomment to print a list of Citizens after each visit 
@@ -390,43 +397,168 @@ class Pipeline:
         self.cppPipeline.shutdown()
 
 
+    def invokeSyncSlices(self, iStage):
+        """
+        If needed, calls the C++ Pipeline invokeSyncSlices
+        """
+
+        invlog = Log(self.log, "invokeSyncSlices", Log.INFO)
+
+        invlog.log(Log.INFO, "Start invokeSyncSlices", self.statstart)
+        if(self.shareDataList[iStage-1]):
+            self.cppPipeline.invokeSyncSlices(); 
+        invlog.log(Log.INFO, "End invokeSyncSlices", self.statend)
+
+    def tryPreProcess(self, iStage, stage):
+        """
+        Executes the try/except construct for Stage preprocess() call 
+        """
+
+        prelog = Log(self.log, "tryPreProcess", Log.INFO)
+
+        # Important try - except construct around stage preprocess() 
+        try:
+            # If no error/exception has been flagged, run preprocess()
+            # otherwise, simply pass along the Clipboard 
+            if (self.errorFlagged == 0):
+                prelog.log(Log.INFO, "Starting preprocess", self.statstart)
+                stage.preprocess()
+                prelog = Log(self.log, "tryPreProcess", Log.INFO)
+                prelog.log(Log.INFO, "Ending preprocess", self.statend)
+            else:
+                self.transferClipboard(iStage)
+
+        except lsst.pex.exceptions.LsstCppException, e:
+            t = e.args[0].getTraceback()
+
+            lr = LogRec(prelog, Log.FATAL)
+            lr << "Exception traceback: " + "File = " + t[0]._file \
+               << "Line = "  + t[0]._line + "Func = " + t[0]._func \
+               << "Message = " + t[0]._msg << LogRec.endr
+
+            # Flag that an exception occurred to guide the framework to skip processing
+            self.errorFlagged = 1
+            # Post the cliphoard that the Stage failed to transfer to the output queue
+            self.postOutputClipboard(iStage)
+
+        except Exception, e:
+
+            # Use str(e) or  e.args[0].what() for message  
+            lr = LogRec(prelog, Log.FATAL)
+            lr << "Exception " + "Type = " + e.args[0].getType() \
+               << "Message = " + str(e) << LogRec.endr
+
+            # Flag that an exception occurred to guide the framework to skip processing
+            self.errorFlagged = 1
+            # Post the cliphoard that the Stage failed to transfer to the output queue
+            self.postOutputClipboard(iStage)
+
+        prelog.log(Log.INFO, "Ending tryPreProcess", self.statend)
+        # Done try - except around stage preprocess 
+
+    def tryPostProcess(self, iStage, stage):
+        """
+        Executes the try/except construct for Stage postprocess() call 
+        """
+
+        postlog = Log(self.log, "tryPostProcess", Log.INFO)
+
+        # Important try - except construct around stage postprocess() 
+        try:
+            # If no error/exception has been flagged, run postprocess()
+            # otherwise, simply pass along the Clipboard 
+            if (self.errorFlagged == 0):
+                postlog.log(Log.INFO,"Starting postprocess",self.statstart)
+                stage.postprocess()
+                postlog = Log(self.log, "tryPostProcess", Log.INFO)
+                postlog.log(Log.INFO, "Ending postprocess", self.statend)
+            else:
+                self.transferClipboard(iStage)
+
+        except lsst.pex.exceptions.LsstCppException, e:
+            t = e.args[0].getTraceback()
+
+            lr = LogRec(postlog, Log.FATAL)
+            lr << "Exception traceback: " + "File = " + t[0]._file \
+               << "Line = "  + t[0]._line + "Func = " + t[0]._func \
+               << "Message = " + t[0]._msg << LogRec.endr
+
+            # Flag that an exception occurred to guide the framework to skip processing
+            self.errorFlagged = 1
+            # Post the cliphoard that the Stage failed to transfer to the output queue
+            self.postOutputClipboard(iStage)
+
+        except Exception, e:
+
+            # Use str(e) or  e.args[0].what() for message  
+            lr = LogRec(postlog, Log.FATAL)
+            lr << "Exception " + "Type = " + e.args[0].getType() \
+               << "Message = " + str(e) \
+               << LogRec.endr
+
+            # Flag that an exception occurred to guide the framework to skip processing
+            self.errorFlagged = 1
+            # Post the cliphoard that the Stage failed to transfer to the output queue
+            self.postOutputClipboard(iStage)
+
+        # Done try - except around stage preprocess 
+
     def handleEvents(self, iStage):
         """
         Handles Events: transmit or receive events as specified by Policy
         """
         log = Log(self.log, "handleEvents");
-        log.log(Log.INFO, "iStage %d" % iStage)
+
+        psStage  = dafBase.PropertySet()
+        psStage.setInt("iStage", iStage);
+
+        lr = LogRec(log, Log.INFO)
+        lr << "Start handleEvents"
+        lr << psStage
+        lr << LogRec.endr
 
         thisTopic = self.eventTopicList[iStage-1]
         thisTopic = thisTopic.strip()
-        log.log(Log.DEBUG, "processing topic " + thisTopic)
+
+        psTopic  = dafBase.PropertySet()
+        psTopic.setString("Topic", thisTopic);
+
+        lr = LogRec(log, Log.INFO)
+        lr << "Processing topic"
+        lr << psTopic
+        lr << LogRec.endr
 
         if (thisTopic != "None"):
             fileStr = StringIO()
             fileStr.write(thisTopic)
             fileStr.write("_slice")
             sliceTopic = fileStr.getvalue()
-            #  Replace 
-            # eventReceiver    = events.EventReceiver(self.activemqBroker, thisTopic)
             eventReceiver    = self.eventReceiverList[iStage-1]
             eventTransmitter = events.EventTransmitter(self.activemqBroker, sliceTopic)
 
             log.log(Log.INFO, "waiting on receive...")
 
-            inputParamPropertyPtrType = eventReceiver.receive(self.eventTimeout)
+            inputParamPropertySetPtr = eventReceiver.receive(self.eventTimeout)
 
-            if (inputParamPropertyPtrType.get() != None):
+            if (inputParamPropertySetPtr != None):
                 log.log(Log.INFO, "received event; sending it to Slices")
 
                 # Pipeline  does not disassemble the payload of the event.
                 # It knows nothing of the contents.
                 # It simply places the payload on the clipboard with key of the eventTopic
-                self.populateClipboard(inputParamPropertyPtrType, iStage, thisTopic)
-                eventTransmitter.publish("sliceevent1", inputParamPropertyPtrType)
+                self.populateClipboard(inputParamPropertySetPtr, iStage, thisTopic)
+                eventTransmitter.publish(inputParamPropertySetPtr)
 
                 log.log(Log.DEBUG, "event sent")
+        else:
+            log.log(Log.INFO, 'No event to handle')
 
-    def populateClipboard(self, inputParamPropertyPtrType, iStage, eventTopic):
+        lr = LogRec(log, Log.INFO)
+        lr << "End handleEvents"
+        lr << psStage
+        lr << LogRec.endr
+
+    def populateClipboard(self, inputParamPropertySetPtr, iStage, eventTopic):
         """
         Place the event payload onto the Clipboard 
         """
@@ -439,13 +571,22 @@ class Pipeline:
         # Pipeline does not disassemble the payload of the event.
         # It knows nothing of the contents.
         # It simply places the payload on the clipboard with key of the eventTopic
-        clipboard.put(eventTopic, inputParamPropertyPtrType)
-
-        # LogRec(log, Log.DEBUG) << 'Added DataPropertyPtrType to clipboard ' \
-        #             << inputParamPropertyPtrType                            \
-        #            << LogRec.endr
+        clipboard.put(eventTopic, inputParamPropertySetPtr)
 
         queue.addDataset(clipboard)
+
+        print 'Python populateClipboard  : clipboard ', clipboard
+
+        psClip = dafBase.PropertySet()
+        psClip.setInt("clipboard", id(clipboard))
+        psInput = dafBase.PropertySet()
+        psInput.setInt("inputParamPropertySetPtr", id(inputParamPropertySetPtr))
+
+        lr = LogRec(log, Log.INFO)
+        lr << "End populateClipboard"
+        lr << psClip.toString(False)
+        lr << psInput.toString(False)
+        lr << LogRec.endr
 
     def postOutputClipboard(self, iStage):
         """

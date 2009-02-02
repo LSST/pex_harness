@@ -1,25 +1,25 @@
 #! /usr/bin/env python
 
-import lsst.daf.base as datap
+import threading
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
+
 import lsst.ctrl.events as events
 import time
 
 if __name__ == "__main__":
     print "starting...\n"
 
-    activemqBroker = "lsst4.ncsa.uiuc.edu" 
+    activemqBroker = "lsst8.ncsa.uiuc.edu" 
 
     externalEventTransmitter = events.EventTransmitter(activemqBroker, "triggerAssociationEvent")
 
-    root = datap.DataProperty.createPropertyNode("root");
+    root = PropertySet()
 
-    visitId  = datap.DataProperty("visitId", 1)
-    FOVRa    = datap.DataProperty("FOVRa", 273.48066298343)
-    FOVDec   = datap.DataProperty("FOVDec", -27.125)
+    root.setInt("visitId", 1)
+    root.setDouble("FOVRa", 273.48066298343)
+    root.setDouble("FOVDec", -27.125)
 
-    root.addProperty(visitId)
-    root.addProperty(FOVRa)
-    root.addProperty(FOVDec)
 
-    externalEventTransmitter.publish("eventtype", root)
+    externalEventTransmitter.publish(root)
 

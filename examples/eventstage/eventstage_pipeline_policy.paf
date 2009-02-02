@@ -5,7 +5,17 @@
 
 activemqBroker: "lsst8.ncsa.uiuc.edu"  
 executionMode: "oneloop"
-appStages: "lsst.pexhexamples.apps.App1Stage" "lsst.pex.harness.EventStage.EventStage"   
-eventTopics: "None" "None"   
-stagePolicies: "None" "policy/eventstage.paf" 
+
+
+appStage: { 
+     stageName: "lsst.pexhexamples.apps.App1Stage" 
+     eventTopic: "None"  
+     stagePolicy: "None"
+}
+
+appStage: { 
+     stageName: "lsst.pex.harness.EventStage.EventStage" 
+     eventTopic: "None"  
+     stagePolicy: "policy/eventstage.paf"
+}
 

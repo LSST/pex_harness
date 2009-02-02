@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 
-import lsst.daf.base as datap
+import threading
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
+
 import lsst.ctrl.events as events
 import time
 
@@ -12,5 +15,5 @@ if __name__ == "__main__":
     eventRec = events.EventReceiver(activemqBroker, "outgoingEvent")
 
     print 'Python listenEvents : waiting on receive...\n'
-    inputParamPropertyPtrType = eventRec.receive(800000)
+    inputParamPropertySetPtr = eventRec.receive(800000)
     print 'Python listenEvents : - received event.\n'

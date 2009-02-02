@@ -7,7 +7,7 @@ from lsst.pex.harness.Slice import Slice
 
 import lsst.pex.policy as policy
 
-import lsst.daf.base as datap
+import lsst.daf.base as dafBase
 
 import lsst.ctrl.events as events
 

@@ -7,8 +7,8 @@ from lsst.pex.harness.Pipeline import Pipeline
 
 import lsst.pex.policy as policy
 
-import lsst.daf.base as datap
-from lsst.daf.base import DataProperty
+import lsst.daf.base as dafBase
+from lsst.daf.base import PropertySet
 
 import lsst.ctrl.events as events
 

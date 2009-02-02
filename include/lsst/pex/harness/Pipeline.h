@@ -8,25 +8,61 @@
   * \author  Greg Daues, NCSA
   */
 
-#ifndef LSST_DPS_PIPELINE_H
-#define LSST_DPS_PIPELINE_H
-
-using namespace std;
+#ifndef LSST_PEX_HARNESS_PIPELINE_H
+#define LSST_PEX_HARNESS_PIPELINE_H
 
 #include "mpi.h"
 #include "Stage.h"
 #include "Queue.h"
 
 #include <string>
-#include <iostream>
 #include <unistd.h>
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <istream>
+#include <ostream>
+#include <sstream>
+
+
+#include "lsst/pex/policy/Policy.h"
+#include "lsst/utils/Utils.h"
+
+#include "lsst/daf/base/PropertySet.h"
+#include "lsst/pex/logging/Component.h"
+#include "lsst/pex/logging/LogRecord.h"
+#include "lsst/pex/logging/LogDestination.h"
+#include "lsst/pex/logging/LogFormatter.h"
+#include "lsst/pex/logging/Log.h"
+#include "lsst/pex/logging/DualLog.h"
+#include "lsst/pex/logging/ScreenLog.h"
+#include "lsst/ctrl/events/EventLog.h"
+#include "lsst/pex/exceptions.h"
+#include <boost/shared_ptr.hpp>
+
+using namespace lsst::daf::base;
+using namespace lsst::pex::harness;
+
+using namespace std;
+using namespace lsst;
+using namespace boost;
+
+using lsst::daf::base::PropertySet;
+using lsst::pex::logging::ScreenLog;
+using lsst::pex::logging::Log;
+using lsst::pex::logging::LogRecord;
+using lsst::pex::logging::LogRec;
+using lsst::pex::logging::LogFormatter;
+using lsst::pex::logging::LogDestination;
+using lsst::pex::logging::BriefFormatter;
+using lsst::pex::logging::Rec;
+using lsst::ctrl::events::EventLog;
 
 namespace lsst {
 
 namespace pex {
 
-	namespace harness {
+namespace harness {
 
 typedef vector<Stage> StageVector;   //  Stage& 
 typedef vector<Queue*> QueueVector; 
@@ -47,6 +83,7 @@ public:
     ~Pipeline(); // destructor
 
     void initialize();
+    void initializeLogger(bool isLocalLogMode);
 
     void start();
     void startSlices();  
@@ -55,6 +92,7 @@ public:
     void invokeProcess(int iStage);
     void invokeShutdown();
     void invokeContinue();
+    void invokeSyncSlices(); 
 
     void shutdown();
 
@@ -76,7 +114,6 @@ private:
     void initializeQueues();  
     void initializeStages();  
 
-
     int _pid;
     char* _runId;
     char* _policyName;
@@ -92,6 +129,10 @@ private:
     int size;
     int universeSize;
 
+    Log pipelineLog;
+    boost::shared_ptr<LogDestination> destPtr;
+    ofstream* outlog;
+
 };
 
 } // namespace harness 
@@ -100,5 +141,5 @@ private:
 
 } // namespace lsst
 
-#endif // LSST_DPS_PIPELINE_H 
+#endif // LSST_PEX_HARNESS_PIPELINE_H 
 

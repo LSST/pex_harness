@@ -6,7 +6,8 @@ Test Application Stages for proto association pipeline
 
 from lsst.pex.harness.Stage import Stage
 
-import lsst.daf.base as datap
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
 
 class LoadStage(Stage):
 
@@ -20,25 +21,24 @@ class LoadStage(Stage):
 
         self.activeClipboard = self.inputQueue.getNextDataset()
         keys = self.activeClipboard.getKeys()
+	print 'Python pipeline.LoadStage preprocess : activeClipboard ',  self.activeClipboard
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.LoadStage preprocess(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.LoadStage preprocess() ', key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.LoadStage preprocess() ', key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.LoadStage preprocess() ', key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.LoadStage preprocess() ', key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.LoadStage preprocess() ', key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.LoadStage preprocess() ', key, name, self.FOVDec
 
 
     #------------------------------------------------------------------------
@@ -52,23 +52,21 @@ class LoadStage(Stage):
         keys = self.activeClipboard.getKeys()
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.LoadStage process(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.LoadStage process() ', self._rank, key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.LoadStage process() ', self._rank, key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.LoadStage process() ', self._rank, key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.LoadStage process() ', self._rank, key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.LoadStage process() ', self._rank, key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.LoadStage process() ', self._rank, key, name, self.FOVDec
 
         self.outputQueue.addDataset(self.activeClipboard)
 
@@ -96,23 +94,21 @@ class MatchDiaSourceStage(Stage):
         keys = self.activeClipboard.getKeys()
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.MatchDiaSourceStage preprocess(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.MatchDiaSourceStage preprocess() ', key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchDiaSourceStage preprocess() ', key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchDiaSourceStage preprocess() ', key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.MatchDiaSourceStage preprocess() ', key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchDiaSourceStage preprocess() ', key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchDiaSourceStage preprocess() ', key, name, self.FOVDec
 
     #------------------------------------------------------------------------
     def process(self): 
@@ -125,23 +121,21 @@ class MatchDiaSourceStage(Stage):
         keys = self.activeClipboard.getKeys()
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.MatchDiaSourceStage process(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.MatchDiaSourceStage process() ', self._rank, key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchDiaSourceStage process() ', self._rank, key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchDiaSourceStage process() ', self._rank, key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.MatchDiaSourceStage process() ', self._rank, key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchDiaSourceStage process() ', self._rank, key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchDiaSourceStage process() ', self._rank, key, name, self.FOVDec
 
         self.outputQueue.addDataset(self.activeClipboard)
 
@@ -169,30 +163,27 @@ class MatchMopStage(Stage):
         keys = self.activeClipboard.getKeys()
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.MatchMopStage preprocess(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.MatchMopStage preprocess() ', key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchMopStage preprocess() ', key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchMopStage preprocess() ', key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.MatchMopStage preprocess() ', key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchMopStage preprocess() ', key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchMopStage preprocess() ', key, name, self.FOVDec
 
             if (key == "triggerMatchMopEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.MatchMopStage preprocess() ', key, dataPropKey, self.visitId
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.MatchMopStage preprocess() ', key, name, self.visitId
 
     #------------------------------------------------------------------------
     def process(self): 
@@ -205,30 +196,27 @@ class MatchMopStage(Stage):
         keys = self.activeClipboard.getKeys()
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.MatchMopStage process(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, name, self.FOVDec
 
             if (key == "triggerMatchMopEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, dataPropKey, self.visitId
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.MatchMopStage process() ', self._rank, key, name, self.visitId
 
         self.outputQueue.addDataset(self.activeClipboard)
 
@@ -255,30 +243,27 @@ class StoreStage(Stage):
         keys = self.activeClipboard.getKeys()
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.StoreStage preprocess(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.StoreStage preprocess() ', key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.StoreStage preprocess() ', key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.StoreStage preprocess() ', key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.StoreStage preprocess() ', key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.StoreStage preprocess() ', key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.StoreStage preprocess() ', key, name, self.FOVDec
 
             if (key == "triggerMatchMopEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.StoreStage preprocess() ', key, dataPropKey, self.visitId
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.StoreStage preprocess() ', key, name, self.visitId
 
     #------------------------------------------------------------------------
     def process(self): 
@@ -291,30 +276,27 @@ class StoreStage(Stage):
         keys = self.activeClipboard.getKeys()
 
         for key in keys:
-            inputParamPropertyPtrType = self.activeClipboard.get(key)
+            propertySet = self.activeClipboard.get(key)
             print 'Python pipeline.StoreStage process(): stageId %i key %s' % (self.stageId, key)
-            dataPropertyKeyList = inputParamPropertyPtrType.findNames(r"^.")
-            print dataPropertyKeyList
+            nameList = propertySet.names()
 
             if (key == "triggerAssociationEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.StoreStage process() ', self._rank, key, dataPropKey, self.visitId
-                    elif (dataPropKey == "FOVRa"):
-                        self.FOVRa = dpPtr.getValueDouble()
-                        print 'Python pipeline.StoreStage process() ', self._rank, key, dataPropKey, self.FOVRa
-                    elif (dataPropKey == "FOVDec"):
-                        self.FOVDec = dpPtr.getValueDouble()
-                        print 'Python pipeline.StoreStage process() ', self._rank, key, dataPropKey, self.FOVDec
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.StoreStage process() ', self._rank, key, name, self.visitId
+                    elif (name == "FOVRa"):
+                        self.FOVRa = propertySet.getDouble(name)
+                        print 'Python pipeline.StoreStage process() ', self._rank, key, name, self.FOVRa
+                    elif (name == "FOVDec"):
+                        self.FOVDec = propertySet.getDouble(name)
+                        print 'Python pipeline.StoreStage process() ', self._rank, key, name, self.FOVDec
 
             if (key == "triggerMatchMopEvent"):
-                for dataPropKey in dataPropertyKeyList:
-                    dpPtr = inputParamPropertyPtrType.findUnique(dataPropKey)
-                    if (dataPropKey == "visitId"):
-                        self.visitId = dpPtr.getValueInt()
-                        print 'Python pipeline.StoreStage process() ', self._rank, key, dataPropKey, self.visitId
+                for name in nameList:
+                    if (name == "visitId"):
+                        self.visitId = propertySet.getInt(name)
+                        print 'Python pipeline.StoreStage process() ', self._rank, key, name, self.visitId
 
         self.outputQueue.addDataset(self.activeClipboard)
 
