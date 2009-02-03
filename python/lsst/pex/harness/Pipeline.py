@@ -578,14 +578,14 @@ class Pipeline:
         print 'Python populateClipboard  : clipboard ', clipboard
 
         psClip = dafBase.PropertySet()
-        psClip.setInt("clipboard", id(clipboard))
+        # psClip.setInt64("clipboard", id(clipboard))
         psInput = dafBase.PropertySet()
-        psInput.setInt("inputParamPropertySetPtr", id(inputParamPropertySetPtr))
+        # psInput.setInt64("inputParamPropertySetPtr", id(inputParamPropertySetPtr))
 
         lr = LogRec(log, Log.INFO)
         lr << "End populateClipboard"
-        lr << psClip.toString(False)
-        lr << psInput.toString(False)
+        # lr << psClip.toString(False)
+        # lr << psInput.toString(False)
         lr << LogRec.endr
 
     def postOutputClipboard(self, iStage):
