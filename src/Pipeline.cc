@@ -44,8 +44,8 @@ void Pipeline::initializeLogger(bool isLocalLogMode) {
         std::string logfile;
 
         logfileBuffer << "Pipeline";
-        logfileBuffer << _pid;
-        logfileBuffer << ".log";
+        /* logfileBuffer << _pid;   */ 
+        logfileBuffer << ".log"; 
 
         logfileBuffer >> logfile;
 
