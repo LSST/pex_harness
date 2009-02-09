@@ -14,6 +14,7 @@ from lsst.daf.base import *
 
 import lsst.ctrl.events as events
 import lsst.pex.exceptions
+from lsst.pex.exceptions import *
 
 import os
 import sys
@@ -77,23 +78,23 @@ class Slice:
         dictName = "pipeline_dict.paf"
         p = policy.Policy.createPolicy(self.pipelinePolicyName)
 
-        # Check for activemqBroker 
-        if (p.exists('activemqBroker')):
-            self.activemqBroker = p.getString('activemqBroker')
+        # Check for eventBrokerHost 
+        if (p.exists('eventBrokerHost')):
+            self.eventBrokerHost = p.getString('eventBrokerHost')
         else:
-            self.activemqBroker = "lsst8.ncsa.uiuc.edu"   # default value
+            self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
 
         eventSystem = events.EventSystem.getDefaultEventSystem()
-        eventSystem.createTransmitter(self.activemqBroker, "LSSTLogging")
+        eventSystem.createTransmitter(self.eventBrokerHost, "LSSTLogging")
         events.EventLog.createDefaultLog(self._runId, self._rank)
 
         # Check for localLogMode 
         if (p.exists('localLogMode')):
-            self.localLogMode = p.getString('localLogMode')
+            self.localLogMode = p.getBool('localLogMode')
         else:
-            self.localLogMode = "No"   # default value
+            self.localLogMode = False  # default value
 
-        if (self.localLogMode == "Yes"):
+        if (self.localLogMode == True):
             # Initialize the logger in C++ to add a ofstream
             self.cppSlice.initializeLogger(True)
         else:
@@ -215,7 +216,7 @@ class Slice:
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.sliceEventTopicList:
-            eventReceiver = events.EventReceiver(self.activemqBroker, topic)
+            eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
             self.eventReceiverList.append(eventReceiver)
 
         # Process Stage Policies
@@ -452,10 +453,8 @@ class Slice:
                     testString = propertySetPtr.toString(False)
                     clipboard.put(neighborKey, propertySetPtr, False);
                     lr = LogRec(synclog, Log.INFO)
-                    lr << "Added  "
-                    lr << neighborKey
-                    lr << "to Clipboard. Contents:  "
-                    lr << testString
+                    lr << "Added  "  + neighborKey + " to Clipboard. "
+                    lr << "Contents "+ testString
                     lr << LogRec.endr
                     
 
@@ -554,7 +553,7 @@ class Slice:
 
         if (thisTopic != "None"):
             sliceTopic = self.sliceEventTopicList[iStage-1]
-            # x = events.EventReceiver(self.activemqBroker, sliceTopic)
+            # x = events.EventReceiver(self.eventBrokerHost, sliceTopic)
             x  = self.eventReceiverList[iStage-1]
 
             log.log(Log.INFO, 'waiting on receive...')
