@@ -7,9 +7,9 @@
 #
 # shutdownTopic: "triggerShutdownEvent" 
 #
-localLogMode: "Yes"
+localLogMode: true
 executionMode: "oneloop"
-activemqBroker: "lsst8.ncsa.uiuc.edu"
+eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 shutdownTopic: "triggerShutdownA" 
 
 shareDataOn: true
