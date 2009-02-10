@@ -1,0 +1,46 @@
+
+pex_harness examples/association 
+----------------------------------------------
+
+The association example is a mockup of the Association Pipeline that demonstrates the 
+trigger event dependence of the full version.  The mock association pipeline has 
+4 application stages:    
+        LoadStage 
+        MatchDiaSourceStage 
+        MatchMopStage 
+        StoreStage
+
+The intial LoadStage has a trigger event dependence, and so the Pipeline execution 
+blocks for the arrival of an event of the appropriate topic, which is denoted
+"triggerAssociationEvent" in this example. Later in the pipeline execution, information 
+is needed from the moving objects pipeline, and so prior to the third stage MatchMopStage
+the Pipeline again blocks for the arrival of an event, of topic "triggerMatchMopEvent"
+this time.
+
+By default the mock example will run with the Pipeline and one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+To execute this scenario, in one shell execute 
+
+% ./run.sh association_policy.paf <some-run-id>
+
+such as  
+
+% ./run.sh association_policy.paf test_2001 
+
+and in a separate shell provide the trigger events
+
+% python triggerAssociationEventTransmitter.py  
+
+% python triggerMatchMopEventTransmitter.py
+
+The Pipeline will cycle around repeated through the four stages 
+until a shutdown event is issued 
+
+% python triggerShutdownEventTransmitter.py
+
+if an ActiveMQbroker other than the LSST default (lsst8.ncsa.uiuc.edu) 
+is used, this needs to be specified in the pipeline policy file (under 
+"eventBrokerHost") and the trigger event python scripts.
+
+
