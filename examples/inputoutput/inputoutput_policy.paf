@@ -4,17 +4,16 @@
 # a simple test of IOStage.InputStage
 # It initially blocks to receive an event of topic triggerIpdpEvent, which we 
 # take to be a simple event carrying a "visitId" which is a string. 
-# The value received in the event is then used by point to an appropriate data file
-# In this example the data is retrieved as   PythonType: "lsst.daf.base.DataProperty"
+# The value received in the event is then used to point to an appropriate data file
+# In this example the data is retrieved as   PythonType: "lsst.daf.base.PropertySet"
 # with  Storage: "BoostStorage", as opposed to actual FitsStorage. 
 # 
 # The required event is issued with the script triggerIpdpEventTransmit.py 
 #
 
-localLogMode: "Yes"
+localLogMode: true
 executionMode: "oneloop"
-activemqBroker: "lsst8.ncsa.uiuc.edu" 
-shutdownTopic: "triggerShutdownEvent" 
+eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
 
 appStage: { 
      stageName: "lsst.pex.harness.IOStage.InputStage" 
@@ -23,7 +22,7 @@ appStage: {
 }
 
 appStage: { 
-     stageName: "lsst.dpsexamples.ipdp.IPDPStage" 
+     stageName: "lsst.pexhexamples.apps.IPDPStage" 
      eventTopic: "None"
      stagePolicy: "None"
 }
