@@ -3,11 +3,11 @@
 # --------------------------------------------------------- 
 # INPUT PARAMETERS
 # To run on a single host, keep nodes set equal to 1 
-# Increase nodes for a larger parallel execution. 
-# For example, for two nodes with 16 total cores we could set nodes=2 
+# Increase nodes and nslices for a larger parallel execution. 
+# For example, for two nodes with 16 total cores, set nodes=2 
 # and nslices=15 (pipeline itself takes one core) 
 nodes=1
-nslices=5
+nslices=1
 # --------------------------------------------------------- 
 
 pwd=`pwd`

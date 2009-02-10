@@ -1,19 +1,12 @@
-# association_policy.paf
 #
-# This policy file executes the Pipeline within a scenario that protoypes the
-# Association pipeline. Two events trigger stages of the Pipeline. 
-# These events are issues with test scripts 
-# triggerAssociationEventTransmitter.py  and triggerMatchMopEventTransmitter.py, respectively. 
+# syncslices.paf 
 #
-# shutdownTopic: "triggerShutdownEvent" 
-#
-localLogMode: "Yes"
+
+localLogMode: true
 executionMode: "oneloop"
-activemqBroker: "lsst8.ncsa.uiuc.edu"
-shutdownTopic: "triggerShutdownA" 
+eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 
 shareDataOn: true
-# topology: "ring"
 
 topology: {
     type: "focalplane"

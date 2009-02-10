@@ -11,9 +11,9 @@ if __name__ == "__main__":
     print "starting...\n"
 
     shutdownTopic = "triggerShutdownA"
-    activemqBroker = "lsst8.ncsa.uiuc.edu"
+    eventBrokerHost = "lsst8.ncsa.uiuc.edu"
 
-    externalEventTransmitter = events.EventTransmitter(activemqBroker, shutdownTopic )
+    externalEventTransmitter = events.EventTransmitter(eventBrokerHost, shutdownTopic )
 
     root = PropertySet()
 

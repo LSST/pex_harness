@@ -1,0 +1,42 @@
+
+pex_harness examples/eventstage 
+----------------------------------------------
+
+The eventstage example demonstrates how a Pipeline can send data on the Clipboard
+to another running pipeline by issuing an outgoing event. This functionality is encapsulated 
+in the EventStage class of the pex_harness. 
+
+The current pipeline example has 2 application stages:    
+     App1Stage
+     EventStage
+
+The initial App1Stage is a dummy application stage that places data on the Clipboard under 
+a designated key (denoted "outgoingKey" in this case). The eventstage policy file 
+(policy/eventstage.paf) is then configured to output the data under this key in an event. 
+The notation
+
+keysToPublish: "outgoingEvent=outgoingKey"
+
+signals that the key "outgoingKey" is pulled from the Clipboard and its contents 
+issued within an event of topic "outgoingEvent". 
+
+A utility script "listenEvent.py" may first be executed in a separate shell to start up a 
+listener that blocks for an event of topic outgoingEvent.
+
+% python listenEvent.py 
+
+By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+The pipeline is then executed via 
+
+% ./run.sh eventstage_pipeline_policy.paf <some-run-id>
+
+such as  
+
+% ./run.sh eventstage_pipeline_policy.paf test_23 
+
+if an ActiveMQbroker other than the LSST default (lsst8.ncsa.uiuc.edu)
+is used, this needs to be specified in the pipeline policy file (under
+"eventBrokerHost") and the listener python script.
+

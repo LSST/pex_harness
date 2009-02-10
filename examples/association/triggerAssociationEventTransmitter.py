@@ -10,9 +10,9 @@ import time
 if __name__ == "__main__":
     print "starting...\n"
 
-    activemqBroker = "lsst8.ncsa.uiuc.edu" 
+    eventBrokerHost = "lsst8.ncsa.uiuc.edu" 
 
-    externalEventTransmitter = events.EventTransmitter(activemqBroker, "triggerAssociationEvent")
+    externalEventTransmitter = events.EventTransmitter(eventBrokerHost, "triggerAssociationEvent")
 
     root = PropertySet()
 

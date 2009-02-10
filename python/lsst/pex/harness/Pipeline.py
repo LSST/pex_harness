@@ -83,23 +83,23 @@ class Pipeline:
         dictName = "pipeline_dict.paf"
         p = policy.Policy.createPolicy(self.pipelinePolicyName)
 
-        # Check for activemqBroker 
-        if (p.exists('activemqBroker')):
-            self.activemqBroker = p.getString('activemqBroker')
+        # Check for eventBrokerHost 
+        if (p.exists('eventBrokerHost')):
+            self.eventBrokerHost = p.getString('eventBrokerHost')
         else:
-            self.activemqBroker = "lsst8.ncsa.uiuc.edu"   # default value
+            self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
 
 	eventSystem = events.EventSystem.getDefaultEventSystem()
-	eventSystem.createTransmitter(self.activemqBroker, "LSSTLogging")
+	eventSystem.createTransmitter(self.eventBrokerHost, "LSSTLogging")
         events.EventLog.createDefaultLog(self._runId, -1)
 
         # Check for localLogMode
         if (p.exists('localLogMode')):
-            self.localLogMode = p.getString('localLogMode')
+            self.localLogMode = p.getBool('localLogMode')
         else:
-            self.localLogMode = "No"   # default value
+            self.localLogMode = False   # default value
 
-        if (self.localLogMode == "Yes"):
+        if (self.localLogMode == True):
             # Initialize the logger in C++ to add a ofstream
             self.cppPipeline.initializeLogger(True)
         else:
@@ -204,7 +204,7 @@ class Pipeline:
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.eventTopicList:
-            eventReceiver = events.EventReceiver(self.activemqBroker, topic)
+            eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
             self.eventReceiverList.append(eventReceiver)
 
         # Process Stage Policies
@@ -318,7 +318,7 @@ class Pipeline:
         Method to execute loop over Stages
         """
 
-        eventReceiver = events.EventReceiver(self.activemqBroker, self.shutdownTopic)
+        eventReceiver = events.EventReceiver(self.eventBrokerHost, self.shutdownTopic)
 
         looplog = Log(self.log, "startStagesLoop", Log.INFO)
 
@@ -534,7 +534,7 @@ class Pipeline:
             fileStr.write("_slice")
             sliceTopic = fileStr.getvalue()
             eventReceiver    = self.eventReceiverList[iStage-1]
-            eventTransmitter = events.EventTransmitter(self.activemqBroker, sliceTopic)
+            eventTransmitter = events.EventTransmitter(self.eventBrokerHost, sliceTopic)
 
             log.log(Log.INFO, "waiting on receive...")
 

@@ -14,7 +14,6 @@ from lsst.daf.base import *
 
 class App1Stage(Stage):
 
-    #------------------------------------------------------------------------
     def preprocess(self): 
         """
         Execute the needed preprocessing code for this Stage
@@ -33,7 +32,6 @@ class App1Stage(Stage):
         self.activeClipboard.put("outgoingKey", propertySet)
 
 
-    #------------------------------------------------------------------------
     def postprocess(self): 
         """
         Execute the needed postprocessing code for this Stage
@@ -44,7 +42,6 @@ class App1Stage(Stage):
 
 class SyncSetupStage(Stage):
 
-    #------------------------------------------------------------------------
     def preprocess(self): 
         """
         Execute the needed preprocessing code for this Stage
@@ -71,7 +68,6 @@ class SyncSetupStage(Stage):
         lr << "Posted data to Clipboard"
         lr << LogRec.endr
 
-    #------------------------------------------------------------------------
     def process(self): 
         """
         Execute the needed processing code for this Stage
@@ -103,7 +99,6 @@ class SyncSetupStage(Stage):
 
         self.outputQueue.addDataset(self.activeClipboard)
 
-    #------------------------------------------------------------------------
     def postprocess(self): 
         """
         Execute the needed postprocessing code for SyncSetupStage
@@ -122,7 +117,6 @@ class SyncSetupStage(Stage):
 
 class SyncTestStage(Stage):
 
-    #------------------------------------------------------------------------
     def preprocess(self): 
         """
         Execute the needed preprocessing code for this Stage
@@ -133,7 +127,6 @@ class SyncTestStage(Stage):
         self.activeClipboard = self.inputQueue.getNextDataset()
 
 
-    #------------------------------------------------------------------------
     def process(self): 
         """
         Execute the needed processing code for this Stage
@@ -160,7 +153,6 @@ class SyncTestStage(Stage):
 
         self.outputQueue.addDataset(self.activeClipboard)
 
-    #------------------------------------------------------------------------
     def postprocess(self): 
         """
         Execute the needed postprocessing code for SyncTestStage
@@ -172,7 +164,6 @@ class SyncTestStage(Stage):
 
 class ImageprocStage(Stage):
 
-    #------------------------------------------------------------------------
     def process(self):
         """
         Execute the needed processing code for this Stage
@@ -202,4 +193,31 @@ class ImageprocStage(Stage):
 
         self.outputQueue.addDataset(self.activeClipboard)
 
+
+class IPDPStage(Stage):
+
+    def process(self):
+        """
+        Execute the needed processing code for this Stage
+        """
+        print 'Python IPDPStage process : _rank %i stageId %d' % (self._rank, self.stageId)
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        inputImage = self.activeClipboard.get("inputImage") 
+
+        nameList = inputImage.names()
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.apps.IPDPStage.process")
+
+        for name in nameList:
+            value = inputImage.getString(name) 
+            print name, value
+            lr = LogRec(log, Log.INFO)
+            lr << name  
+            lr << value 
+            lr << LogRec.endr
+
+        self.outputQueue.addDataset(self.activeClipboard)
 

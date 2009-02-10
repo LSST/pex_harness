@@ -1,0 +1,37 @@
+
+Running an example interSlice communication pipeline: examples/syncSlices
+-------------------------------------------------------------------
+
+This example is found under pex_harness/examples/syncSlices . 
+Change to this directory to find files
+
+% ls
+nodelist.scr  syncslices.paf  run.sh   README 
+
+The run.sh is a very simple launching script to test a Pipeline. 
+(A more configurable mechanism for setup and launching of pipelines 
+is developed within the dc2pipe/dc3pipe packages and the full 
+orchestration layer.) At the top of the run.sh one finds input 
+parameters that one can edit
+
+nodes=1
+nslices=16
+
+These default parameters of a single node and sixteen slices 
+are sufficient to illustrate the example.
+
+The MPI "machine file" is called nodelist.scr and contains the entry
+
+lsst8.ncsa.uiuc.edu:17
+
+The parameter value 17 that appears after the hostname specifies the total 
+number of MPI processes on the host, and so equals the sum of the 1 Pipeline 
+process and the 16 Slices.
+
+The pipeline can be launched by placing the policy file and a runid 
+on the command line:
+
+ ./run.sh syncslices.paf test_20001
+
+
+

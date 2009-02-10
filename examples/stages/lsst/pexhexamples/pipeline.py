@@ -6,12 +6,40 @@ Test Application Stages for proto association pipeline
 
 from lsst.pex.harness.Stage import Stage
 
+import lsst.pex.harness.Utils
+from lsst.pex.logging import Log, LogRec
+
 import lsst.daf.base as dafBase
 from lsst.daf.base import *
 
+class SampleStage(Stage):
+
+    def process(self): 
+        """
+        Processing code for this Stage to be executed within a Slice 
+        """
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.pipeline.SampleStage.process")
+
+        value ="None"
+        if self._policy.exists('RunMode'):
+            value = self._policy.getString('RunMode')
+
+        lr = LogRec(log, Log.INFO)
+        lr << " rank " + str(self._rank)
+        lr << " stageId " + str(self.stageId) 
+        lr << " universeSize " + str(self._universeSize) 
+        lr << " RunMode from Policy " + value 
+        lr << LogRec.endr
+
+
+        self.outputQueue.addDataset(self.activeClipboard)
+
 class LoadStage(Stage):
 
-    #------------------------------------------------------------------------
     def preprocess(self): 
         """
         Execute the needed preprocessing code for this Stage
@@ -41,7 +69,6 @@ class LoadStage(Stage):
                         print 'Python pipeline.LoadStage preprocess() ', key, name, self.FOVDec
 
 
-    #------------------------------------------------------------------------
     def process(self): 
         """
         Execute the needed processing code for this Stage
@@ -70,7 +97,6 @@ class LoadStage(Stage):
 
         self.outputQueue.addDataset(self.activeClipboard)
 
-    #------------------------------------------------------------------------
     def postprocess(self): 
         """
         Execute the needed postprocessing code for this Stage
@@ -82,7 +108,6 @@ class LoadStage(Stage):
 
 class MatchDiaSourceStage(Stage):
 
-    #------------------------------------------------------------------------
     def preprocess(self): 
         """
         Execute the needed preprocessing code for this Stage
@@ -110,7 +135,6 @@ class MatchDiaSourceStage(Stage):
                         self.FOVDec = propertySet.getDouble(name)
                         print 'Python pipeline.MatchDiaSourceStage preprocess() ', key, name, self.FOVDec
 
-    #------------------------------------------------------------------------
     def process(self): 
         """
         Execute the needed processing code for this Stage
@@ -140,7 +164,6 @@ class MatchDiaSourceStage(Stage):
         self.outputQueue.addDataset(self.activeClipboard)
 
 
-    #------------------------------------------------------------------------
     def postprocess(self): 
         """
         Execute the needed postprocessing code for this Stage
@@ -152,7 +175,6 @@ class MatchDiaSourceStage(Stage):
 
 class MatchMopStage(Stage):
 
-    #------------------------------------------------------------------------
     def preprocess(self): 
         """
         Execute the needed preprocessing code for this Stage
@@ -185,7 +207,6 @@ class MatchMopStage(Stage):
                         self.visitId = propertySet.getInt(name)
                         print 'Python pipeline.MatchMopStage preprocess() ', key, name, self.visitId
 
-    #------------------------------------------------------------------------
     def process(self): 
         """
         Execute the needed processing code for this Stage
@@ -220,7 +241,6 @@ class MatchMopStage(Stage):
 
         self.outputQueue.addDataset(self.activeClipboard)
 
-    #------------------------------------------------------------------------
     def postprocess(self): 
         """
         Execute the needed postprocessing code for this Stage
@@ -232,7 +252,6 @@ class MatchMopStage(Stage):
 
 class StoreStage(Stage):
 
-    #------------------------------------------------------------------------
     def preprocess(self): 
         """
         Execute the needed preprocessing code for this Stage
@@ -265,7 +284,6 @@ class StoreStage(Stage):
                         self.visitId = propertySet.getInt(name)
                         print 'Python pipeline.StoreStage preprocess() ', key, name, self.visitId
 
-    #------------------------------------------------------------------------
     def process(self): 
         """
         Execute the needed processing code for this Stage
@@ -300,7 +318,6 @@ class StoreStage(Stage):
 
         self.outputQueue.addDataset(self.activeClipboard)
 
-    #------------------------------------------------------------------------
     def postprocess(self): 
         """
         Execute the needed postprocessing code for this Stage

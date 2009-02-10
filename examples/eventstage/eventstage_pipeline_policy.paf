@@ -3,8 +3,9 @@
 # This policy file executes the Pipeline within a scenario that utilizes 
 # the Event stage for issueing .
 
-activemqBroker: "lsst8.ncsa.uiuc.edu"  
+localLogMode: true
 executionMode: "oneloop"
+eventBrokerHost: "lsst8.ncsa.uiuc.edu"  
 
 
 appStage: { 
