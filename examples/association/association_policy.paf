@@ -8,8 +8,8 @@
 # executionMode: "oneloop" ,
 # shutdownTopic: "triggerShutdownEvent" 
 #
-localLogMode: "Yes"  
-activemqBroker: "lsst8.ncsa.uiuc.edu" 
+localLogMode: true  
+eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
 shutdownTopic: "triggerShutdownA" 
 
 appStage: { 

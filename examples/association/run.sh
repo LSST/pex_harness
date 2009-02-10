@@ -1,11 +1,20 @@
 #!/bin/sh
 
+# --------------------------------------------------------- 
+# INPUT PARAMETERS
+# To run on a single host, keep nodes set equal to 1 
+# Increase nodes for a larger parallel execution. 
+# For example, for two nodes with 16 total cores we could set nodes=2 
+# and nslices=15 (pipeline itself takes one core) 
+nodes=1
+nslices=1
+# --------------------------------------------------------- 
+
 pwd=`pwd`
 PYTHONPATH=${pwd}/../stages:${PYTHONPATH}
 export PYTHONPATH
 
 # Command line arguments 
-echo $@  echo $#
 if [ "$#" != 2 ]; then
     echo "------------------------------------------"
     echo "Usage:  run.sh <policy-file-name> <runId>"
@@ -15,16 +24,6 @@ fi
 
 pipelinePolicyName=${1}
 runId=${2}
-
-# --------------------------------------------------------- 
-# INPUT PARAMETERS
-# To run on a single host, keep nodes set equal to 1 
-# Increase nodes for a larger parallel execution. 
-# For example, for two nodes with 4 cpus we could set nodes=2 
-# and nslices=3 (pipeline itself takes one cpu) 
-nodes=1
-nslices=1
-# --------------------------------------------------------- 
 
 # Add 1 to the number of slices to get the universe size 
 usize=$(( $nslices + 1 ))
