@@ -1,0 +1,45 @@
+
+pex_harness examples/inputoutput
+----------------------------------------------
+
+This policy file describes a Pipeline that peforms a simple test of IOStage.InputStage .
+
+The two stages in the pipeline are 
+InputStage
+IPDPStage
+
+The pipeline initially blocks to receive an event of topic "triggerIpdpEvent", which 
+is a simple event carrying a string "visitid".  The value received in the event is then 
+used to point to an appropriate data file. 
+
+The InputStage is configured to store data as a PythonType: "lsst.daf.base.PropertySet"
+after accessing  Storage: "BoostStorage" (as opposed to actual FitsStorage; for the 
+full test of FitsStorage, see examples/inputoutputfits).  InputStage is configured
+to place the input data onto the Clipboard under key "inputImage".
+
+The IPDPStage is a dummy application stage that shows the results of InputStage,
+i.e., IPDPStage retrieves the PropertySet under key "inputImage" from the
+Clipboard and writes out the contents. 
+
+
+By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+The pipeline is then executed via 
+
+% ./run.sh inputoutput_policy.paf <some-run-id>
+
+such as  
+
+% ./run.sh inputoutput_policy.paf test_1001 
+
+The pipeline blocks for an event that will carry the viistid of the image
+to process. This event can be supplied by running with in a separate shell
+the script:
+
+% python triggerIpdpEventTransmit.py
+
+if an ActiveMQbroker other than the LSST default (lsst8.ncsa.uiuc.edu)
+is used, this needs to be specified in the pipeline policy file (under
+"eventBrokerHost") and the event trigger python script.
+
