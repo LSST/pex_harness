@@ -12,6 +12,7 @@
   *
   * \author  Greg Daues, NCSA
   */
+#include <cstring>
 
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Stage.h"
@@ -196,7 +197,7 @@ void Pipeline::invokeShutdown() {
 
     char procCommand[bufferSize];
 
-    strcpy(procCommand, "SHUTDOWN");  
+    std::strcpy(procCommand, "SHUTDOWN");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
@@ -212,7 +213,7 @@ void Pipeline::invokeContinue() {
 
     char procCommand[bufferSize];
 
-    strcpy(procCommand, "CONTINUE");  
+    std::strcpy(procCommand, "CONTINUE");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
@@ -248,7 +249,7 @@ void Pipeline::invokeSyncSlices() {
         boost::format("InterSlice Communication Command Bcast rank %d ") % rank);
 
     char procCommand[bufferSize];
-    strcpy(procCommand, "SYNC");  
+    std::strcpy(procCommand, "SYNC");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
@@ -273,12 +274,12 @@ void Pipeline::invokeProcess(int iStage) {
 
     char processCommand[nSlices][bufferSize];
     for (int k = 0 ; k < nSlices; k++) {
-        strcpy(processCommand[k], "PROCESS");
+        std::strcpy(processCommand[k], "PROCESS");
     }
 
     char procCommand[bufferSize];
 
-    strcpy(procCommand, "PROCESS");  
+    std::strcpy(procCommand, "PROCESS");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
