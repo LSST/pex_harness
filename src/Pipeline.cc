@@ -12,6 +12,7 @@
   *
   * \author  Greg Daues, NCSA
   */
+#include <cstring>
 
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Stage.h"
@@ -177,26 +178,11 @@ void Pipeline::startInitQueue() {
     return;
 }
 
-void Pipeline::startStagesLoop() {
-
-    for (int iStage = 0; iStage < nStages; iStage++) {
-        Stage ithStage = stageVector.at(iStage);
-        ithStage.preprocess();
-       
-        invokeProcess(iStage);  
-
-        ithStage.postprocess();
-    } 
-
-    return;
-}
-
-
 void Pipeline::invokeShutdown() {
 
     char procCommand[bufferSize];
 
-    strcpy(procCommand, "SHUTDOWN");  
+    std::strcpy(procCommand, "SHUTDOWN");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
@@ -212,7 +198,7 @@ void Pipeline::invokeContinue() {
 
     char procCommand[bufferSize];
 
-    strcpy(procCommand, "CONTINUE");  
+    std::strcpy(procCommand, "CONTINUE");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
@@ -226,29 +212,14 @@ void Pipeline::invokeContinue() {
 
 void Pipeline::invokeSyncSlices() {
 
-    /* 
-    pipelineLog.log(Log::INFO,
-     boost::format("Top Isend loop: rank %d destSlice %d") % rank % destSlice);
-    */ 
     pipelineLog.log(Log::INFO,
         boost::format("Start invokeSyncSlices: rank %d ") % rank);
-
-   /* 
-    mpiError = MPI_Barrier(sliceIntercomm);
-    if (mpiError != MPI_SUCCESS) {
-        MPI_Finalize();
-        exit(1);
-    }
-    pipelineLog.log(Log::INFO,
-        boost::format("synced with Barrier: rank %d ") % rank);
-
-   */
 
     pipelineLog.log(Log::INFO,
         boost::format("InterSlice Communication Command Bcast rank %d ") % rank);
 
     char procCommand[bufferSize];
-    strcpy(procCommand, "SYNC");  
+    std::strcpy(procCommand, "SYNC");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
@@ -273,12 +244,12 @@ void Pipeline::invokeProcess(int iStage) {
 
     char processCommand[nSlices][bufferSize];
     for (int k = 0 ; k < nSlices; k++) {
-        strcpy(processCommand[k], "PROCESS");
+        std::strcpy(processCommand[k], "PROCESS");
     }
 
     char procCommand[bufferSize];
 
-    strcpy(procCommand, "PROCESS");  
+    std::strcpy(procCommand, "PROCESS");  
 
     mpiError = MPI_Bcast((void *)procCommand, bufferSize, MPI_CHAR, MPI_ROOT, sliceIntercomm);
     if (mpiError != MPI_SUCCESS) {
