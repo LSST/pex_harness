@@ -272,16 +272,6 @@ void Pipeline::invokeProcess(int iStage) {
     return;
 }
 
-void Pipeline::start() {
-
-    startSlices();
-
-    startInitQueue();
-
-    startStagesLoop();
-
-}
-
 void Pipeline::shutdown() {
 
     MPI_Finalize(); 
