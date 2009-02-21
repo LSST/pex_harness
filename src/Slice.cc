@@ -19,27 +19,6 @@
 namespace dafBase = lsst::daf::base;
 namespace pexPolicy = lsst::pex::policy;
 
-class gps_position
-{
-private:
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-        ar & degrees;
-    }
-
-    string degrees;
-
-public:
-    gps_position(){};
-    gps_position(string d) : degrees(d)
-    {};
-
-};
-
-
 Slice::Slice() {
 }
 
@@ -247,8 +226,7 @@ char* Slice::getRunId() {
 std::vector<int> Slice::getRecvNeighborList() {
     std::vector<int> neighborVec;
     std::list<int>::iterator iter;
-    for(iter = recvNeighborList.begin(); iter != recvNeighborList.end(); )
-    {
+    for(iter = recvNeighborList.begin(); iter != recvNeighborList.end(); ) {
        neighborVec.push_back(*iter);
        iter++;
     }
@@ -354,12 +332,10 @@ void Slice::calculateNeighbors() {
         recvNeighborList.push_back(lefty);
         recvNeighborList.push_back(righty);
 
-        /* 
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d rightx %d") % _rank % rightx);
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d lefty %d") % _rank % lefty);
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d righty %d") % _rank % righty);
-        */
+        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
+        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d rightx %d") % _rank % rightx);
+        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d lefty %d") % _rank % lefty);
+        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d righty %d") % _rank % righty);
     }   
 
 }
@@ -378,14 +354,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     }
 
     /* Ptr for the return values received from other Slices */ 
-
     PropertySet::Ptr retPtr(new dafBase::PropertySet);
-
-    /*   If we are passed PropertySet, then do this: 
-    std::vector<std::string> vPs0 = ps0.names();
-    */ 
-
-    /* If passed a PropertySet::Ptr then do this */  
 
     std::vector<std::string> psNames = ps0Ptr->names();
     std::string keyToShare = psNames[0];
@@ -409,8 +378,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     int destSlice, sendCount;
     sendCount = 0;
     std::list<int>::iterator iterSend;
-    for(iterSend = sendNeighborList.begin(); iterSend != sendNeighborList.end(); iterSend++)
-    {
+    for(iterSend = sendNeighborList.begin(); iterSend != sendNeighborList.end(); iterSend++) {
         destSlice = (*iterSend);
 
         localLog.log(Log::INFO, boost::format("Communicating value to Slice %d ") % destSlice);
@@ -427,8 +395,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     recvCount=0;
     std::list<int>::iterator iterRecv;
    
-    for(iterRecv = recvNeighborList.begin(); iterRecv != recvNeighborList.end(); iterRecv++)
-    {
+    for(iterRecv = recvNeighborList.begin(); iterRecv != recvNeighborList.end(); iterRecv++) {
         srcSlice = (*iterRecv);
 
         /* perform Recvs */
@@ -447,8 +414,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     /* Combine the array of recvPtr [] into a single retPtr */ 
     int yy = 0; 
     std::list<int>::iterator iterNeighbors;
-    for(iterNeighbors = recvNeighborList.begin(); iterNeighbors != recvNeighborList.end(); )
-    {
+    for(iterNeighbors = recvNeighborList.begin(); iterNeighbors != recvNeighborList.end(); ) {
         int ni =  (*iterNeighbors);
         std::stringstream newkeyBuffer;
         std::string newkey;
