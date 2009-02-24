@@ -17,12 +17,18 @@
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Stage.h"
 
-Pipeline::Pipeline() {
+/** Constructor.
+ */
+Pipeline::Pipeline(void) {
 }
 
-Pipeline::~Pipeline() {
+/** Destructor.
+ */
+Pipeline::~Pipeline(void) {
 }
 
+/** Initialize the environment of the Pipeline.
+ */
 void Pipeline::initialize() {
 
     initializeMPI();
@@ -32,7 +38,11 @@ void Pipeline::initialize() {
     return;
 }
 
-
+/** Initialize the logger "pipelineLog" to be used globally in the Pipeline class.
+ *  Add an ofstream  Destination to the default logger if the localLogMode is True
+ * \param[in] boolean flag indicating whether the localLog Mode for writing to a
+ * local file is on
+ */
 void Pipeline::initializeLogger(bool isLocalLogMode) {
 
     _pid = getpid();
@@ -76,16 +86,12 @@ void Pipeline::initializeLogger(bool isLocalLogMode) {
     return;
 }
 
+/** Initialize the MPI environment of the Pipeline.
+ * Check the rank, size of MPI_COMM_WORLD, and the universe size 
+ * prior to the spawning of the Slices. 
+ */
 void Pipeline::initializeMPI() {
   
-  /** jmyers:
-   * MPI_Init removes MPI-related info (such as ./mpirun, --ncpus=#)
-   * from the argc, argv.  Since we don't really have those, 
-   * it takes NULL for both values meaning "do nothing."  Sending it
-   * bogus numbers and parameters results in Seg Faults (at least using
-   * my MPICH).
-   **/
-
   mpiError = MPI_Init (NULL, NULL); 
     if (mpiError != MPI_SUCCESS) {
         MPI_Finalize();
@@ -118,25 +124,23 @@ void Pipeline::initializeMPI() {
     return;
 }
 
+/** Set configuration for the Pipeline.
+ */
 void Pipeline::configurePipeline() {
     bufferSize = 256;
     return;
 }
 
-int Pipeline::getNStages() {
-    return nStages;
-}
-
+/** get method for the universe size
+ */ 
 int Pipeline::getUniverseSize() {
     return universeSize;
 }
 
-Stage Pipeline::getIthStage(int iStage) {
-    Stage ithStage = stageVector.at(iStage-1);
-    return ithStage;
-
-}
-
+/** Spawn the Slice workers for parallel computation. 
+ * This is accomplished using MPI_Comm_spawn and creates an Intercommunicator sliceIntercomm.
+ * The number of Slices to be spawned nSlices is one less than the designated universe size.
+ */ 
 void Pipeline::startSlices() {
 
     int *array_of_errcodes;
@@ -156,28 +160,8 @@ void Pipeline::startSlices() {
     return;
 }
 
-void Pipeline::startInitQueue() {
-
-    /*   Make a simple Clipboard  */ 
-    Clipboard *board1;
-    board1 = new Clipboard();
-    bool bool1 = true;
-
-    string *key1;
-    string *value1;
-    key1 = new string("primary_image");
-    value1 = new string("/gpfs_scratch1/daues/LSSTDC2/image1.fits");
-
-    board1->put(*key1, value1, bool1);
-
-    /* Add Clipboard to Queue q1 */
-    Queue *q1;
-    q1 = queueVector.at(0);
-    q1->addDataset(*board1);
-
-    return;
-}
-
+/** Broadcast a Shutdown message to all of the Slices.
+ */
 void Pipeline::invokeShutdown() {
 
     char procCommand[bufferSize];
@@ -194,6 +178,9 @@ void Pipeline::invokeShutdown() {
 
 }
 
+/** Broadcast a "Continue" message to all of the Slices. 
+ * This is used to tell Slices to continue processing (no shutdown event received). 
+ */
 void Pipeline::invokeContinue() {
 
     char procCommand[bufferSize];
@@ -207,9 +194,10 @@ void Pipeline::invokeContinue() {
     }
 
     return;
-
 }
 
+/** Tell the Slices to perform the interSlice communication, i.e., synchronized the Slices.
+ */
 void Pipeline::invokeSyncSlices() {
 
     pipelineLog.log(Log::INFO,
@@ -240,6 +228,8 @@ void Pipeline::invokeSyncSlices() {
         boost::format("End invokeSyncSlices rank %d ") % rank);
 }
 
+/** Tell the Slices to call the process method for the current Stage.
+ */
 void Pipeline::invokeProcess(int iStage) {
 
     char processCommand[nSlices][bufferSize];
@@ -272,6 +262,8 @@ void Pipeline::invokeProcess(int iStage) {
     return;
 }
 
+/** Shutdown the Pipeline by calling MPI_Finalize and then exit().
+ */
 void Pipeline::shutdown() {
 
     MPI_Finalize(); 
@@ -279,20 +271,28 @@ void Pipeline::shutdown() {
 
 }
 
+/** set method for the overall runid of the Pipeline plus all Slices
+ */
 void Pipeline::setRunId(char* runId) {
     _runId = runId;
     return;
 }
 
+/** get method for the overall runid of the Pipeline plus all Slices
+ */
 char* Pipeline::getRunId() {
     return _runId;
 }
 
+/** set method for the Pipeline policy filename
+ */
 void Pipeline::setPolicyName(char* policyName) {
     _policyName = policyName;
     return;
 }
 
+/** get method for the Pipeline policy filename
+ */
 char* Pipeline::getPolicyName() {
     return _policyName;
 }

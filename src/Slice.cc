@@ -19,13 +19,27 @@
 namespace dafBase = lsst::daf::base;
 namespace pexPolicy = lsst::pex::policy;
 
-Slice::Slice() {
+/** Constructor.
+ */
+Slice::Slice(void) {
 }
 
-Slice::~Slice() {
+/** Destructor.
+ */
+Slice::~Slice(void) {
 }
 
+/** Retrieve a Persistable instance, returning an unsafe bare pointer.
+ * \param[in] persistableType Name of Persistable type to be retrieved as
+ * correct data from any of the Storages
+ * \return Bare pointer to new Persistable instance
+ */
 
+/** Initialize the logger "sliceLog" to be used globally in the Slice class. 
+ *  Add an ofstream  Destination to the default logger if the localLogMode is True
+ * \param[in] boolean flag indicating whether the localLog Mode for writing to a
+ * local file is on
+ */
 void Slice::initializeLogger(bool isLocalLogMode) {
 
     _pid = getpid();
@@ -70,6 +84,11 @@ void Slice::initializeLogger(bool isLocalLogMode) {
     return;
 }
 
+/** Initialize the MPI environment of the Slice.
+ * In doing so, obtain a reference to the Intercommunicator of the 
+ * Pipeline and the Slices. Find and record the Slice rank and the
+ * universe size.
+ */
 void Slice::initializeMPI() {
 
     mpiError = MPI_Init(NULL, NULL);  
@@ -123,12 +142,16 @@ void Slice::initializeMPI() {
     return;
 }
 
+/** Set configuration for the Slice.
+ */
 void Slice::configureSlice() {
 
     bufferSize = 256;
     return;
 }
 
+/** Initialize the environment of the Slice.
+ */
 void Slice::initialize() {
 
     initializeMPI();
@@ -138,6 +161,10 @@ void Slice::initialize() {
     return;
 }
 
+/** Invoke the Shutdown test from the Pipeline. 
+ * This is done by receiving a message from the Pipeline, and if 
+ * instructed, running shutdown on ths Slice.
+ */
 void Slice::invokeShutdownTest() {
 
     char shutdownCommand[bufferSize];
@@ -157,6 +184,10 @@ void Slice::invokeShutdownTest() {
 
 }
 
+/** Invoke the MPI_Bcast in coordination with the Pipeline (prior to 
+ * running the process() method.)
+ * \param[in] the integer index of the current Stage in the stage loop
+ */
 void Slice::invokeBcast(int iStage) {
 
     char runCommand[bufferSize];
@@ -179,6 +210,10 @@ void Slice::invokeBcast(int iStage) {
 
 }
 
+/** Invoke the MPI_Barrier in coordination with the Pipeline (after the 
+ * excution of the process() method.)
+ * \param[in] the integer index of the current Stage in the stage loop
+ */
 void Slice::invokeBarrier(int iStage) {
 
     Log localLog(sliceLog, "invokeBarrier()");    
@@ -193,36 +228,55 @@ void Slice::invokeBarrier(int iStage) {
 }
 
 
+/** Shutdown the Slice by calling MPI_Finalize and then exit(). 
+ */
 void Slice::shutdown() {
 
     MPI_Finalize();
     exit(0);
 }
 
+/** set method for Slice MPI rank
+ */
 void Slice::setRank(int rank) {
     _rank = rank;
 }
 
+/** get method for Slice MPI rank
+ */
 int Slice::getRank() {
     return _rank;
 }
 
+/** get method for  MPI universe size
+ */
 int Slice::getUniverseSize() {
     return universeSize;
 }
 
+/** set method for the Slice topology, which is described by a Policy 
+ * \param[in] Ptr pointer to a Policy 
+ */
 void Slice::setTopology(pexPolicy::Policy::Ptr policy) {
     _topologyPolicy = policy;
 }
 
+/** set method for the overall runid of the Pipeline plus all Slices
+ */
 void Slice::setRunId(char* runId) {
     _runId = runId;
 }
 
+/** get method for the overall runid of the Pipeline plus all Slices
+ */
 char* Slice::getRunId() {
     return _runId;
 }
 
+/** Get a list of ranks of neighbors Slices from which this Slice receives data
+ * \return a std vector containing integer indices of the ranks of neighbor Slices 
+ * from which this Slice receives data
+ */
 std::vector<int> Slice::getRecvNeighborList() {
     std::vector<int> neighborVec;
     std::list<int>::iterator iter;
@@ -233,6 +287,11 @@ std::vector<int> Slice::getRecvNeighborList() {
     return neighborVec;
 }
 
+/** Calculate the ranks of the neighbors Slices for this Slice.  The calculation 
+ * relies on the topology that has been set for the Pipeline plus Slices, 
+ * and the result is stored as a list of Slices from which this Slice receives 
+ * data (recvNeighborList) and sends (sendNeighborList). 
+ */
 void Slice::calculateNeighbors() {
 
     Log localLog(sliceLog, "calculateNeighbors()");  
@@ -340,6 +399,10 @@ void Slice::calculateNeighbors() {
 
 }
 
+/** Perform the interSlice communication, i.e., synchronized the Slices. 
+ * \param[in] A Ptr pointer to a PropertySet of values to communicate
+ * \return A Ptr pointer to the PropertySet of values that has been received 
+ */
 PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
 
     Log localLog(sliceLog, "syncSlices()");    
