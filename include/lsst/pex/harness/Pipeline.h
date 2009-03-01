@@ -85,10 +85,7 @@ public:
     void initialize();
     void initializeLogger(bool isLocalLogMode);
 
-    void start();
     void startSlices();  
-    void startInitQueue();  
-    void startStagesLoop();  
     void invokeProcess(int iStage);
     void invokeShutdown();
     void invokeContinue();
@@ -96,8 +93,6 @@ public:
 
     void shutdown();
 
-    int getNStages();
-    Stage getIthStage(int iStage);
     int getUniverseSize();
 
     void setRunId(char* runId);
