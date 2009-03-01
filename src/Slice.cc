@@ -391,10 +391,10 @@ void Slice::calculateNeighbors() {
         recvNeighborList.push_back(lefty);
         recvNeighborList.push_back(righty);
 
-        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
-        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d rightx %d") % _rank % rightx);
-        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d lefty %d") % _rank % lefty);
-        localLog->log(Log::INFO, boost::format("calculateNeighbors(): %d righty %d") % _rank % righty);
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d rightx %d") % _rank % rightx);
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d lefty %d") % _rank % lefty);
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d righty %d") % _rank % righty);
     }   
 
 }
