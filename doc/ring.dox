@@ -1,0 +1,111 @@
+/**
+
+\page secRing Running an example interSlice communication pipeline: examples/ring/ 
+
+This example is found under pex_harness/examples/ring/ . 
+Change to this directory to find files
+
+\code
+% ls
+nodelist.scr  ring.paf  run.sh   README 
+\endcode
+
+The run.sh is a very simple launching script to test a Pipeline. 
+(A more configurable mechanism for setup and launching of pipelines 
+is developed within the dc2pipe/dc3pipe packages and the full 
+orchestration layer.) At the top of the run.sh one finds input 
+parameters that one can edit
+
+\code
+nodes=1
+nslices=5
+\endcode
+
+These default parameters of a single node and five slices 
+are sufficient to illustrate this ring topology example.
+
+The MPI "machine file" is called nodelist.scr and contains the entry
+
+\code
+lsst8.ncsa.uiuc.edu:6
+\endcode
+
+The parameter value 6 that appears after the hostname specifies the total 
+number of MPI processes on the host, and so equals the sum of the 1 Pipeline 
+process and the 5 Slices.
+
+The pipeline can be launched by placing the policy file and a runid 
+on the command line:
+
+\code
+./run.sh ring.paf test_10001
+\endcode
+
+To understand the function of this pipeline we can examine pieces of 
+the ring.paf policy file :
+
+\code
+localLogMode: true
+
+shareDataOn: true
+
+topology: {
+    type: "ring"
+    param1: "clockwise"
+    # param1: "counterclockwise"
+}
+
+appStage: {
+    stageName: "lsst.pexhexamples.apps.SyncSetupStage"
+    eventTopic: "None"
+    stagePolicy: "None"
+    shareData: false
+}
+
+appStage: {
+    stageName: "lsst.pexhexamples.apps.SyncTestStage"
+    eventTopic: "None"
+    stagePolicy: "None"
+    shareData: true
+}
+\endcode
+
+InterSlice communication is enabled globally with shareDataOn: true 
+and the topology is set to a ring with attribute clockwise. In this setup 
+we have the Slices in a line: 0 1 2 3 4 with the ends connected, hence, 
+Slice 0 will have neighbors 4 and 1, Slice 1 will have neighbors 0 and 2, etc. 
+The communication will have the character that Slice 0 receives from Slice 4 
+and sends to Slice 1, Slice 1 receives from Slice 0 and sends to Slice 2, etc. 
+Because the option localLogMode: "Yes" is set, after execution logs files 
+Pipeline(#processid).log, Slice0.log, Slice1.log, ... will be found in 
+the working directory.
+
+The pipeline contains two Stages, SyncSetupStage and SyncTestStage. Within 
+its process() method SyncSetupStage places a PropertySet on the Clipboard 
+under the key "rankKey" and marks it as Shared:
+
+\code
+
+propertySet = dafBase.PropertySet()
+
+propertySet.setInt("sliceRank", self._rank)
+propertySet.setString("Level", "Debug")
+
+self.activeClipboard.put("rankKey", propertySet)
+
+self.activeClipboard.setShared("rankKey", True)
+
+\endcode
+
+The next Stage SyncTestStage has the attribute shareData: true set, which 
+ensures that all items marked shared on the Clipboard will be communicated 
+prior to the execution of the process() method for this Stage. The 
+received PropertySet is placed on the Clipboard under a key tagged with 
+the rank of the neighbor Slice, e.g., rankKey-0 for the case where Slice 1 
+receives data from Slice 0. 
+
+
+*/
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+

@@ -1,0 +1,60 @@
+/**
+
+\page secIOFits Example demonstrating IOStage to read and write FITS files 
+
+This example describes a Pipeline that performs a test of IOStage.InputStage 
+and IOStage.OutputStage. This example is found under pex_harness/examples/inputoutputfits/. 
+
+The three stages in the pipeline are 
+
+- InputStage
+- ImageprocStage
+- OutputStage
+
+The pipeline initially blocks to receive an event of topic "triggerImageprocEvent", which 
+carries information such as the exposureId to identify the input image.  
+
+The InputStage is configured to store data as a 
+PythonType: "lsst.afw.image.imageLib.MaskedImageF" after accessing  Storage: "FitsStorage".
+InputStage is configured to place the input data onto the Clipboard under key "InputImage".
+
+The ImageprocStage is a dummy application stage that shows that mocks an
+image processing stage. It pulls the "inputImage" from the Clipboard and 
+posts it back to the Clipboard under the key "outputImage".
+
+The OutputStage is configured to retrieve data from the Clipboard under the key "OutputStage"
+of PythonType: "lsst.afw.image.imageLib.MaskedImageF" and persist ot using Storage: "FitsStorage".
+The OutputStage encodes the exposureId within the name of the output file (as specified
+in its policy). 
+
+By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+The pipeline is then executed via 
+
+\code 
+% ./run.sh inputoutputfits_policy.paf <some-run-id>
+\endcode
+
+such as  
+
+\code 
+% ./run.sh inputoutputfits_policy.paf test_3001 
+\endcode
+
+The pipeline blocks for an event that will carry the exposureId of the image
+to process. This event can be supplied by running with in a separate shell
+the script:
+
+\code 
+% python triggerImageprocEventTransmit.py
+\endcode
+
+if an ActiveMQbroker other than the LSST default (lsst8.ncsa.uiuc.edu)
+is used, this needs to be specified in the pipeline policy file (under
+"eventBrokerHost") and the event trigger python script.
+
+*/
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
