@@ -29,15 +29,9 @@ Slice::Slice(void) {
 Slice::~Slice(void) {
 }
 
-/** Retrieve a Persistable instance, returning an unsafe bare pointer.
- * \param[in] persistableType Name of Persistable type to be retrieved as
- * correct data from any of the Storages
- * \return Bare pointer to new Persistable instance
- */
-
 /** Initialize the logger "sliceLog" to be used globally in the Slice class. 
  *  Add an ofstream  Destination to the default logger if the localLogMode is True
- * \param[in] boolean flag indicating whether the localLog Mode for writing to a
+ * \param[in] isLocalLogMode A flag indicating whether the localLog Mode for writing to a
  * local file is on
  */
 void Slice::initializeLogger(bool isLocalLogMode) {
@@ -186,7 +180,7 @@ void Slice::invokeShutdownTest() {
 
 /** Invoke the MPI_Bcast in coordination with the Pipeline (prior to 
  * running the process() method.)
- * \param[in] the integer index of the current Stage in the stage loop
+ * \param[in] iStage The integer index of the current Stage in the stage loop
  */
 void Slice::invokeBcast(int iStage) {
 
@@ -212,7 +206,7 @@ void Slice::invokeBcast(int iStage) {
 
 /** Invoke the MPI_Barrier in coordination with the Pipeline (after the 
  * excution of the process() method.)
- * \param[in] the integer index of the current Stage in the stage loop
+ * \param[in] iStage The integer index of the current Stage in the stage loop
  */
 void Slice::invokeBarrier(int iStage) {
 
@@ -255,7 +249,7 @@ int Slice::getUniverseSize() {
 }
 
 /** set method for the Slice topology, which is described by a Policy 
- * \param[in] Ptr pointer to a Policy 
+ * \param[in] policy A smart pointer to a Policy 
  */
 void Slice::setTopology(pexPolicy::Policy::Ptr policy) {
     _topologyPolicy = policy;
@@ -400,7 +394,7 @@ void Slice::calculateNeighbors() {
 }
 
 /** Perform the interSlice communication, i.e., synchronized the Slices. 
- * \param[in] A Ptr pointer to a PropertySet of values to communicate
+ * \param[in] ps0Ptr A smart pointer to a PropertySet of values to communicate
  * \return A Ptr pointer to the PropertySet of values that has been received 
  */
 PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
