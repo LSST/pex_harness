@@ -31,7 +31,7 @@ Slice::~Slice(void) {
 
 /** Initialize the logger "sliceLog" to be used globally in the Slice class. 
  *  Add an ofstream  Destination to the default logger if the localLogMode is True
- * \param[in] isLocalLogMode A flag indicating whether the localLog Mode for writing to a
+ * @param[in] isLocalLogMode A flag indicating whether the localLog Mode for writing to a
  * local file is on
  */
 void Slice::initializeLogger(bool isLocalLogMode) {
@@ -180,7 +180,7 @@ void Slice::invokeShutdownTest() {
 
 /** Invoke the MPI_Bcast in coordination with the Pipeline (prior to 
  * running the process() method.)
- * \param[in] iStage The integer index of the current Stage in the stage loop
+ * @param[in] iStage The integer index of the current Stage in the stage loop
  */
 void Slice::invokeBcast(int iStage) {
 
@@ -206,7 +206,7 @@ void Slice::invokeBcast(int iStage) {
 
 /** Invoke the MPI_Barrier in coordination with the Pipeline (after the 
  * excution of the process() method.)
- * \param[in] iStage The integer index of the current Stage in the stage loop
+ * @param[in] iStage The integer index of the current Stage in the stage loop
  */
 void Slice::invokeBarrier(int iStage) {
 
@@ -249,7 +249,7 @@ int Slice::getUniverseSize() {
 }
 
 /** set method for the Slice topology, which is described by a Policy 
- * \param[in] policy A smart pointer to a Policy 
+ * @param[in] policy A smart pointer to a Policy 
  */
 void Slice::setTopology(pexPolicy::Policy::Ptr policy) {
     _topologyPolicy = policy;
@@ -268,7 +268,7 @@ char* Slice::getRunId() {
 }
 
 /** Get a list of ranks of neighbors Slices from which this Slice receives data
- * \return a std vector containing integer indices of the ranks of neighbor Slices 
+ * @returns a std vector containing integer indices of the ranks of neighbor Slices 
  * from which this Slice receives data
  */
 std::vector<int> Slice::getRecvNeighborList() {
@@ -394,7 +394,7 @@ void Slice::calculateNeighbors() {
 }
 
 /** Perform the interSlice communication, i.e., synchronized the Slices. 
- * \param[in] ps0Ptr A smart pointer to a PropertySet of values to communicate
+ * @param[in] ps0Ptr A smart pointer to a PropertySet of values to communicate
  * \return A Ptr pointer to the PropertySet of values that has been received 
  */
 PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
