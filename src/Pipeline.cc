@@ -40,11 +40,10 @@ void Pipeline::initialize() {
 
 /** Initialize the logger "pipelineLog" to be used globally in the Pipeline class.
  *  Add an ofstream  Destination to the default logger if the localLogMode is True
- * @param[in] isLocalLogMode A flag indicating whether the localLog Mode for writing to a
  * local file is on
  */
-void Pipeline::initializeLogger(bool isLocalLogMode) {
-
+void Pipeline::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs to local files
+                                ) {
     _pid = getpid();
     char* _host = getenv("HOST");
 

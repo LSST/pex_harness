@@ -30,11 +30,10 @@ Slice::~Slice(void) {
 }
 
 /** Initialize the logger "sliceLog" to be used globally in the Slice class. 
- *  Add an ofstream  Destination to the default logger if the localLogMode is True
- * @param[in] isLocalLogMode A flag indicating whether the localLog Mode for writing to a
- * local file is on
+ *  Add an ofstreamDestination to the default logger if the localLogMode is True
  */
-void Slice::initializeLogger(bool isLocalLogMode) {
+void Slice::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs to local files
+                            ) {
 
     _pid = getpid();
     char* _host = getenv("HOST");
@@ -180,9 +179,9 @@ void Slice::invokeShutdownTest() {
 
 /** Invoke the MPI_Bcast in coordination with the Pipeline (prior to 
  * running the process() method.)
- * @param[in] iStage The integer index of the current Stage in the stage loop
  */
-void Slice::invokeBcast(int iStage) {
+void Slice::invokeBcast(int iStage //!< The integer index of the current Stage
+                        ) {
 
     char runCommand[bufferSize];
     int kStage;
@@ -206,10 +205,9 @@ void Slice::invokeBcast(int iStage) {
 
 /** Invoke the MPI_Barrier in coordination with the Pipeline (after the 
  * excution of the process() method.)
- * @param[in] iStage The integer index of the current Stage in the stage loop
  */
-void Slice::invokeBarrier(int iStage) {
-
+void Slice::invokeBarrier(int iStage //!< The integer index of the current Stage 
+                          ) {
     Log localLog(sliceLog, "invokeBarrier()");    
     localLog.log(Log::INFO, boost::format("Invoking Barrier: %d ") % iStage);
 
@@ -249,9 +247,9 @@ int Slice::getUniverseSize() {
 }
 
 /** set method for the Slice topology, which is described by a Policy 
- * @param[in] policy A smart pointer to a Policy 
  */
-void Slice::setTopology(pexPolicy::Policy::Ptr policy) {
+void Slice::setTopology(pexPolicy::Policy::Ptr policy//!< A smart pointer to a Policy  
+                        ) {
     _topologyPolicy = policy;
 }
 
@@ -394,11 +392,10 @@ void Slice::calculateNeighbors() {
 }
 
 /** Perform the interSlice communication, i.e., synchronized the Slices. 
- * @param[in] ps0Ptr A smart pointer to a PropertySet of values to communicate
- * \return A Ptr pointer to the PropertySet of values that has been received 
+ * @return A smart pointer to the PropertySet of values that has been received 
  */
-PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
-
+PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr //!< A smart pointer to a PropertySet of values to communicate 
+                                   ) {
     Log localLog(sliceLog, "syncSlices()");    
 
     char syncCommand[bufferSize];
