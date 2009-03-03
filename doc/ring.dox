@@ -1,6 +1,6 @@
 /**
 
-\page secRing Running an example interSlice communication pipeline: examples/ring/ 
+\page Example_Ring Running an example interSlice communication pipeline: examples/ring/ 
 
 This example is found under pex_harness/examples/ring/ . 
 Change to this directory to find files

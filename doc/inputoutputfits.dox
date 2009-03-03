@@ -1,6 +1,6 @@
 /**
 
-\page secIOFits Example demonstrating IOStage to read and write FITS files 
+\page Example_IOFits Example demonstrating IOStage to read and write FITS files 
 
 This example describes a Pipeline that performs a test of IOStage.InputStage 
 and IOStage.OutputStage. This example is found under pex_harness/examples/inputoutputfits/. 

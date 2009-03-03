@@ -15,9 +15,10 @@ The software container that the harness provides for hosting an algorithm writte
 by an application developer is the Stage class.  The Stage class provides a standard API
 for integrating code into the LSST Pipeline Harnesss framework.  
 
-   - \ref secTemplate : Template for testing an application Stage in a Pipeline
-   - \ref secIOFits : Example demonstrating IOStage to read and write FITS files
-   - \ref secRing : Run the Pipeline harness for a simple interSlice communication example: ring
+   - \ref Example_Template : Template for testing an application Stage in a Pipeline
+   - \ref Example_IOFits : Example demonstrating IOStage to read and write FITS files
+   - \ref Example_Event : Example demonstrating the use of EventStage to issue outgoing events
+   - \ref Example_Ring : Run the Pipeline harness for a simple interSlice communication example: ring
 
 */
 
