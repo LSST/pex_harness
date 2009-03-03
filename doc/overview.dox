@@ -1,0 +1,26 @@
+/**
+\mainpage lsst::pex::harness;  the LSST Pipeline Harness
+
+\section secIntro Introduction
+
+The LSST Pipeline Harness is a package for constructing pipelines out of reusable scientific 
+processing modules and executing pipelines within an parallel processing environment. 
+The harness serves to separate middleware functionality---management of parallel processing, 
+I/O functionality, access to persistence, aggregation and connection of processing stages, etc. 
+The Pipeline class encapsulates the main executing pipeline; it spawns a number of 
+parallel workers denoted Slices that can be distributed across multiple nodes. 
+Both Pipeline and Slice workers execute a loop of application stages that have been 
+provided with pipeline policy.  
+The software container that the harness provides for hosting an algorithm written 
+by an application developer is the Stage class.  The Stage class provides a standard API
+for integrating code into the LSST Pipeline Harnesss framework.  
+
+   - \ref Example_Template : Template for testing an application Stage in a Pipeline
+   - \ref Example_IOFits : Example demonstrating IOStage to read and write FITS files
+   - \ref Example_Event : Example demonstrating the use of EventStage to issue outgoing events
+   - \ref Example_Ring : Run the Pipeline harness for a simple interSlice communication example: ring
+
+*/
+
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+

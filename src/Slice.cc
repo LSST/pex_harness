@@ -19,35 +19,21 @@
 namespace dafBase = lsst::daf::base;
 namespace pexPolicy = lsst::pex::policy;
 
-class gps_position
-{
-private:
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-        ar & degrees;
-    }
-
-    string degrees;
-
-public:
-    gps_position(){};
-    gps_position(string d) : degrees(d)
-    {};
-
-};
-
-
-Slice::Slice() {
+/** Constructor.
+ */
+Slice::Slice(void) {
 }
 
-Slice::~Slice() {
+/** Destructor.
+ */
+Slice::~Slice(void) {
 }
 
-
-void Slice::initializeLogger(bool isLocalLogMode) {
+/** Initialize the logger "sliceLog" to be used globally in the Slice class. 
+ *  Add an ofstreamDestination to the default logger if the localLogMode is True
+ */
+void Slice::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs to local files
+                            ) {
 
     _pid = getpid();
     char* _host = getenv("HOST");
@@ -91,6 +77,11 @@ void Slice::initializeLogger(bool isLocalLogMode) {
     return;
 }
 
+/** Initialize the MPI environment of the Slice.
+ * In doing so, obtain a reference to the Intercommunicator of the 
+ * Pipeline and the Slices. Find and record the Slice rank and the
+ * universe size.
+ */
 void Slice::initializeMPI() {
 
     mpiError = MPI_Init(NULL, NULL);  
@@ -144,12 +135,16 @@ void Slice::initializeMPI() {
     return;
 }
 
+/** Set configuration for the Slice.
+ */
 void Slice::configureSlice() {
 
     bufferSize = 256;
     return;
 }
 
+/** Initialize the environment of the Slice.
+ */
 void Slice::initialize() {
 
     initializeMPI();
@@ -159,6 +154,10 @@ void Slice::initialize() {
     return;
 }
 
+/** Invoke the Shutdown test from the Pipeline. 
+ * This is done by receiving a message from the Pipeline, and if 
+ * instructed, running shutdown on ths Slice.
+ */
 void Slice::invokeShutdownTest() {
 
     char shutdownCommand[bufferSize];
@@ -178,7 +177,11 @@ void Slice::invokeShutdownTest() {
 
 }
 
-void Slice::invokeBcast(int iStage) {
+/** Invoke the MPI_Bcast in coordination with the Pipeline (prior to 
+ * running the process() method.)
+ */
+void Slice::invokeBcast(int iStage //!< The integer index of the current Stage
+                        ) {
 
     char runCommand[bufferSize];
     int kStage;
@@ -200,8 +203,11 @@ void Slice::invokeBcast(int iStage) {
 
 }
 
-void Slice::invokeBarrier(int iStage) {
-
+/** Invoke the MPI_Barrier in coordination with the Pipeline (after the 
+ * excution of the process() method.)
+ */
+void Slice::invokeBarrier(int iStage //!< The integer index of the current Stage 
+                          ) {
     Log localLog(sliceLog, "invokeBarrier()");    
     localLog.log(Log::INFO, boost::format("Invoking Barrier: %d ") % iStage);
 
@@ -214,47 +220,70 @@ void Slice::invokeBarrier(int iStage) {
 }
 
 
+/** Shutdown the Slice by calling MPI_Finalize and then exit(). 
+ */
 void Slice::shutdown() {
 
     MPI_Finalize();
     exit(0);
 }
 
+/** set method for Slice MPI rank
+ */
 void Slice::setRank(int rank) {
     _rank = rank;
 }
 
+/** get method for Slice MPI rank
+ */
 int Slice::getRank() {
     return _rank;
 }
 
+/** get method for  MPI universe size
+ */
 int Slice::getUniverseSize() {
     return universeSize;
 }
 
-void Slice::setTopology(pexPolicy::Policy::Ptr policy) {
+/** set method for the Slice topology, which is described by a Policy 
+ */
+void Slice::setTopology(pexPolicy::Policy::Ptr policy//!< A smart pointer to a Policy  
+                        ) {
     _topologyPolicy = policy;
 }
 
+/** set method for the overall runid of the Pipeline plus all Slices
+ */
 void Slice::setRunId(char* runId) {
     _runId = runId;
 }
 
+/** get method for the overall runid of the Pipeline plus all Slices
+ */
 char* Slice::getRunId() {
     return _runId;
 }
 
+/** Get a list of ranks of neighbors Slices from which this Slice receives data
+ * @returns a std vector containing integer indices of the ranks of neighbor Slices 
+ * from which this Slice receives data
+ */
 std::vector<int> Slice::getRecvNeighborList() {
     std::vector<int> neighborVec;
     std::list<int>::iterator iter;
-    for(iter = recvNeighborList.begin(); iter != recvNeighborList.end(); )
-    {
+    for(iter = recvNeighborList.begin(); iter != recvNeighborList.end(); ) {
        neighborVec.push_back(*iter);
        iter++;
     }
     return neighborVec;
 }
 
+/** Calculate the ranks of the neighbors Slices for this Slice.  The calculation 
+ * relies on the topology that has been set for the Pipeline plus Slices, 
+ * and the result is stored as a list of Slices from which this Slice receives 
+ * data (recvNeighborList) and sends (sendNeighborList). 
+ */
 void Slice::calculateNeighbors() {
 
     Log localLog(sliceLog, "calculateNeighbors()");  
@@ -354,18 +383,19 @@ void Slice::calculateNeighbors() {
         recvNeighborList.push_back(lefty);
         recvNeighborList.push_back(righty);
 
-        /* 
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d rightx %d") % _rank % rightx);
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d lefty %d") % _rank % lefty);
-        sliceLog->log(Log::INFO, boost::format("calculateNeighbors(): %d righty %d") % _rank % righty);
-        */
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d leftx %d ") % _rank % leftx);
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d rightx %d") % _rank % rightx);
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d lefty %d") % _rank % lefty);
+        localLog.log(Log::INFO, boost::format("calculateNeighbors(): %d righty %d") % _rank % righty);
     }   
 
 }
 
-PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
-
+/** Perform the interSlice communication, i.e., synchronized the Slices. 
+ * @return A smart pointer to the PropertySet of values that has been received 
+ */
+PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr //!< A smart pointer to a PropertySet of values to communicate 
+                                   ) {
     Log localLog(sliceLog, "syncSlices()");    
 
     char syncCommand[bufferSize];
@@ -378,14 +408,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     }
 
     /* Ptr for the return values received from other Slices */ 
-
     PropertySet::Ptr retPtr(new dafBase::PropertySet);
-
-    /*   If we are passed PropertySet, then do this: 
-    std::vector<std::string> vPs0 = ps0.names();
-    */ 
-
-    /* If passed a PropertySet::Ptr then do this */  
 
     std::vector<std::string> psNames = ps0Ptr->names();
     std::string keyToShare = psNames[0];
@@ -409,8 +432,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     int destSlice, sendCount;
     sendCount = 0;
     std::list<int>::iterator iterSend;
-    for(iterSend = sendNeighborList.begin(); iterSend != sendNeighborList.end(); iterSend++)
-    {
+    for(iterSend = sendNeighborList.begin(); iterSend != sendNeighborList.end(); iterSend++) {
         destSlice = (*iterSend);
 
         localLog.log(Log::INFO, boost::format("Communicating value to Slice %d ") % destSlice);
@@ -427,8 +449,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     recvCount=0;
     std::list<int>::iterator iterRecv;
    
-    for(iterRecv = recvNeighborList.begin(); iterRecv != recvNeighborList.end(); iterRecv++)
-    {
+    for(iterRecv = recvNeighborList.begin(); iterRecv != recvNeighborList.end(); iterRecv++) {
         srcSlice = (*iterRecv);
 
         /* perform Recvs */
@@ -447,8 +468,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr) {
     /* Combine the array of recvPtr [] into a single retPtr */ 
     int yy = 0; 
     std::list<int>::iterator iterNeighbors;
-    for(iterNeighbors = recvNeighborList.begin(); iterNeighbors != recvNeighborList.end(); )
-    {
+    for(iterNeighbors = recvNeighborList.begin(); iterNeighbors != recvNeighborList.end(); ) {
         int ni =  (*iterNeighbors);
         std::stringstream newkeyBuffer;
         std::string newkey;
