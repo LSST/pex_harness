@@ -33,8 +33,13 @@ env.Replace(CXX = 'mpicxx')
 env.Append(INCLUDES = '-DMPICH')
 env.Append(CXXFLAGS = "-DMPICH_IGNORE_CXX_SEEK")
 
-for d in Split("doc src lib python/lsst/pex/harness"):
-    SConscript(os.path.join(d, "SConscript"))
+#
+# Build/install things
+#
+for d in Split("lib python/lsst/" + re.sub(r'_', "/", pkg) + " tests doc"):
+    if os.path.isdir(d):
+        SConscript(os.path.join(d, "SConscript"))
+
 
 env['IgnoreFiles'] = r"(~$|\.pyc$|^\.svn$|\.o$)"
 
