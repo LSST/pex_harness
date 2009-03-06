@@ -1,0 +1,19 @@
+# -*- python -*-
+Import("env")
+import glob, os
+
+# No C++ currently 
+# for src in glob.glob("*.cc"):
+#     env.Program(src, LIBS=env.getlibs(env["eups_product"]))
+
+#
+# Tests
+#
+# print env.Dump()  # dump whole env
+
+import lsst.tests
+tests = lsst.tests.Control(env, verbose = True)
+
+tests.run("TestIO.py")
+tests.run("TestClipboard.py")
+
