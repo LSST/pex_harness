@@ -1,0 +1,36 @@
+
+pex_harness examples/exitevent
+----------------------------------------------
+
+The exitevent example demonstrates how to configure a Pipeline to issue an event 
+upon exiting. The event is issued at the middleware level, within shutdown, as
+opposed to a particular Stage. 
+
+In the pipeline policy file, in this example exitevent_policy.paf, we place 
+
+exitTopic: "SampleExitTopic"
+
+This will result in an event of this topic being issued. If the exitTopic 
+entry in the policy file is absent, then no exit event is issued. 
+
+By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+One can test the exit event functionality by, in one shell running the provided 
+listenEvent.py script, which will block for the arrival of an event of topic "SampleExitTopic".
+
+% python listenEvent.py 
+
+In a separate shell the pipeline may be executed via 
+
+% ./run.sh exitevent_policy.paf  <some-run-id>
+
+such as  
+
+% ./run.sh exitevent_policy.paf f test_239
+
+The listenEvent.py should receive the event, unblock and terminate. 
+
+
+
+

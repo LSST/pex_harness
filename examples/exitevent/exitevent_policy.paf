@@ -1,0 +1,20 @@
+# exitevent_policy.paf
+#
+#
+
+execute: { 
+
+    executionMode: "oneloop"
+    localLogMode: true  
+    eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
+    exitTopic: "SampleExitTopic"
+
+    appStage: { 
+        stageName: "lsst.pexhexamples.pipeline.SampleStage" 
+        eventTopic: "None" 
+        stagePolicy: "policy/samplestage.paf"
+    }
+
+}
+
+

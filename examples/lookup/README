@@ -1,0 +1,39 @@
+
+pex_harness examples/lookup
+----------------------------------------------
+
+This example demonstrates that the locations of directory spaces are available
+to application Stages through a lookup dictionary that is part of the generic
+Stage class: 
+
+By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+The pipeline is then executed via
+
+% ./run.sh lookup_policy.paf   <some-run-id>
+
+such as
+
+% ./run.sh lookup_policy.paf  gds_10066
+
+Executing the example will give entries in the log files like:
+
+Pipeline.log :
+
+lsst.pexhexamples.pipeline.MyLookupStage.preprocess:  dirWork /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.preprocess:  dirInput /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.preprocess:  dirOutput /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.preprocess:  dirUpdate /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.preprocess:  dirScratch /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+
+Slice0.log 
+
+lsst.pexhexamples.pipeline.MyLookupStage.process:  dirWork /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.process:  dirInput /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.process:  dirOutput /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.process:  dirUpdate /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+lsst.pexhexamples.pipeline.MyLookupStage.process:  dirScratch /lsst/daues/lsst4/add_ons/222/examples/lookup/gds_10066/.
+
+
+
