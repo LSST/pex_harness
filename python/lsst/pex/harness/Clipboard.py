@@ -53,12 +53,21 @@ class Clipboard:
         return sharedKeySet
 
     #------------------------------------------------------------------------
-    def get (self, key):
+    def getItem (self, key):
         """
         Return the value within the dictionary that corresponds to the 
         provided key 
         """
-        return self.dict[key]
+        ##return self.dict[key]
+        return self.dict.__getitem__(key)
+
+    #------------------------------------------------------------------------
+    def get (self, key, defValue=None):
+        """
+        Return the value within the dictionary that corresponds to the 
+        provided key 
+        """
+        return self.dict.get(key, defValue)
 
     #------------------------------------------------------------------------
     def put (self, key, value, isShareable=False):
@@ -75,4 +84,15 @@ class Clipboard:
         Set the shared value for this key 
         """
         self.isShared[key] = isShareable
+
+    #------------------------------------------------------------------------
+    def contains (self, key):
+        """
+        Return the value True if the dictionary has a key "key";
+        otherwise return False.
+        """
+        if key in self.dict:
+            return True
+        else:
+            return False
 
