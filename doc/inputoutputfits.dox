@@ -17,6 +17,21 @@ carries information such as the exposureId to identify the input image.
 The InputStage is configured to store data as a 
 PythonType: "lsst.afw.image.imageLib.MaskedImageF" after accessing  Storage: "FitsStorage".
 InputStage is configured to place the input data onto the Clipboard under key "InputImage".
+The policy file for InputStage is 
+\code 
+AdditionalData: "exposureId=triggerImageprocEvent.exposureid"
+RunMode: "process"
+InputItems: {
+    InputImage: {
+        Type: "MaskedImageF"
+        PythonType: "lsst.afw.image.imageLib.MaskedImageF"
+        StoragePolicy: {
+            Storage: "FitsStorage"
+            Location: "%{input}/%{exposureId}p_1_MI"
+        }
+    }
+}
+\endcode
 
 The ImageprocStage is a dummy application stage that shows that mocks an
 image processing stage. It pulls the "inputImage" from the Clipboard and 
@@ -25,7 +40,21 @@ posts it back to the Clipboard under the key "outputImage".
 The OutputStage is configured to retrieve data from the Clipboard under the key "OutputStage"
 of PythonType: "lsst.afw.image.imageLib.MaskedImageF" and persist ot using Storage: "FitsStorage".
 The OutputStage encodes the exposureId within the name of the output file (as specified
-in its policy). 
+in its policy).  The policy file for OutputStage is
+\code 
+AdditionalData: "exposureId=triggerImageprocEvent.exposureid"
+RunMode: "process"
+OutputItems: {
+    OutputImage: {
+        required: true
+        StoragePolicy: {
+            Storage: "FitsStorage"
+            Location: "%{output}/image%{exposureId}"
+        }
+    }
+}
+\endcode 
+
 
 By default this example will run with the Pipeline with one Slice on a single node.
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
