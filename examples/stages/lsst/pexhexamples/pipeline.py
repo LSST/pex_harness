@@ -35,7 +35,72 @@ class SampleStage(Stage):
         lr << " RunMode from Policy " + value 
         lr << LogRec.endr
 
+        self.outputQueue.addDataset(self.activeClipboard)
 
+class MyLookupStage(Stage):
+
+    def preprocess(self): 
+        """
+        Execute the preprocessing code for this Stage
+        """
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.pipeline.MyLookupStage.preprocess")
+
+        lookup = self.getLookup()
+
+        print lookup 
+
+        dirWork = lookup.get('work')
+        dirInput = lookup.get('input')
+        dirOutput = lookup.get('output')
+        dirUpdate = lookup.get('update')
+        dirScratch = lookup.get('scratch')
+
+        lr = LogRec(log, Log.INFO)
+        lr << " dirWork " + dirWork
+        lr << " dirInput " + dirInput
+        lr << " dirOutput " + dirOutput
+        lr << " dirUpdate " + dirUpdate
+        lr << " dirScratch " + dirScratch
+        lr << LogRec.endr
+
+    def process(self): 
+        """
+        Processing code for this Stage to be executed within a Slice 
+        """
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.pipeline.MyLookupStage.process")
+
+        lookup = self.getLookup()
+
+        print lookup 
+
+        dirWork = lookup.get('work')
+        dirInput = lookup.get('input')
+        dirOutput = lookup.get('output')
+        dirUpdate = lookup.get('update')
+        dirScratch = lookup.get('scratch')
+
+        lr = LogRec(log, Log.INFO)
+        lr << " dirWork " + dirWork
+        lr << " dirInput " + dirInput
+        lr << " dirOutput " + dirOutput
+        lr << " dirUpdate " + dirUpdate
+        lr << " dirScratch " + dirScratch
+        lr << LogRec.endr
+
+        self.outputQueue.addDataset(self.activeClipboard)
+
+    def postprocess(self): 
+        """
+        Execute the  postprocessing code for this Stage
+        """
         self.outputQueue.addDataset(self.activeClipboard)
 
 class LoadStage(Stage):
