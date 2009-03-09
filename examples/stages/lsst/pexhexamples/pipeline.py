@@ -14,6 +14,30 @@ from lsst.daf.base import *
 
 class SampleStage(Stage):
 
+    def preprocess(self): 
+        """
+        Processing code for this Stage to be executed by the main Pipeline 
+        prior to invoking Slice process 
+        """
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.pipeline.SampleStage.preprocess")
+
+        log.log(Log.INFO, 'Executing SampleStage preprocess')
+
+    def postprocess(self): 
+        """
+        Processing code for this Stage to be executed by the main Pipeline 
+        after the completion of Slice process 
+        """
+        root =  Log.getDefaultLog()
+
+        log = Log(root, "lsst.pexhexamples.pipeline.SampleStage.postprocess")
+        log.log(Log.INFO, 'Executing SampleStage postprocess')
+
+        self.outputQueue.addDataset(self.activeClipboard)
+
     def process(self): 
         """
         Processing code for this Stage to be executed within a Slice 
