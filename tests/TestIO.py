@@ -1,14 +1,12 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 
-import lsst.pex.harness.IOStage
 import lsst.pex.harness.Clipboard
 import lsst.pex.harness.Queue
-import lsst.daf.base
-import lsst.pex.policy
+import lsst.pex.harness.IOStage
 
 # Get the policies
-outputPolicy = lsst.pex.policy.Policy.createPolicy("test/policy/output+1.policy")
-inputPolicy = lsst.pex.policy.Policy.createPolicy("test/policy/input+1.policy")
+outputPolicy = lsst.pex.policy.Policy.createPolicy("tests/policy/output.policy")
+inputPolicy = lsst.pex.policy.Policy.createPolicy("tests/policy/input.policy")
 
 # Create the queues
 q1 = lsst.pex.harness.Queue.Queue()
@@ -25,22 +23,20 @@ inputStage.initialize(q4, q3)
 inputStage.setUniverseSize(100)
 # Note: no direct connection between the stages!
 
-# Create the event DataProperty
-event = lsst.daf.base.DataProperty.createPropertyNode("root")
-child = lsst.daf.base.DataProperty("visitId", "fov391")
-event.addProperty(child)
+# Create the event PropertySet
+event = lsst.daf.base.PropertySet()
+event.addString("visitId", "fov391")
 
 # Create the clipboard and put the event on it
 clip = lsst.pex.harness.Clipboard.Clipboard()
 clip.put("tcsEvent", event)
 
-# Create a DataProperty to persist
-dp = lsst.daf.base.DataProperty.createPropertyNode("sample")
-child = lsst.daf.base.DataProperty("str", "foo")
-dp.addProperty(child)
-child = lsst.daf.base.DataProperty("num", 42)
-dp.addProperty(child)
-clip.put("theProperty", dp)
+# Create a PropertySet to persist
+# dp = lsst.daf.base.DataProperty.createPropertyNode("sample")
+ps = lsst.daf.base.PropertySet()
+ps.addString("str", "foo")
+ps.addInt("num", 42)
+clip.put("theProperty", ps)
 
 # Put the clipboard on the input queue
 q1.addDataset(clip)
@@ -62,7 +58,7 @@ clip3 = lsst.pex.harness.Clipboard.Clipboard()
 clip3.put("tcsEvent", event)
 
 # Put the clipboard on the input queue
-# No DataProperty on this queue!
+# No PropertySet on this queue!
 q3.addDataset(clip3)
 
 # Run the input stage like a master process
@@ -75,11 +71,13 @@ clip4 = q4.getNextDataset()
 assert clip4
 assert clip4.get("tcsEvent")
 assert clip4.get("theProperty")
-dp2 = clip4.get("theProperty")
-assert dp2.__class__ == lsst.daf.base.DataProperty
-print dp2.findUnique("str").getValueString()
-print dp2.findUnique("num").getValueInt()
-assert dp2.findUnique("str").getValueString() == \
-        dp.findUnique("str").getValueString()
-assert dp2.findUnique("num").getValueInt() == \
-        dp.findUnique("num").getValueInt()
+ps2 = clip4.get("theProperty")
+assert ps2.__class__ == lsst.daf.base.PropertySet
+
+# print dp2.findUnique("str").getValueString()
+# print dp2.findUnique("num").getValueInt()
+# assert dp2.findUnique("str").getValueString() == \
+#         dp.findUnique("str").getValueString()
+# assert dp2.findUnique("num").getValueInt() == \
+#         dp.findUnique("num").getValueInt()
+

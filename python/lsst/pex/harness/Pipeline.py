@@ -3,6 +3,7 @@
 from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.Stage import Stage
 from lsst.pex.harness.Clipboard import Clipboard
+from lsst.pex.harness.Directories import Directories
 from lsst.pex.logging import Log, LogRec, cout
 from lsst.pex.harness import harnessLib as pipeline
 
@@ -81,7 +82,21 @@ class Pipeline:
         if(self.pipelinePolicyName == None):
             self.pipelinePolicyName = "pipeline_policy.paf"
         dictName = "pipeline_dict.paf"
-        p = policy.Policy.createPolicy(self.pipelinePolicyName)
+        topPolicy = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+        if (topPolicy.exists('execute')):
+            p = topPolicy.get('execute')
+        else:
+            p = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+
+        if (p.exists('dir')):
+            dirPolicy = p.get('dir') 
+            dirs = Directories(dirPolicy, self._runId)
+            self._lookup = dirs.getDirs()
+        else:
+            self._lookup = {}
+
 
         # Check for eventBrokerHost 
         if (p.exists('eventBrokerHost')):
@@ -217,11 +232,17 @@ class Pipeline:
         if (p.exists('executionMode') and (p.getString('executionMode') == "oneloop")):
             self.executionMode = 1 
 
-        # Check for executionMode of oneloop 
+        # Check for shutdownTopic 
         if (p.exists('shutdownTopic')):
             self.shutdownTopic = p.getString('shutdownTopic')
         else:
             self.shutdownTopic = "triggerShutdownEvent"
+
+        # Check for exitTopic 
+        if (p.exists('exitTopic')):
+            self.exitTopic = p.getString('exitTopic')
+        else:
+            self.exitTopic = None
 
         # Log the input topology
         if (p.exists('topology')):
@@ -275,6 +296,7 @@ class Pipeline:
             stageObject.initialize(outputQueue, inputQueue)
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
+            stageObject.setLookup(self._lookup)
             self.stageList.append(stageObject)
 
         lr = LogRec(log, Log.INFO)
@@ -392,8 +414,18 @@ class Pipeline:
 
     def shutdown(self): 
         """
-        Shutdown the Pipeline execution: delete the MPI environment 
+        Shutdown the Pipeline execution: delete the MPI environment
+        Send the Exit Event if required
         """
+        if self.exitTopic == None:
+            pass
+        else:
+            oneEventTransmitter = events.EventTransmitter(self.eventBrokerHost, self.exitTopic)
+            psPtr = dafBase.PropertySet()
+            psPtr.setString("message", str("exiting_") + self._runId )
+
+            oneEventTransmitter.publish(psPtr)
+
         self.cppPipeline.shutdown()
 
 

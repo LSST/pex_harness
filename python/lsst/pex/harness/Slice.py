@@ -3,6 +3,7 @@
 from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.Stage import Stage
 from lsst.pex.harness.Clipboard import Clipboard
+from lsst.pex.harness.Directories import Directories
 from lsst.pex.logging import Log, LogRec
 from lsst.pex.harness import harnessLib as slice
 
@@ -76,7 +77,21 @@ class Slice:
         if(self.pipelinePolicyName == None):
             self.pipelinePolicyName = "pipeline_policy.paf"
         dictName = "pipeline_dict.paf"
-        p = policy.Policy.createPolicy(self.pipelinePolicyName)
+        topPolicy = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+        if (topPolicy.exists('execute')):
+            p = topPolicy.get('execute')
+        else:
+            p = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+
+        if (p.exists('dir')):
+            dirPolicy = p.get('dir')
+            dirs = Directories(dirPolicy, self._runId)
+            self._lookup = dirs.getDirs()
+        else:
+            self._lookup = {}
+
 
         # Check for eventBrokerHost 
         if (p.exists('eventBrokerHost')):
@@ -273,13 +288,13 @@ class Slice:
                 stageObject = StageClass(iStage, stagePolicy)
             else:
                 stageObject = StageClass(iStage)
-            # stageObject.setLog(self.log);
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
             stageObject.initialize(outputQueue, inputQueue)
             stageObject.setRank(self._rank)
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
+            stageObject.setLookup(self._lookup)
             self.stageList.append(stageObject)
 
     def startInitQueue(self):
