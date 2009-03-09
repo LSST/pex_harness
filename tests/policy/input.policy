@@ -2,8 +2,8 @@ AdditionalData: "visitId=tcsEvent.visitId"
 RunMode: "postprocess"
 InputItems: {
     theProperty: {
-        Type: "DataProperty"
-        PythonType: "lsst.daf.base.DataProperty"
+        Type: "PropertySet"
+        PythonType: "lsst.daf.base.PropertySet"
         StoragePolicy: {
             Storage: "BoostStorage"
             Location: "theProperty.%{visitId}.%{sliceId}"
