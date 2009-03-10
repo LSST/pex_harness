@@ -16,7 +16,6 @@
 #include "lsst/pex/harness/Slice.h"
 #include <lsst/pex/policy/Policy.h>
 
-namespace dafBase = lsst::daf::base;
 namespace pexPolicy = lsst::pex::policy;
 
 /** Constructor.
@@ -408,7 +407,7 @@ PropertySet::Ptr Slice::syncSlices(PropertySet::Ptr ps0Ptr //!< A smart pointer 
     }
 
     /* Ptr for the return values received from other Slices */ 
-    PropertySet::Ptr retPtr(new dafBase::PropertySet);
+    PropertySet::Ptr retPtr(new PropertySet);
 
     std::vector<std::string> psNames = ps0Ptr->names();
     std::string keyToShare = psNames[0];
