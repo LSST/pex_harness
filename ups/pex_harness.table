@@ -1,10 +1,9 @@
-
-setupRequired(scons)
-setupRequired(mpich2)
-setupRequired(daf_base)
-setupRequired(pex_logging)
+setupRequired(mpich2 >= 1.0.5p4)
+setupRequired(daf_base >= 3.2.3)
+setupRequired(pex_logging >= 3.3.2)
+setupRequired(pex_exceptions >= 3.2.2)
 setupRequired(pex_policy >= 3.3.1)
-setupRequired(daf_persistence)
+setupRequired(daf_persistence >= 3.3.3)
 setupRequired(ctrl_events >= 3.3)
 
 envAppend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
