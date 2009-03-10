@@ -1,7 +1,0 @@
->merge: daf_base
->merge: pex_logging
->merge: daf_persistence
->merge: ctrl_events
->merge: afw
->merge: mpich2
->self
