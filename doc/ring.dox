@@ -77,7 +77,7 @@ Slice 0 will have neighbors 4 and 1, Slice 1 will have neighbors 0 and 2, etc.
 The communication will have the character that Slice 0 receives from Slice 4 
 and sends to Slice 1, Slice 1 receives from Slice 0 and sends to Slice 2, etc. 
 Because the option localLogMode: "Yes" is set, after execution logs files 
-Pipeline(#processid).log, Slice0.log, Slice1.log, ... will be found in 
+Pipeline.log, Slice0.log, Slice1.log, ... will be found in 
 the working directory.
 
 The pipeline contains two Stages, SyncSetupStage and SyncTestStage. Within 
