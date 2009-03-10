@@ -16,7 +16,7 @@ The SampleStage is a dummy application stage that performs a few simple tasks:
    and posts it to the outputQueue at the end, ushering the Clipboard on to the next Stage 
    that a Slice will process,
 -# retrieves the Clipboard from its inputQueue at the start of the preprocess() method,
-   and posts it to the outputQueue at the end of postprocess(), passing the clipping to the
+   and posts it to the outputQueue at the end of postprocess(), passing the Clipboard to the
    next Stage for serial processing in the main Pipeline,
 -# creates an instance of the Log,
 -# retrieves elements from its stage policy file and write them to the Log. 
