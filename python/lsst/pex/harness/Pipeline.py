@@ -14,6 +14,8 @@ from lsst.pex.exceptions import *
 
 import lsst.daf.base as dafBase
 from lsst.daf.base import *
+import lsst.daf.persistence as dafPersist
+from lsst.daf.persistence import *
 
 
 import lsst.ctrl.events as events
@@ -89,14 +91,12 @@ class Pipeline:
         else:
             p = policy.Policy.createPolicy(self.pipelinePolicyName)
 
-
+        # Obtain the working directory space locators
+        psLookup = lsst.daf.base.PropertySet()
         if (p.exists('dir')):
-            dirPolicy = p.get('dir') 
+            dirPolicy = p.get('dir')
             dirs = Directories(dirPolicy, self._runId)
-            self._lookup = dirs.getDirs()
-        else:
-            self._lookup = {}
-
+            psLookup = dirs.getDirs()
 
         # Check for eventBrokerHost 
         if (p.exists('eventBrokerHost')):
@@ -136,6 +136,10 @@ class Pipeline:
         lr << "Initialized the Logger" \
            << psUniv.toString(False) << psRunid.toString(False)
         lr << LogRec.endr
+
+        # Configure persistence logical location map with values for directory 
+        # work space locators
+        dafPersist.LogicalLocation.setLocationMap(psLookup)
 
         # Check for eventTimeout
         if (p.exists('eventTimeout')):
@@ -296,7 +300,7 @@ class Pipeline:
             stageObject.initialize(outputQueue, inputQueue)
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
-            stageObject.setLookup(self._lookup)
+            # stageObject.setLookup(self._lookup)
             self.stageList.append(stageObject)
 
         lr = LogRec(log, Log.INFO)
