@@ -1,5 +1,11 @@
+#! /usr/bin/env python
+
 import lsst.pex.policy as Policy
 import lsst.pex.exceptions as pexExcept
+
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
+
 import os
 
 ##
@@ -7,10 +13,11 @@ import os
 #              used by a pipeline.  
 #
 # This class takes a "dir" policy (found in platform policies or pipeline
-# configuration policies) and a run identfier and converts the values into
+# configuration policies) and a run identifier and converts the values into
 # a set of directory paths that a pipeline is allowed to use.  A typical 
 # use might be:
 # @code
+#   lookup = lsst.daf.base.PropertySet()
 #   dirs = Directories(dirPolicy, "rlp0220")
 #   lookup = dirs.getDirs()
 # @endcode
@@ -111,13 +118,11 @@ class Directories:
 
     ## 
     # return the absolute paths for the standard named directories as a
-    # dictionary.  The keys will include "work", "input", "output", 
+    # PropertySet.  The keys will include "work", "input", "output", 
     # "update", and "scratch".  
     def getDirs(self):
-        out = {}
+        out = lsst.daf.base.PropertySet()
         for name in "work input output update scratch".split():
-            #out[name] = self.getNamedDirectory(self, name)
-            out[name] = self.getNamedDirectory(name)
-
+            out.set(name, self.getNamedDirectory(name)) 
         return out
 
