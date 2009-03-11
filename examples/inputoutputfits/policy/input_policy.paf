@@ -6,7 +6,7 @@ InputItems: {
         PythonType: "lsst.afw.image.imageLib.MaskedImageF"
         StoragePolicy: {
             Storage: "FitsStorage"
-            Location: "%{input}/%{exposureId}p_1_MI"
+            Location: "%(input)/%(exposureId)p_1_MI"
         }
     }
 }

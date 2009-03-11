@@ -24,57 +24,6 @@ import re
 
 __all__ = ['OutputStage', 'InputStage']
 
-def massage(location, additionalData): 
-    """
-    Substitute values from additionalData into the location, if requested.
-    """
-
-    lsst.pex.logging.Trace("pex.harness.IOStage", 3, "Massaging location: " + location)
-    if location.find('%{') == -1:
-        lsst.pex.logging.Trace("pex.harness.IOStage", 3, "\tNo substitutions")
-        return location
-    vars = re.compile(r'\%\{(\w+)(=([^}]+))?\}')
-
-    def replace(match):
-        """
-        Get the value of a PropertySet key in match.group(1), using
-        match.group(3) as a default if not found.
-        """
-        if not additionalData.exists(match.group(1)):
-            if match.group(3):
-                return match.group(3)
-            else:
-                raise RuntimeError, 'Unknown substitution in IOStage: ' + \
-                        match.group(0)
-
-        try:
-            value = additionalData.getAsString(match.group(1))
-            return value
-        except:
-            pass
-        try:
-            value = additionalData.getAsInt(match.group(1))
-            return repr(value)
-        except:
-            pass
-        try:
-            value = additionalData.getAsInt64(match.group(1))
-            return repr(value)
-        except:
-            pass
-        try:
-            value = additionalData.getAsDouble(match.group(1))
-            return repr(value)
-        except:
-            pass
-
-        raise RuntimeError, 'Unknown type in IOStage: ' + match.group(0)
-
-    newLoc = vars.sub(replace, location)
-    lsst.pex.logging.Trace("pex.harness.IOStage", 3, "\tnew location: " + newLoc)
-    return newLoc
-
-
 class OutputStage (lsst.pex.harness.Stage.Stage):
     """
     A Stage that persists data.
@@ -188,13 +137,13 @@ class OutputStage (lsst.pex.harness.Stage.Stage):
                 for policy in policyList:
                     storageName = policy.getString('Storage')
                     location = policy.getString('Location')
-                    location = massage(location, additionalData)
-                    self.log.log(Log.INFO,
-                                 "persisting %s as %s" % (item, location));
+                    logLoc = lsst.daf.persistence.LogicalLocation(location,
+                            additionalData)
+                    self.log.log(Log.INFO, "persisting %s as %s" % (item,
+                                     logLoc.locString()));
 
-                    additionalData.add('StorageLocation.' + storageName, location)
-
-                    logLoc = lsst.daf.persistence.LogicalLocation(location)
+                    additionalData.add('StorageLocation.' + storageName,
+                            logLoc.locString())
                     storage = persistence.getPersistStorage(storageName, \
                             logLoc)
                     storageList.append(storage)
@@ -330,10 +279,10 @@ class InputStage (lsst.pex.harness.Stage.Stage):
                 for policy in policyList:
                     storageName = policy.getString('Storage')
                     location = policy.getString('Location')
-                    location = massage(location, additionalData)
-                    self.log.log(Log.INFO,
-                                 "loading %s as %s" % (location, item));
-                    logLoc = lsst.daf.persistence.LogicalLocation(location)
+                    logLoc = lsst.daf.persistence.LogicalLocation(location,
+                            additionalData)
+                    self.log.log(Log.INFO, "loading %s as %s" %
+                            (logLoc.locString(), item));
                     storage = persistence.getRetrieveStorage(storageName, \
                             logLoc)
                     storageList.append(storage)
