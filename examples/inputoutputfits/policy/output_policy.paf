@@ -5,7 +5,7 @@ OutputItems: {
         required: true
         StoragePolicy: {
             Storage: "FitsStorage"
-            Location: "%{output}/image%{exposureId}"
+            Location: "%(output)/image%(exposureId)"
         }
     }
 }
