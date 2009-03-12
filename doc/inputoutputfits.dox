@@ -13,11 +13,33 @@ The three stages in the pipeline are
 
 The pipeline initially blocks to receive an event of topic "triggerImageprocEvent", which 
 carries information such as the exposureId to identify the input image.  
+The pipeline policy file inputoutputfits_policy.paf designating the three Stages is   
+\code
+localLogMode: true
+executionMode: "oneloop"
+eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 
-The InputStage is configured to store data as a 
-PythonType: "lsst.afw.image.imageLib.MaskedImageF" after accessing  Storage: "FitsStorage".
-InputStage is configured to place the input data onto the Clipboard under key "InputImage".
-The policy file for InputStage is 
+appStage: {
+     stageName: "lsst.pex.harness.IOStage.InputStage"
+     eventTopic: "triggerImageprocEvent"
+     stagePolicy: "policy/input_policy.paf"
+}
+
+appStage: {
+     stageName: "lsst.pexhexamples.apps.ImageprocStage"
+     eventTopic: "None"
+     stagePolicy: "None"
+}
+
+appStage: {
+     stageName: "lsst.pex.harness.IOStage.OutputStage"
+     eventTopic: "None"
+     stagePolicy: "policy/output_policy.paf"
+}
+\endcode
+
+
+The policy file input_policy.paf for InputStage is 
 \code 
 AdditionalData: "exposureId=triggerImageprocEvent.exposureid"
 RunMode: "process"
@@ -27,20 +49,20 @@ InputItems: {
         PythonType: "lsst.afw.image.imageLib.MaskedImageF"
         StoragePolicy: {
             Storage: "FitsStorage"
-            Location: "%{input}/%{exposureId}p_1_MI"
+            Location: "%(input)/%(exposureId)p_1_MI"
         }
     }
 }
 \endcode
+The InputStage is configured to store data as a 
+PythonType: "lsst.afw.image.imageLib.MaskedImageF" after accessing  Storage: "FitsStorage".
+InputStage is configured to place the input data onto the Clipboard under key "InputImage".
 
 The ImageprocStage is a dummy application stage that shows that mocks an
 image processing stage. It pulls the "inputImage" from the Clipboard and 
 posts it back to the Clipboard under the key "outputImage".
 
-The OutputStage is configured to retrieve data from the Clipboard under the key "OutputStage"
-of PythonType: "lsst.afw.image.imageLib.MaskedImageF" and persist ot using Storage: "FitsStorage".
-The OutputStage encodes the exposureId within the name of the output file (as specified
-in its policy).  The policy file for OutputStage is
+The policy file output_policy.paf for OutputStage is
 \code 
 AdditionalData: "exposureId=triggerImageprocEvent.exposureid"
 RunMode: "process"
@@ -49,14 +71,17 @@ OutputItems: {
         required: true
         StoragePolicy: {
             Storage: "FitsStorage"
-            Location: "%{output}/image%{exposureId}"
+            Location: "%(output)/image%(exposureId)"
         }
     }
 }
 \endcode 
+The OutputStage is configured to retrieve data from the Clipboard under the key "OutputStage"
+of PythonType: "lsst.afw.image.imageLib.MaskedImageF" and persist ot using Storage: "FitsStorage".
+The OutputStage encodes the exposureId within the name of the output file.  
 
-
-By default this example will run with the Pipeline with one Slice on a single node.
+By default this example will run with the Pipeline with one Slice on a single node 
+(specified by parameters in run.sh).
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
 The pipeline is then executed via 

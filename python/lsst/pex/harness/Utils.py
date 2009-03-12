@@ -35,11 +35,6 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     additionalData.setInt('sliceId', stage.getRank())
     additionalData.setInt('universeSize', stage.getUniverseSize())
 
-    # add the lookup dictionary entries 
-    lookup = stage.getLookup()
-    for k, v in lookup.items(): 
-        additionalData.set(k, v)
-    
     lsst.pex.logging.Trace("pex.harness.Utils.createAdditionalData", 3, \
             "additionalData:\n" + additionalData.toString(False))
 

@@ -12,6 +12,9 @@ import lsst.pex.exceptions as ex
 
 import lsst.daf.base as dafBase
 from lsst.daf.base import *
+import lsst.daf.persistence as dafPersist
+from lsst.daf.persistence import *
+
 
 import lsst.ctrl.events as events
 import lsst.pex.exceptions
@@ -84,14 +87,12 @@ class Slice:
         else:
             p = policy.Policy.createPolicy(self.pipelinePolicyName)
 
-
+        # Obtain the working directory space locators  
+        psLookup = lsst.daf.base.PropertySet()
         if (p.exists('dir')):
             dirPolicy = p.get('dir')
             dirs = Directories(dirPolicy, self._runId)
-            self._lookup = dirs.getDirs()
-        else:
-            self._lookup = {}
-
+            psLookup = dirs.getDirs()
 
         # Check for eventBrokerHost 
         if (p.exists('eventBrokerHost')):
@@ -142,6 +143,9 @@ class Slice:
         lr << "universeSize " + str(self.universeSize)
         lr << LogRec.endr
 
+        # Configure persistence logical location map with values for directory 
+        # work space locators
+        dafPersist.LogicalLocation.setLocationMap(psLookup)
 
         # Check for eventTimeout
         if (p.exists('eventTimeout')):
@@ -294,7 +298,7 @@ class Slice:
             stageObject.setRank(self._rank)
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
-            stageObject.setLookup(self._lookup)
+            # stageObject.setLookup(self._lookup)
             self.stageList.append(stageObject)
 
     def startInitQueue(self):
@@ -515,7 +519,7 @@ class Slice:
 
             lr = LogRec(proclog, Log.FATAL)
             lr << "Exception traceback: " + "File = " + t[0]._file \
-               << "Line = "  + t[0]._line + "Func = " + t[0]._func \
+               << "Line = "  + str(t[0]._line) + "Func = " + t[0]._func \
                << "Message = " + t[0]._msg \
                << LogRec.endr
 
@@ -528,9 +532,8 @@ class Slice:
 
             # Use str(e) or  e.args[0].what() for message  
             lr = LogRec(proclog, Log.FATAL)
-            lr << "Exception " + "args[0] = " + e.args[0] \
-               << "Message = " + str(e) \
-               << LogRec.endr
+            lr << "Exception " + "Type = " + e.args[0].getType() \
+               << "Message = " + str(e) << LogRec.endr
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
