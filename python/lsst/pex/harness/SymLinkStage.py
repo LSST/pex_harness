@@ -60,15 +60,17 @@ class SymLinkStage (lsst.pex.harness.Stage.Stage):
             mylog.log(Log.WARN, "No Links found")
             return
 
-        # Here additionalData is in the form of a Python dictionary 
-        additionalData = lsst.pex.harness.Utils.propertySetToDict( \
-                lsst.pex.harness.Utils.createAdditionalData(self, \
+        additionalData = lsst.pex.harness.Utils.createAdditionalData(self, \
                     self._policy, self.activeClipboard))
 
         linkPolicyList = self._policy.getPolicyArray('Links')
         for linkPolicy in linkPolicyList:
-            sourcePath = linkPolicy.getString('sourcePath') % additionalData
-            destPath = linkPolicy.getString('destPath') % additionalData
+            sourcePath = lsst.daf.persistence.LogicalLocation(
+                    linkPolicy.getString('sourcePath'), additionalData
+                    ).locString()
+            destPath = lsst.daf.persistence.LogicalLocation(
+                    linkPolicy.getString('destPath'), additionalData
+                    ).locString()
             lsst.pex.logging.Trace("pex.harness.SymLinkStage", 3, \
                     "linking %s to %s" % (sourcePath, destPath))
             parentDir = os.path.dirname(destPath)
