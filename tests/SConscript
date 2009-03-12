@@ -14,6 +14,6 @@ import glob, os
 import lsst.tests
 tests = lsst.tests.Control(env, verbose = True)
 
-tests.run("TestIO.py")
+# tests.run("TestIO.py")
 tests.run("TestClipboard.py")
 
