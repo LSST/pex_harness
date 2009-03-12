@@ -8,8 +8,9 @@ import lsst.pex.exceptions
 def createAdditionalData(stage, stagePolicy, clipboard):
     """
     Extract additionalData values, as specified by policy, from the clipboard.
-    Also create predefined keys for runId, sliceId, ccdId, and universeSize.
-    This routine effectively performs slice-to-CCD mappings in DC2.
+    Also create predefined keys for runId, sliceId, and universeSize.
+    This routine no longer performs slice-to-CCD mappings as of DC3a.
+    Instead, they are now performed in the SliceInfoStage.
     """
 
     additionalData = lsst.daf.base.PropertySet()
@@ -39,15 +40,6 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     for k, v in lookup.items(): 
         additionalData.set(k, v)
     
-    if stagePolicy.exists('CcdFormula'):
-        formula = stagePolicy.get('CcdFormula')
-        formula = re.sub(r'@slice', r'stage.getRank()', formula)
-        ccdId = eval(formula)
-    else:
-        incr = stagePolicy.get('CcdOffset', 1)
-        ccdId = "%03d" % (stage.getRank() + incr)
-    additionalData.set('ccdId', ccdId)
-
     lsst.pex.logging.Trace("pex.harness.Utils.createAdditionalData", 3, \
             "additionalData:\n" + additionalData.toString(False))
 
