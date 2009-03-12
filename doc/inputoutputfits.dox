@@ -11,9 +11,11 @@ The three stages in the pipeline are
 - ImageprocStage
 - OutputStage
 
-The pipeline initially blocks to receive an event of topic "triggerImageprocEvent", which 
-carries information such as the exposureId to identify the input image.  
-The pipeline policy file inputoutputfits_policy.paf designating the three Stages is   
+To configure the pipeline with the three application stages 
+we insert one "appStage" policy for each stage.  These will be gathered into
+an array by policy. Each appStage policy designates the Python package and class
+of the application stage, the event dependency for the stage, and the stage policy file. 
+The pipeline policy file inputoutputfits_policy.paf for this case is   
 \code
 localLogMode: true
 executionMode: "oneloop"
@@ -37,8 +39,13 @@ appStage: {
      stagePolicy: "policy/output_policy.paf"
 }
 \endcode
+The attribute localLogMode set to true will give local log files written to disk for 
+the Pipleline and each Slice. Because of the assignment eventTopic: "triggerImageprocEvent"
+for the first Stage, the pipeline initially blocks to receive an event of topic "triggerImageprocEvent", which 
+carries information such as the exposureId to identify the input image.  
 
-
+The InputStage and OutputStage require appropriate policy files for their 
+effective operation. 
 The policy file input_policy.paf for InputStage is 
 \code 
 AdditionalData: "exposureId=triggerImageprocEvent.exposureid"
