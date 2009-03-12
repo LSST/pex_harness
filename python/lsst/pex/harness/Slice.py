@@ -156,7 +156,7 @@ class Slice:
         # Check if inter-Slice communication, i.e., data sharing, is on
         self.isDataSharingOn = False;
         if (p.exists('shareDataOn')):
-            self.isDataSharingOn = p.getBool('shareDataOn', self.isDataSharingOn)
+            self.isDataSharingOn = p.getBool('shareDataOn')
 
         psSharing  = dafBase.PropertySet()
         psSharing.setBool("isDataSharingOn", self.isDataSharingOn)
@@ -213,7 +213,7 @@ class Slice:
         for item in fullStageList:
             shareDataStage = False
             if (item.exists('shareData')):
-                shareDataStage = item.getBool('shareData', False)
+                shareDataStage = item.getBool('shareData')
             self.shareDataList.append(shareDataStage)
 
         lr = LogRec(log, Log.INFO)
