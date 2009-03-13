@@ -4,7 +4,7 @@
 import lsst.pex.harness.Stage
 import lsst.pex.harness.Utils
 import lsst.pex.logging
-import lsst.pex.persistence
+import lsst.daf.persistence
 import os
 from lsst.pex.logging import Log
 
