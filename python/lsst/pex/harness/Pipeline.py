@@ -464,24 +464,10 @@ class Pipeline:
             else:
                 self.transferClipboard(iStage)
 
-        except lsst.pex.exceptions.LsstCppException, e:
-            t = e.args[0].getTraceback()
-
-            lr = LogRec(prelog, Log.FATAL)
-            lr << "Exception traceback: " + "File = " + t[0]._file \
-               << "Line = "  + t[0]._line + "Func = " + t[0]._func \
-               << "Message = " + t[0]._msg << LogRec.endr
-
-            # Flag that an exception occurred to guide the framework to skip processing
-            self.errorFlagged = 1
-            # Post the cliphoard that the Stage failed to transfer to the output queue
-            self.postOutputClipboard(iStage)
-
         except Exception, e:
 
-            # Use str(e) or  e.args[0].what() for message  
             lr = LogRec(prelog, Log.FATAL)
-            lr << "Exception " + "Type = " + e.args[0].getType() \
+            lr << "Exception " + "Type = " + str(type(e)) \
                << "Message = " + str(e) << LogRec.endr
 
             # Flag that an exception occurred to guide the framework to skip processing
@@ -511,26 +497,12 @@ class Pipeline:
             else:
                 self.transferClipboard(iStage)
 
-        except lsst.pex.exceptions.LsstCppException, e:
-            t = e.args[0].getTraceback()
-
-            lr = LogRec(postlog, Log.FATAL)
-            lr << "Exception traceback: " + "File = " + t[0]._file \
-               << "Line = "  + t[0]._line + "Func = " + t[0]._func \
-               << "Message = " + t[0]._msg << LogRec.endr
-
-            # Flag that an exception occurred to guide the framework to skip processing
-            self.errorFlagged = 1
-            # Post the cliphoard that the Stage failed to transfer to the output queue
-            self.postOutputClipboard(iStage)
-
         except Exception, e:
 
             # Use str(e) or  e.args[0].what() for message  
             lr = LogRec(postlog, Log.FATAL)
-            lr << "Exception " + "Type = " + e.args[0].getType() \
-               << "Message = " + str(e) \
-               << LogRec.endr
+            lr << "Exception " + "Type = " + str(type(e)) \
+               << "Message = " + str(e) << LogRec.endr
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
