@@ -62,7 +62,7 @@ class SymLinkStage (lsst.pex.harness.Stage.Stage):
             return
 
         additionalData = lsst.pex.harness.Utils.createAdditionalData(self, \
-                    self._policy, self.activeClipboard))
+                    self._policy, self.activeClipboard)
 
         linkPolicyList = self._policy.getPolicyArray('Links')
         for linkPolicy in linkPolicyList:
