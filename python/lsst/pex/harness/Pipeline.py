@@ -97,8 +97,8 @@ class Pipeline:
             dirPolicy = p.get('dir')
             dirs = Directories(dirPolicy, self._runId)
             psLookup = dirs.getDirs()
-        if (p.exists('database')):
-            psLookup.set('dbUrl', p.get('database.url'))
+        if (topPolicy.exists('configuration.execute.database')):
+            psLookup.set('dbUrl', topPolicy.get('configuration.execute.database.url'))
 
         # Check for eventBrokerHost 
         if (p.exists('eventBrokerHost')):
