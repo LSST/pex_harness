@@ -1,2 +1,2 @@
-from harnessLib import *
+from harnessLib import Pipeline, Slice
 
