@@ -2,6 +2,7 @@
 
 import os, sys, re
 import glob
+import imp
 import time
 import eups
 import lsst.afw.image as afwImage
@@ -15,7 +16,23 @@ from lsst.ctrl.dc3pipe.MetadataStages import transformMetadata, validateMetadata
 import lsst.pex.logging as logging
 
 # Import EventFromInputfile from eventFromFitsfile.py so that we do not have to
-# re-write that one.
+# re-write that one. We do not use the imputil modules since it is deprecated as
+# of Python 2.6 and removed in Python 3.0.
+# From http://docs.python.org/3.0/library/imp.html
+# Fast path: see if the module has already been imported.
+if('eventFromFitsfile' in sys.modules):
+    import eventFromFitsfile
+else:
+    thisDir = this_dir = os.path.dirname(os.path.realpath(__file__))
+    fp, pathname, description = imp.find_module('eventFromFitsfile', [thisDir,])
+try:
+    eventFromFitsfile = imp.load_module('eventFromFitsfile', fp, pathname, 
+                                        description)
+finally:
+    # Since we may exit via an exception, close fp explicitly.
+    if fp:
+        fp.close()
+
 
 
 # Constants
@@ -80,8 +97,11 @@ def EventFromInputFileList(inputfile,
     
     # Covenience function.
     def sendEvent(f):
-        return(EventFromInputfile(f, datatypePolicy, metadataPolicy,
-                                  rootTopicName, hostName))
+        return(eventFromFitsfile.EventFromInputfile(f, 
+                                                    datatypePolicy, 
+                                                    metadataPolicy,
+                                                    rootTopicName, 
+                                                    hostName))
     
     f = open(inputfile)
     for line in f:
@@ -115,48 +135,6 @@ def EventFromInputFileList(inputfile,
     return
     
 
-
-def EventFromInputfile(inputfile, 
-                       datatypePolicy, 
-                       metadataPolicy,
-                       rootTopicName='triggerImageprocEvent', 
-                       hostName='lsst8.ncsa.uiuc.edu'):
-    # For DC3a, inputfile is a .fits file on disk
-    metadata = afwImage.readMetadata(inputfile)
-
-    # First, transform the input metdata
-    transformMetadata(metadata, datatypePolicy, metadataPolicy, 'Keyword')
-
-    # To be consistent...
-    if not validateMetadata(metadata, metadataPolicy):
-        pexLog.Trace('dc3pipe.eventfrominputfilelist', 1, 
-                     'Unable to create event from %s' % (inputfile))
-        return False
-        
-
-    # Create event policy, using defaults from input metadata
-    event = dafBase.PropertySet()
-    event.copy('visitId',     metadata, 'visitId')
-    event.copy('ccdId',       metadata, 'ccdId')
-    event.copy('ampId',       metadata, 'ampId')
-    event.copy('exposureId',  metadata, 'exposureId')
-    event.copy('datasetId',   metadata, 'datasetId')
-    event.copy('filter',      metadata, 'filter')
-    event.copy('expTime',     metadata, 'expTime')
-    event.copy('ra',          metadata, 'ra')
-    event.copy('decl',        metadata, 'decl')
-    event.copy('equinox',     metadata, 'equinox')
-    event.copy('airmass',     metadata, 'airmass')
-    event.copy('dateObs',     metadata, 'dateObs')
-
-    if event.getInt('exposureId') == 0:
-        eventTransmitter = ctrlEvents.EventTransmitter(hostName, topicName+'0')
-    elif event.getInt('exposureId') == 1:
-        eventTransmitter = ctrlEvents.EventTransmitter(hostName, topicName+'1')
-
-    eventTransmitter.publish(event)
-    # print('Sending event for file %s' %(inputfile))
-    return True
 
 
 if __name__ == "__main__":
