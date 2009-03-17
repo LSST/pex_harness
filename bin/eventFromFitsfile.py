@@ -45,7 +45,7 @@ def EventFromInputfile(inputfile, datatypePolicy, pipelinePolicy=dafBase.Propert
     event.copy('decl',        metadata, 'decl')
     event.copy('equinox',     metadata, 'equinox')
     event.copy('airmass',     metadata, 'airmass')
-    event.copy('dateObs',     metadata, 'dateObs')
+    event.copy('dateobs',     metadata, 'dateobs')
 
     # Policy for the event transmission
     if pipelinePolicy.exists('hostName'):
