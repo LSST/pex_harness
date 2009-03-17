@@ -59,7 +59,7 @@ def EventFromInputFileList(inputfile,
     
     # Covenience function.
     def sendEvent(f):
-        return(EventFromInputfile(f, datatypePolicy, metadataPolicy, 
+        return(EventFromInputfile(f, datatypePolicy, metadataPolicy, sleepTime,
                                   rootTopicName, hostName))
     
     f = open(inputfile)
@@ -101,7 +101,7 @@ def EventFromInputfile(inputfile,
 
     # To be consistent...
     if not validateMetadata(metadata, metadataPolicy):
-        pexLog.Trace('dc3pipe.eventfrominputfile', 1, 
+        pexLog.Trace('dc3pipe.eventfrominputfilelist', 1, 
                      'Unable to create event from %s' % (inputfile))
         return False
         
@@ -126,10 +126,11 @@ def EventFromInputfile(inputfile,
     elif event.getInt('exposureId') == 1:
         eventTransmitter = ctrlEvents.EventTransmitter(hostName, topicName+'1')
 
-    eventTransmitter.publish(event)
-    # print('Sending event for file %s' %(inputfile))
+    # eventTransmitter.publish(event)
+    print('Sending event for file %s' %(inputfile))
     if(sleepTime == None):
-        time.sleep(event.get('expTime'))
+        print('Sleeping for %f seconds' %(event.get('expTime')))
+        time.sleep(float(event.get('expTime')))
     else:
         time.sleep(sleepTime)
     return True
@@ -183,5 +184,5 @@ directory has the following structure:
         topicName = 'triggerImageprocEvent'
     
     EventFromInputFileList(inputDirectoryList, datatypePolicy, sleepTime,
-                           hostName, topicName)
+                           topicName, hostName)
         
