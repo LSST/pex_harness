@@ -119,7 +119,7 @@ def EventFromInputfile(inputfile,
     event.copy('decl',        metadata, 'decl')
     event.copy('equinox',     metadata, 'equinox')
     event.copy('airmass',     metadata, 'airmass')
-    event.copy('dateobs',     metadata, 'dateobs')
+    event.copy('dateObs',     metadata, 'dateObs')
 
     if event.getInt('exposureId') == 0:
         eventTransmitter = ctrlEvents.EventTransmitter(hostName, topicName+'0')
