@@ -256,8 +256,7 @@ class InputStage (lsst.pex.harness.Stage.Stage):
                 importClassString = importClassString.strip()
                 importPackage = ".".join(pythonTypeTokenList)
 
-                print "i importing: importPackage importClassString ", \
-                       i, importPackage, importClassString, "\n"
+                print "importing:", item, importPackage, importClassString
 
                 # For example  importPackage -> lsst.afw.Core.afwLib  
                 #              importClassString -> MaskedImageF
@@ -287,22 +286,20 @@ class InputStage (lsst.pex.harness.Stage.Stage):
                             logLoc)
                     storageList.append(storage)
 
-
                 # Retrieve the item.
                 itemData = persistence.unsafeRetrieve(itemType, storageList, \
                         additionalData)
 
                 # Cast the SWIGged Persistable to a more useful type.
-                pos = pythonType.rfind('.')
-                if pos != -1:
-                    pythonModule = pythonType[0:pos]
-                    exec 'import ' + pythonModule
                 exec 'finalItem = ' + pythonType + '.swigConvert(itemData)'
 
                 # Make sure that the useful type owns the pointer, not the
                 # original Persistable.
-                itemData.this.disown()
-                finalItem.this.acquire()
+                try:
+                    itemData.this.disown()
+                    finalItem.this.acquire()
+                except:
+                    raise RuntimeError, "Unable to manage memory for %s (%s -> %s) obtained from %s as %s" % (item, type(itemData), type(finalItem), logLoc.locString(), pythonType)
 
                 # Put the item on the clipboard
                 clipboard.put(item, finalItem)
