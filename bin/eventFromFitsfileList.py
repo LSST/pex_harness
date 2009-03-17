@@ -2,6 +2,7 @@
 
 import os, sys, re
 import glob
+import time
 import eups
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
@@ -21,12 +22,16 @@ logging.Trace_setVerbosity('dc3pipe', Verbosity)
 
 def EventFromInputFileList(inputfile, 
                            datatypePolicy, 
+                           sleepTime=None,
                            rootTopicName='triggerImageprocEvent', 
                            hostName='lsst8.ncsa.uiuc.edu'):
     """
     Generate events for the IPSD (and MOPS) pipeline by reading a list of visit
     directories and extracting the relevant information from the FITS files 
     therein.
+    
+    The script sends events every <sleep time> seconds or, if that is not 
+    specified, every <exposure time> seconds (extracted from each FITS file).
     
     The input directory list is a simple text file listing visit directories one
     per line. Comments start with a '#' and are ignored. It is assumed that the 
@@ -85,6 +90,7 @@ def EventFromInputFileList(inputfile,
 def EventFromInputfile(inputfile, 
                        datatypePolicy, 
                        metadataPolicy,
+                       sleepTime=None,
                        rootTopicName='triggerImageprocEvent', 
                        hostName='lsst8.ncsa.uiuc.edu'):
     # For DC3a, inputfile is a .fits file on disk
@@ -122,15 +128,22 @@ def EventFromInputfile(inputfile,
 
     eventTransmitter.publish(event)
     # print('Sending event for file %s' %(inputfile))
+    if(sleepTime == None):
+        time.sleep(event.get('expTime'))
+    else:
+        time.sleep(sleepTime)
     return True
 
 
 if __name__ == "__main__":
-    if(len(sys.argv) != 3):
-        sys.stderr.write('usage: eventFromFitsFileList.py <dir_list_file> ' + \
-                         '<policy_file>\n\n' + \
-'''Generate events for the IPSD (and MOPS) pipeline by reading a list of visit
+    USAGE = '''
+usage: eventFromFitsFileList.py <dir_list_file> <policy_file> [<sleep time>]
+    
+Generate events for the IPSD (and MOPS) pipeline by reading a list of visit
 directories and extracting the relevant information from the FITS files therein.
+
+The script sends events every <sleep time> seconds or, if that is not specified,
+every <exposure time> seconds (extracted from each FITS file).
 
 The input directory list is a simple text file listing visit directories one per
 line. Comments start with a '#' and are ignored. It is assumed that the name of 
@@ -141,11 +154,34 @@ directory has the following structure:
               raw-<visitId>-e000-c<ccdId>-a<ampId>.fits
             1/
               raw-<visitId>-e001-c<ccdId>-a<ampId>.fits
-''')
-        sys.stderr.flush()
+'''
+    
+    
+    if(len(sys.argv) not in (3, 4)):
+        sys.stderr.write(USAGE)
         sys.exit(1)
+    
     inputDirectoryList = sys.argv[1]
     datatypePolicy = pexPolicy.Policy.createPolicy(sys.argv[2])
+    sleepTime = None
+    if(len(sys.argv) == 4):
+        try:
+            sleepTime = int(sys.argv[4])
+        except:
+            sys.stderr.write(USAGE)
+            sys.exit(2)
     
-    EventFromInputFileList(inputDirectoryList, datatypePolicy)
+    # Extract broker info etc.
+    pipelinePolicy = dafBase.PropertySet()
+    if pipelinePolicy.exists('hostName'):
+        hostName  = pipelinePolicy.getString('hostName')
+    else:
+        hostName = 'lsst8.ncsa.uiuc.edu'
+    if pipelinePolicy.exists('topicName'):
+        topicName = pipelinePolicy.getString('topicName')
+    else:
+        topicName = 'triggerImageprocEvent'
+    
+    EventFromInputFileList(inputDirectoryList, datatypePolicy, sleepTime,
+                           hostName, topicName)
         
