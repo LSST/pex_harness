@@ -43,6 +43,21 @@ class Queue:
         return clipboard
 
     #------------------------------------------------------------------------
+    def element(self): 
+        """
+        Return the Clipboard at the top of the dataset list, but do not remove 
+        the Clipboard from the dataset list
+        """
+        if not self.datasetList:
+            # Code here for the case where the list is empty
+            clipboard = None
+        else:
+            # Code here for the case where the list is NOT empty
+            clipboard = self.datasetList[0]
+
+        return clipboard
+
+    #------------------------------------------------------------------------
     def addDataset(self, clipboard): 
         """
         Append the given Clipboard to the dataset list.

@@ -598,14 +598,12 @@ class Slice:
         log.log(Log.DEBUG,'Python Pipeline populateClipboard');
 
         queue = self.queueList[iStage-1]
-        clipboard = queue.getNextDataset()
+        clipboard = queue.element()
 
         # Slice does not disassemble the payload of the event. 
         # It knows nothing of the contents. 
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertySetPtr)
-
-        queue.addDataset(clipboard)
 
     #------------------------------------------------------------------------
     def getRun(self):
