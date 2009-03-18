@@ -12,6 +12,7 @@ Access to the C++ harness classes from the lsst.pex.harness module
 #include "lsst/daf/base/Citizen.h"
 #include "lsst/pex/exceptions.h"
 #include "lsst/pex/policy/Policy.h"
+#include "lsst/pex/policy/Dictionary.h"
 #include "lsst/daf/base/PropertySet.h"
 #include "lsst/daf/persistence/PropertySetFormatter.h"
 #include "lsst/pex/logging/Log.h"

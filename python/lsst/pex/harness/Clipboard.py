@@ -23,12 +23,12 @@ class Clipboard:
         """
         Delete the Clipboard 
         """
-        print 'Clipboard being deleted'
+        # print 'Clipboard being deleted'
         self.close()
 
     #------------------------------------------------------------------------
     def close(self):
-        print 'Clearing Clipboard dictionary'
+        # print 'Clearing Clipboard dictionary'
         self.dict.clear()
  
     #------------------------------------------------------------------------

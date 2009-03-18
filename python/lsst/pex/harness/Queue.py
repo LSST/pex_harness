@@ -24,7 +24,8 @@ class Queue:
         """
         Delete the Queue object for cleanup
         """
-	print 'Queue being deleted'
+	# print 'Queue being deleted'
+        pass
 
     #------------------------------------------------------------------------
     def getNextDataset(self): 

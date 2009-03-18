@@ -31,7 +31,8 @@ class Stage:
         """
         Delete the Stage object, cleaning up
         """
-	print 'Python Stage %d being deleted' % self.stageId
+	# print 'Python Stage %d being deleted' % self.stageId
+        pass
 
     def initialize(self, outQueue,  inQueue): 
         """
