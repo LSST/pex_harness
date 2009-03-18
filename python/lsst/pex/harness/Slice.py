@@ -24,6 +24,7 @@ import os
 import sys
 import traceback
 import threading
+from cStringIO import StringIO
 
 
 """
@@ -516,13 +517,18 @@ class Slice:
                 self.transferClipboard(iStage)
   
         ### raise lsst.pex.exceptions.LsstException("Terrible Test Exception")
-        except lsst.pex.exceptions.LsstCppException, e:
-            t = e.args[0].getTraceback()
+        except:
+            (ty, val, tb) = sys.exc_info()
+            sys.stderr = StringIO()
+            sys.excepthook(ty, val, tb)
+            trace = sys.stderr.getvalue()
+            sys.stderr.close()
+            sys.stderr = sys.__stderr__
 
             lr = LogRec(proclog, Log.FATAL)
-            lr << "Exception traceback: " + "File = " + t[0]._file \
-               << "Line = "  + str(t[0]._line) + "Func = " + t[0]._func \
-               << "Message = " + t[0]._msg \
+            lr << "Exception " + "Type = " + str(ty) \
+               << "Value = " + str(val) \
+               << "Traceback = " + trace \
                << LogRec.endr
 
             # Flag that an exception occurred to guide the framework to skip processing
@@ -530,17 +536,6 @@ class Slice:
             # Post the cliphoard that the Stage failed to transfer to the output queue
             self.postOutputClipboard(iStage)
 
-        except Exception, e:
-
-            # Use str(e) or  e.args[0].what() for message  
-            lr = LogRec(proclog, Log.FATAL)
-            lr << "Exception " + "Type = " + e.args[0].getType() \
-               << "Message = " + str(e) << LogRec.endr
-
-            # Flag that an exception occurred to guide the framework to skip processing
-            self.errorFlagged = 1
-            # Post the cliphoard that the Stage failed to transfer to the output queue
-            self.postOutputClipboard(iStage)
 
         proclog = Log(self.log, "tryProcess", Log.INFO);
         proclog.log(Log.INFO, "End of process")
