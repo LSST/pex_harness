@@ -295,11 +295,8 @@ class InputStage (lsst.pex.harness.Stage.Stage):
 
                 # Make sure that the useful type owns the pointer, not the
                 # original Persistable.
-                try:
-                    itemData.this.disown()
-                    finalItem.this.acquire()
-                except:
-                    raise RuntimeError, "Unable to manage memory for %s (%s -> %s) obtained from %s as %s" % (item, type(itemData), type(finalItem), logLoc.locString(), pythonType)
+                itemData.this.disown()
+                finalItem.this.acquire()
 
                 # Put the item on the clipboard
                 clipboard.put(item, finalItem)

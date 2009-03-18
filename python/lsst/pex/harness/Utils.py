@@ -22,10 +22,9 @@ def createAdditionalData(stage, stagePolicy, clipboard):
             (rename, name) = pair.split("=")
             if name.find(".") != -1:
                 (clipKey, psKey) = name.split(".", 1)
-                data = clipboard.get(clipKey).get(psKey)
+                additionalData.copy(rename, clipboard.get(clipKey), psKey)
             else:
-                data = clipboard.get(name)
-            additionalData.set(rename, data)
+                additionalData.set(rename, clipboard.get(name))
             lsst.pex.logging.Trace("pex.harness.Utils.createAdditionalData", 3, \
                     "AdditionalData item: " + pair)
 
