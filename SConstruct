@@ -10,6 +10,7 @@ dependencies = "boost mpich2 utils pex_policy pex_exceptions daf_base pex_loggin
 env = scons.makeEnv("pex_harness",
                     r"$HeadURL$",
                     [["boost", "boost/version.hpp", "boost_filesystem:C++"],
+                     ["boost", "boost/version.hpp", "boost_system:C++"],
                      ["boost", "boost/regex.hpp", "boost_regex:C++"],
                      ["boost", "boost/serialization/serialization.hpp", "boost_serialization:C++"],
                      ["boost", "boost/serialization/base_object.hpp", "boost_serialization:C++"],
