@@ -12,7 +12,7 @@ import lsst.pex.harness as pexHarness
 import lsst.pex.harness.Stage
 import lsst.pex.harness.SimpleStageTester
 import lsst.pex.policy as pexPolicy
-from lsst.pex.logging import Log
+from lsst.pex.logging import Log, Debug, LogRec, Prop
 from lsst.pex.exceptions import LsstCppException
 
 def main():
@@ -33,6 +33,14 @@ def main():
     # stagePolicy = pexPolicy.Policy.createPolicy(file)
     # stage = AreaStage(0, stagePolicy)
     # tester = pexHarness.SimpleStageTester.test(stage)
+
+    # set the verbosity of the logger.  If the level is at least 5, you
+    # will see debugging messages from the SimpleStageTester wrapper.
+    tester.setDebugVerbosity(5)
+
+    # if you want to see all log message properties (including the DATE)
+    # uncomment this line:
+    tester.showAllLogProperties(True)
 
     # create a simple dictionary with the data expected to be on the
     # stage's input clipboard.  If this includes images, you will need to 
@@ -86,8 +94,14 @@ class AreaStage(pexHarness.Stage.Stage):
 
         # if we want to do some logging, this is a good time to create
         # the log.  Here we assume that all of this Stage will use the
-        # same logger:
-        self.log = Log(Log.getDefaultLog(), "AreaStage")
+        # same logger.  This uses the threshold for message printing
+        # inherited from the root logger.
+        #
+        # Use this for standard logger:
+        # self.log = Log(Log.getDefaultLog(), "AreaStage")
+        #
+        # Use this for additional debugging API sugar:
+        self.log = Debug("AreaStage")
         if self.outputScale != 0:
             self.log.log(Log.INFO, "Area scaling factor: %i"% self.outputScale)
 
@@ -109,6 +123,16 @@ class AreaStage(pexHarness.Stage.Stage):
             if not self.clipboard.contains("height"):
                 raise RuntimeError("Missing width on clipboard")
 
+        # if you are worried about overhead of formatting a debug message,
+        # you can wrap it in an if block
+        if self.log.sends(Log.DEBUG):
+            # this attaches properties to our message
+            LogRec(self.log, Log.DEBUG) << "all input data found."           \
+                             << Prop("width", self.clipboard.get("width"))   \
+                             << Prop("height", self.clipboard.get("height")) \
+                             << LogRec.endr
+
+
     def process(self):
         # in a worker, pull the next clipboard
         self.clipboard = self.inputQueue.getNextDataset()
@@ -117,6 +141,9 @@ class AreaStage(pexHarness.Stage.Stage):
             # do our work
             area = self.clipboard.get("width") * self.clipboard.get("height")*\
                    (10.0**self.inputScale/10.0**self.outputScale)**2
+
+            # maybe you want to write a debug message
+            self.log.debug(3, "found area of %f" % area)
 
             # save the results to the clipboard
             self.clipboard.put("area", area)

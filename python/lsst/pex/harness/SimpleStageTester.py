@@ -5,6 +5,7 @@ import lsst.pex.policy as pexPolicy
 from Stage import Stage
 from Queue import Queue
 from Clipboard import Clipboard
+from lsst.pex.logging import Log, Debug
 
 class SimpleStageTester:
     """
@@ -23,6 +24,7 @@ class SimpleStageTester:
         @param mpiUniverseSize  the number of MPI processes to pretend are
                           running
         """
+        self.log = Debug("SimpleStageTester")
         self.stage = stage
         self.event = None
         self.inQ = Queue()
@@ -32,7 +34,6 @@ class SimpleStageTester:
         stage.setUniverseSize(mpiUniverseSize)
         stage.setLookup(dict(work=".", input=".", output=".",
                              update=".", scratch="."))
-        
 
     def run(self, clipboard, sliceID):
         """run the stage as a particular slice, returning the output clipboard
@@ -58,12 +59,21 @@ class SimpleStageTester:
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
+        # self.log = Debug("SimpleStageTester")
         self.stage.setRank(sliceID)
 
         self.inQ.addDataset(clipboard)
+
+        self.log.debug(5, "Calling Stage preprocess()")
         self.stage.preprocess()
-        
+        self.log.debug(5, "Stage preprocess() complete")
+
+        self.log.debug(5, "Calling Stage postprocess()")
         self.stage.postprocess()
+        self.log.debug(5, "Stage postprocess() complete")
+
+        # self.log = None
+
         return self.outQ.getNextDataset()
 
     def runWorker(self, clipboard, sliceID=0):
@@ -81,10 +91,17 @@ class SimpleStageTester:
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
+        # self.log = Debug("SimpleStageTester", -1*Log.INHERIT_THRESHOLD)
         self.stage.setRank(sliceID)
 
         self.inQ.addDataset(clipboard)
+
+        self.log.debug(5, "Calling Stage process()")
         self.stage.process()
+        self.log.debug(5, "Stage process() complete")
+
+        # self.log = None
+
         return self.outQ.getNextDataset()
 
     def setEvent(self, name, eventData):
@@ -108,6 +125,42 @@ class SimpleStageTester:
         for key in data.keys():
             cb.put(key, data[key])
         return cb
+
+    def setDebugVerbosity(self, verbLimit):
+        """set the verbosity of the default log.  This and setLogThreshold()
+        are different APIs that affect the same underlying limit that controls
+        how many messages get logged.
+        @param verbLimit    debug messages with a verbosity level larger
+                               than this will not be printed.  If positive
+                               INFO, WARN, and FATAL messages will also
+                               be printed.  
+        """
+        Log.getDefaultLog().setThreshold(-1*verbLimit)
+
+    def setLogThreshold(self, threshold):
+        """set the importance threshold for the default log.  This and
+        setDebugVerbosity are different APIs that affect the same underlying
+        limit that controls how many messages get logged.  Normally one
+        uses one of the predefined values--Log.DEBUG, Log.INFO, Log.WARN, and
+        Log.FATAL--as input.
+        @param threshold    the minimum importance of the message that will
+                               get printed.
+        """
+        Log.getDefaultLog().setThreshold(threshold)
+
+    def showAllLogProperties(self, show):
+        """control whether log properties are displayed to the screen.  These
+        include, for example, the DATE (and time) of the message.
+        @param show   if true, show all the properties when a log message is
+                         printed.  If false, don't show them.
+        """
+        Log.getDefaultLog().setShowAll(show)
+
+    def willShowAllLogProperties(self):
+        """return whether log properties are displayed to the screen.  These
+        include, for example, the DATE (and time) of the message.
+        """
+        return Log.getDefaultLog().willShowAll()
 
 def create(stage, policy, runID="simpleTest", mpiUniverseSize=1):
     """create a SimpleStageTester from a stage and a policy
