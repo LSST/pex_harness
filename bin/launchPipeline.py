@@ -29,18 +29,15 @@ cl.add_option("-s", "--silent", action="store_const", const=-3,
               help="print only warning & error messages")
 cl.add_option("-n", "--nodelist", action="store", dest="nodelist", 
               metavar="file", help="file containing the MPI machine list")
-cl.add_option("-m", "--mpdconfset", action="store_true", dest="forceMpdConf",
-              help="force a check for a .mpd.conf file on every desired node")
 
 # command line results
 cl.opts = {}
 cl.args = []
 
-pkgdirvar = "CTRL_DC3PIPE_DIR"
-ensurempdconfcmd = "forceMpdConf.sh"
+pkgdirvar = "PEX_HARNESS_DIR"
 
 def createLog():
-    log = Log(Log.getDefaultLog(), "dc3pipe")
+    log = Log(Log.getDefaultLog(), "harness.launchPipeline")
     return log
 
 def setVerbosity(verbosity):
@@ -72,7 +69,7 @@ def main():
 
 def launchPipeline(policyFile, runid):
     if not os.environ.has_key(pkgdirvar):
-        raise RuntimeError("CTRL_DC3PIPE_DIR env. var not set (setup ctrl_dc3pipe)")
+        raise RuntimeError(pkgdirvar + " env. var not setup")
 
     nodesfile = "nodelist.scr"
     if cl.opts.nodelist is not None:
@@ -95,17 +92,6 @@ def launchPipeline(policyFile, runid):
                 nprocs += 1
 
             if node in nodes_set: continue
-
-            if not os.path.exists(os.path.join(os.environ["HOME"],".mpd.conf")) \
-               or cl.opts.forceMpdConf:
-                cmd = "ssh %s %s/bin/%s -V %s" % \
-                      (node, os.environ[pkgdirvar], ensurempdconfcmd,
-                       cl.opts.verbosity)
-                logger.log(Log.DEBUG, "executing: " + cmd)
-
-                if subprocess.call(cmd.split()) != 0:
-                    raise RuntimeError("Failed to execute ensureMpdConf on " +
-                                       node)
 
     cmd = "runPipelin.sh.py %s %s %s %d %d" % \
           (policyFile, runid, nodesfile, nnodes, nprocs)

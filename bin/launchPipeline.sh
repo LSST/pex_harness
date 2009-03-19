@@ -6,17 +6,17 @@ if echo $0 | grep -q /; then
     bindir=`dirname $0`
 fi
 
-if [ -z "$CTRL_DC3PIPE_DIR" ]; then
+if [ -z "$PEX_HARNESS_DIR" ]; then
 
     # make sure we load the ctrl_dc3pipe environment
-    version=`dirname "$bindir"`         # ctrl_dc3pipe version directory
+    version=`dirname "$bindir"`         # pex_harness version directory
     if [ "$version" = "."  ]; then
-        echo "Unable to load ctrl_dc3pipe: unable to determin version from $bindir"
+        echo "Unable to load pex_harness: unable to determine the version from $bindir"
         exit 1
     fi
 
     if [ -z "$LSST_HOME" ]; then
-        home=`dirname "$version"`           # dc2ipe directory
+        home=`dirname "$version"`           # pex_harness directory
         home=`dirname "$home"`              # flavor directory
         export LSST_HOME=`dirname "$home"`  # LSST_HOME directory
 
@@ -31,7 +31,7 @@ if [ -z "$CTRL_DC3PIPE_DIR" ]; then
 
     SHELL=/bin/bash
     source  $LSST_HOME/loadLSST.sh
-    setup ctrl_dc3pipe $version
+    setup pex_harness $version
 fi
 
 eups list 2> /dev/null | grep Setup > eups-env.txt
