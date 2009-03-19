@@ -297,10 +297,10 @@ class Slice:
                 stageObject = StageClass(iStage)
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
-            stageObject.initialize(outputQueue, inputQueue)
             stageObject.setRank(self._rank)
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
+            stageObject.initialize(outputQueue, inputQueue)
             # stageObject.setLookup(self._lookup)
             self.stageList.append(stageObject)
 

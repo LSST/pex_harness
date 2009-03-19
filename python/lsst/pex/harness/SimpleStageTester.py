@@ -130,7 +130,7 @@ def create(stage, policy, runID="simpleTest", mpiUniverseSize=1):
 
     if isinstance(policy, str) or isinstance(policy, pexPolicy.PolicyFile):
         policy = pexPolicy.Policy.createPolicy(policy)
-    if not isinstance(policy, pexPolicy.Policy):
+    if policy is not None and not isinstance(policy, pexPolicy.Policy):
         raise TypeError("Not a Policy instance: " + policy)
 
     stageInst = stage(0, policy)

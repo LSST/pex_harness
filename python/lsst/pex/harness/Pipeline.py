@@ -299,10 +299,10 @@ class Pipeline:
                 stageObject = StageClass(iStage)
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
-            stageObject.initialize(outputQueue, inputQueue)
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
             # stageObject.setLookup(self._lookup)
+            stageObject.initialize(outputQueue, inputQueue)
             self.stageList.append(stageObject)
 
         lr = LogRec(log, Log.INFO)
