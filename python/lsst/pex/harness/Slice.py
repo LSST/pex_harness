@@ -24,7 +24,6 @@ import os
 import sys
 import traceback
 import threading
-from cStringIO import StringIO
 
 
 """
@@ -518,13 +517,8 @@ class Slice:
   
         ### raise lsst.pex.exceptions.LsstException("Terrible Test Exception")
         except:
-            (ty, val, tb) = sys.exc_info()
-            sys.stderr = StringIO()
-            sys.excepthook(ty, val, tb)
-            trace = sys.stderr.getvalue()
-            sys.stderr.close()
-            sys.stderr = sys.__stderr__
-
+            trace = "".join(traceback.format_exception(
+                sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             lr = LogRec(proclog, Log.FATAL)
             lr << "Exception " + "Type = " + str(ty) \
                << "Value = " + str(val) \

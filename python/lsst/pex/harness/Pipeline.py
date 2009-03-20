@@ -25,8 +25,6 @@ import sys
 import traceback
 import threading
 
-from cStringIO import StringIO
-
 """
 Pipeline class manages the operation of a multi-stage parallel pipeline.
 The Pipeline is configured by reading a Policy file.   This Python Pipeline
@@ -467,13 +465,8 @@ class Pipeline:
                 self.transferClipboard(iStage)
 
         except:
-            (ty, val, tb) = sys.exc_info()
-            sys.stderr = StringIO()
-            sys.excepthook(ty, val, tb)
-            trace = sys.stderr.getvalue()
-            sys.stderr.close()
-            sys.stderr = sys.__stderr__
-            
+            trace = "".join(traceback.format_exception(
+                    sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             lr = LogRec(proclog, Log.FATAL)
             lr << "Exception " + "Type = " + str(ty) \
                << "Value = " + str(val) \
@@ -508,13 +501,8 @@ class Pipeline:
                 self.transferClipboard(iStage)
 
         except:
-            (ty, val, tb) = sys.exc_info()
-            sys.stderr = StringIO()
-            sys.excepthook(ty, val, tb)
-            trace = sys.stderr.getvalue()
-            sys.stderr.close()
-            sys.stderr = sys.__stderr__
-            
+            trace = "".join(traceback.format_exception(
+                    sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             lr = LogRec(proclog, Log.FATAL)
             lr << "Exception " + "Type = " + str(ty) \
                << "Value = " + str(val) \
