@@ -59,7 +59,6 @@ class SimpleStageTester:
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
-        # self.log = Debug("SimpleStageTester")
         self.stage.setRank(sliceID)
 
         self.inQ.addDataset(clipboard)
@@ -71,8 +70,6 @@ class SimpleStageTester:
         self.log.debug(5, "Calling Stage postprocess()")
         self.stage.postprocess()
         self.log.debug(5, "Stage postprocess() complete")
-
-        # self.log = None
 
         return self.outQ.getNextDataset()
 
@@ -91,16 +88,12 @@ class SimpleStageTester:
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
-        # self.log = Debug("SimpleStageTester", -1*Log.INHERIT_THRESHOLD)
         self.stage.setRank(sliceID)
-
         self.inQ.addDataset(clipboard)
 
         self.log.debug(5, "Calling Stage process()")
         self.stage.process()
         self.log.debug(5, "Stage process() complete")
-
-        # self.log = None
 
         return self.outQ.getNextDataset()
 

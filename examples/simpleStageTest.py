@@ -40,7 +40,7 @@ def main():
 
     # if you want to see all log message properties (including the DATE)
     # uncomment this line:
-    tester.showAllLogProperties(True)
+    # tester.showAllLogProperties(False)
 
     # create a simple dictionary with the data expected to be on the
     # stage's input clipboard.  If this includes images, you will need to 
@@ -59,7 +59,13 @@ def main():
 
     print "Area =", outWorker.get("area")
 
+# Below is our example Stage implmentation
+
 class AreaStage(pexHarness.Stage.Stage):
+    """
+    a simple Stage implmentation that calculates the area of a rectangle
+    given the length of the sides
+    """
 
     def __init__(self, stageId=-1, policy=None):
         """configure this stage with a policy"""

@@ -3,7 +3,7 @@ setupRequired(mpich2 >= 1.0.5p4)
 setupRequired(daf_base >= 3.2.5)
 setupRequired(pex_logging >= 3.3.3)
 setupRequired(pex_exceptions >= 3.2.2)
-setupRequired(pex_policy >= 3.3.4)
+setupRequired(pex_policy >= 3.3.5)
 setupRequired(daf_persistence >= 3.3.5)
 setupRequired(ctrl_events >= 3.4)
 
