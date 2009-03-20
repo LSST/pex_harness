@@ -520,10 +520,7 @@ class Slice:
             trace = "".join(traceback.format_exception(
                 sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             lr = LogRec(proclog, Log.FATAL)
-            lr << "Exception " + "Type = " + str(ty) \
-               << "Value = " + str(val) \
-               << "Traceback = " + trace \
-               << LogRec.endr
+            lr << trace << LogRec.endr
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
