@@ -467,18 +467,10 @@ class Pipeline:
                 self.transferClipboard(iStage)
 
         except:
-            (ty, val, tb) = sys.exc_info()
-            sys.stderr = StringIO()
-            sys.excepthook(ty, val, tb)
-            trace = sys.stderr.getvalue()
-            sys.stderr.close()
-            sys.stderr = sys.__stderr__
-            
-            lr = LogRec(proclog, Log.FATAL)
-            lr << "Exception " + "Type = " + str(ty) \
-               << "Value = " + str(val) \
-               << "Traceback = " + trace \
-               << LogRec.endr
+            trace = "".join(traceback.format_exception(
+                    sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
+            lr = LogRec(prelog, Log.FATAL)
+            lr << trace << LogRec.endr
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
@@ -508,18 +500,10 @@ class Pipeline:
                 self.transferClipboard(iStage)
 
         except:
-            (ty, val, tb) = sys.exc_info()
-            sys.stderr = StringIO()
-            sys.excepthook(ty, val, tb)
-            trace = sys.stderr.getvalue()
-            sys.stderr.close()
-            sys.stderr = sys.__stderr__
-            
-            lr = LogRec(proclog, Log.FATAL)
-            lr << "Exception " + "Type = " + str(ty) \
-               << "Value = " + str(val) \
-               << "Traceback = " + trace \
-               << LogRec.endr
+            trace = "".join(traceback.format_exception(
+                    sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
+            lr = LogRec(postlog, Log.FATAL)
+            lr << trace << LogRec.endr
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
