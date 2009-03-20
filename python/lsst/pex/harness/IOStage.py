@@ -293,10 +293,12 @@ class InputStage (lsst.pex.harness.Stage.Stage):
                 # Cast the SWIGged Persistable to a more useful type.
                 exec 'finalItem = ' + pythonType + '.swigConvert(itemData)'
 
-                # Make sure that the useful type owns the pointer, not the
-                # original Persistable.
-                itemData.this.disown()
-                finalItem.this.acquire()
+                # If Persistable and subclasses are NOT wrapped using SWIG_SHARED_PTR,
+                # then one must make sure that the wrapper for the useful type owns
+                # the pointer (rather than the wrapper for the original Persistable).
+                # The following lines accomplish this:
+                #itemData.this.disown()
+                #finalItem.this.acquire()
 
                 # Put the item on the clipboard
                 clipboard.put(item, finalItem)
