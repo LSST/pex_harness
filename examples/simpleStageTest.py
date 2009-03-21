@@ -9,9 +9,9 @@ multiple instances of SimpleStageTester; the script would simply pass the
 clipboard explicitly from one tester to the next.  
 """
 import lsst.pex.harness as pexHarness
-import lsst.pex.harness.Stage
 import lsst.pex.harness.SimpleStageTester
 import lsst.pex.policy as pexPolicy
+from lsst.pex.harness.Stage import Stage
 from lsst.pex.logging import Log, Debug, LogRec, Prop
 from lsst.pex.exceptions import LsstCppException
 
@@ -61,7 +61,7 @@ def main():
 
 # Below is our example Stage implmentation
 
-class AreaStage(pexHarness.Stage.Stage):
+class AreaStage(Stage):
     """
     a simple Stage implmentation that calculates the area of a rectangle
     given the length of the sides
@@ -110,6 +110,14 @@ class AreaStage(pexHarness.Stage.Stage):
         self.log = Debug("AreaStage")
         if self.outputScale != 0:
             self.log.log(Log.INFO, "Area scaling factor: %i"% self.outputScale)
+
+    # Usually, the initialize function does not need to be overridden;
+    # however, you may do so if you need to do some one-time setup that 
+    # depends on the the slice ID (as returned by getRank()).  Be sure to
+    # call the super version
+    def initialize(self, outQueue, inQueue):
+        Stage.initialize(self, outQueue, inQueue)
+        self.log.debug(3, "Running with sliceID = %s" % self.getRank())
 
     # Most often, one need only to provide a process() implementation; this
     # this is the code that will get run in parallel.  preprocess() gets
