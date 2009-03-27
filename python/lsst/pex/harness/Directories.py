@@ -53,10 +53,11 @@ class Directories:
     # @brief determine the directories from the policy input
     # @param dirPolicy   the "dir" policy containing the 
     # @param runId       the run ID for the pipeline run (default: "no-id")
-    def __init__(self, dirPolicy, runId="no-id"):
+    def __init__(self, dirPolicy, pipeName, runId="no-id"):
         self.policy = dirPolicy
         self.runid = runId
-        self.patdata = { "runid": self.runid }
+        self.pipename = pipeName
+        self.patdata = { "runid": self.runid, "pipename": self.pipename }
         self.defroot = None
 
     ## 

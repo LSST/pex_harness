@@ -91,7 +91,8 @@ class Slice:
         psLookup = lsst.daf.base.PropertySet()
         if (p.exists('dir')):
             dirPolicy = p.get('dir')
-            dirs = Directories(dirPolicy, self._runId)
+            dirName = self.pipelinePolicyName.split('.')[0]
+            dirs = Directories(dirPolicy, dirName, self._runId)
             psLookup = dirs.getDirs()
         if (p.exists('database.url')):
             psLookup.set('dbUrl', p.get('database.url'))
