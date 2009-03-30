@@ -95,8 +95,10 @@ class Pipeline:
         psLookup = lsst.daf.base.PropertySet()
         if (p.exists('dir')):
             dirPolicy = p.get('dir')
-            dirName = self.pipelinePolicyName.split('.')[0]
-            dirs = Directories(dirPolicy, dirName, self._runId)
+            shortName = p.get('shortName')
+            if shortName == None:
+                shortName = self.pipelinePolicyName.split('.')[0]
+            dirs = Directories(dirPolicy, shortName, self._runId)
             psLookup = dirs.getDirs()
         if (p.exists('database.url')):
             psLookup.set('dbUrl', p.get('database.url'))
