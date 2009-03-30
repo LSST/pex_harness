@@ -253,7 +253,7 @@ class Slice:
         # Process Stage Policies
         self.stagePolicyList = [ ]
         for item in fullStageList:
-            self.stagePolicyList.append(item.getString("stagePolicy"))
+            self.stagePolicyList.append(item.get("stagePolicy"))
 
         # Process topology policy
         if (p.exists('topology')):
@@ -295,12 +295,11 @@ class Slice:
         """
         for iStage in range(1, self.nStages+1):
             # Make a Policy object for the Stage Policy file
-            policyFileName = self.stagePolicyList[iStage-1]
+            stagePolicy = self.stagePolicyList[iStage-1]
             # Make an instance of the specifies Application Stage
             # Use a constructor with the Policy as an argument
             StageClass = self.stageClassList[iStage-1]
-            if (policyFileName != "None"):
-                stagePolicy = policy.Policy.createPolicy(policyFileName)
+            if (stagePolicy != "None"):
                 stageObject = StageClass(iStage, stagePolicy)
             else:
                 stageObject = StageClass(iStage)
