@@ -29,7 +29,6 @@ class SimpleStageTester:
         self.event = None
         self.inQ = Queue()
         self.outQ = Queue()
-        stage.initialize(self.outQ, self.inQ);
         stage.setRun(runID)
         stage.setUniverseSize(mpiUniverseSize)
         stage.setLookup(dict(work=".", input=".", output=".",
@@ -48,8 +47,8 @@ class SimpleStageTester:
             return self.runWorker(clipboard, sliceID)
 
     def runMaster(self, clipboard, dopre=True, dopost=True, sliceID=-1):
-        """run the Stage as a master, running the serial functions,
-        preprocess() and postprocess()
+        """run the Stage as a master, calling its initialize() function,
+        and then running the serial functions, preprocess() and postprocess()
         """
         if isinstance(clipboard, dict):
             clipboard = self.toClipboard(clipboard)
@@ -60,6 +59,7 @@ class SimpleStageTester:
             clipboard(self.event[0], self.event[1])
 
         self.stage.setRank(sliceID)
+        self.stage.initialize(self.outQ, self.inQ);
 
         self.inQ.addDataset(clipboard)
 
@@ -89,6 +89,7 @@ class SimpleStageTester:
             clipboard(self.event[0], self.event[1])
 
         self.stage.setRank(sliceID)
+        self.stage.initialize(self.outQ, self.inQ);
         self.inQ.addDataset(clipboard)
 
         self.log.debug(5, "Calling Stage process()")
