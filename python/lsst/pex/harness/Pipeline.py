@@ -229,7 +229,7 @@ class Pipeline:
         # eventReceiverList    
         for topic in self.eventTopicList:
             if (topic == "None"):
-                lr = LogRec(log, Log.INFO)
+                lr = LogRec(log, Log.DEBUG)
                 lr << "The topic is None"
                 lr << LogRec.endr
                 self.eventReceiverList.append(None)
