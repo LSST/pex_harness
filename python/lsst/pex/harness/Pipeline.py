@@ -95,7 +95,10 @@ class Pipeline:
         psLookup = lsst.daf.base.PropertySet()
         if (p.exists('dir')):
             dirPolicy = p.get('dir')
-            dirs = Directories(dirPolicy, self._runId)
+            shortName = p.get('shortName')
+            if shortName == None:
+                shortName = self.pipelinePolicyName.split('.')[0]
+            dirs = Directories(dirPolicy, shortName, self._runId)
             psLookup = dirs.getDirs()
         if (p.exists('database.url')):
             psLookup.set('dbUrl', p.get('database.url'))
@@ -106,8 +109,8 @@ class Pipeline:
         else:
             self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
 
-	eventSystem = events.EventSystem.getDefaultEventSystem()
-	eventSystem.createTransmitter(self.eventBrokerHost, "LSSTLogging")
+        eventSystem = events.EventSystem.getDefaultEventSystem()
+        eventSystem.createTransmitter(self.eventBrokerHost, "LSSTLogging")
         events.EventLog.createDefaultLog(self._runId, -1)
 
         # Check for localLogMode
@@ -225,8 +228,14 @@ class Pipeline:
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.eventTopicList:
-            eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
-            self.eventReceiverList.append(eventReceiver)
+            if (topic == "None"):
+                lr = LogRec(log, Log.DEBUG)
+                lr << "The topic is None"
+                lr << LogRec.endr
+                self.eventReceiverList.append(None)
+            else:
+                eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
+                self.eventReceiverList.append(eventReceiver)
 
         # Process Stage Policies
         # inputStagePolicy = policy.Policy.createPolicy("policy/inputStage.policy")

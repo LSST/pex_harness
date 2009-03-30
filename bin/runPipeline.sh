@@ -46,8 +46,8 @@ sleep 2s
 
 echo "Running mpiexec"
 
-echo mpiexec -usize ${usize} -machinefile nodelist.scr -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId}
-mpiexec -usize ${usize}  -machinefile nodelist.scr -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId}
+echo mpiexec -usize ${usize} -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId}
+mpiexec -usize ${usize}  -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId}
 
 sleep 1s
 
