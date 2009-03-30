@@ -228,8 +228,14 @@ class Pipeline:
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.eventTopicList:
-            eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
-            self.eventReceiverList.append(eventReceiver)
+            if (topic == "None"):
+                lr = LogRec(log, Log.INFO)
+                lr << "The topic is None"
+                lr << LogRec.endr
+                self.eventReceiverList.append(None)
+            else:
+                eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
+                self.eventReceiverList.append(eventReceiver)
 
         # Process Stage Policies
         # inputStagePolicy = policy.Policy.createPolicy("policy/inputStage.policy")
