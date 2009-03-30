@@ -241,7 +241,7 @@ class Slice:
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.sliceEventTopicList:
-            if (topic == "None"):
+            if (topic == "None_slice"):
                 lr = LogRec(log, Log.INFO)
                 lr << "The topic is None"
                 lr << LogRec.endr
