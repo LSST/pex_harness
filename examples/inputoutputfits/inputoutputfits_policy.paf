@@ -8,7 +8,7 @@ eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 appStage: {
      stageName: "lsst.pex.harness.IOStage.InputStage"
      eventTopic: "triggerImageprocEvent" 
-     stagePolicy: "policy/input_policy.paf" 
+     stagePolicy: @policy/input_policy.paf
 }
 
 appStage: {
@@ -20,7 +20,7 @@ appStage: {
 appStage: {
      stageName: "lsst.pex.harness.IOStage.OutputStage"
      eventTopic: "None" 
-     stagePolicy: "policy/output_policy.paf" 
+     stagePolicy: @policy/output_policy.paf
 }
 
    dir: {
