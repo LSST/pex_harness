@@ -17,6 +17,6 @@ appStage: {
 appStage: { 
      stageName: "lsst.pex.harness.EventStage.EventStage" 
      eventTopic: "None"  
-     stagePolicy: "policy/eventstage.paf"
+     stagePolicy: @policy/eventstage.paf
 }
 
