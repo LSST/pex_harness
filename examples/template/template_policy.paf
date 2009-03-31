@@ -12,7 +12,7 @@ eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 appStage: { 
      stageName: "lsst.pexhexamples.pipeline.SampleStage" 
      eventTopic: "None" 
-     stagePolicy: "policy/samplestage.paf"
+     stagePolicy: @policy/samplestage.paf
 }
 
 
