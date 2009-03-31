@@ -18,7 +18,7 @@ eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 appStage: { 
      stageName: "lsst.pex.harness.IOStage.InputStage" 
      eventTopic: "triggerIpdpEvent"
-     stagePolicy: "policy/inputipdp.policy"
+     stagePolicy: @policy/inputipdp.policy
 }
 
 appStage: { 
