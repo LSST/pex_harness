@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-set -x
+#set -x
 bindir=""
 if echo $0 | grep -q /; then
     bindir=`dirname $0`
