@@ -23,6 +23,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "lsst/pex/harness/TracingLog.h"
 #include "lsst/pex/policy/Policy.h"
 #include "lsst/utils/Utils.h"
 
@@ -92,6 +93,10 @@ public:
 
     void initialize();
     void initializeLogger(bool isLocalLogMode);
+    TracingLog& getLogger() {
+        return sliceLog;
+    }
+
     void invokeBcast(int iStage);
     void invokeBarrier(int iStage);
     void invokeShutdownTest();
@@ -105,6 +110,11 @@ public:
     void calculateNeighbors();
     std::vector<int> getRecvNeighborList();
     PropertySet::Ptr syncSlices(PropertySet::Ptr dpt);
+
+    void setEventBrokerHost(const std::string& host) {
+        _evbHost = host;
+    }
+    const std::string& getEventBrokerHost() {  return _evbHost;  }
 
 private:
     void initializeMPI();
@@ -128,11 +138,9 @@ private:
     std::list<int> recvNeighborList;
     string neighborString;
 
-    Log sliceLog;
-    boost::shared_ptr<LogDestination> destPtr; 
-    ofstream* outlog; 
-
-
+    TracingLog sliceLog;
+    std::string _evbHost;
+    ofstream* outlog;
 };
 
     	} // namespace harness

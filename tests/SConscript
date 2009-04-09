@@ -10,10 +10,17 @@ import glob, os
 # Tests
 #
 # print env.Dump()  # dump whole env
+Import("env")
+env.Program(["testTracingLog.cc"], LIBS=env.libs["pex_harness"])
+env.Program(["testTracingLog_2.cc"], LIBS=env.libs["pex_harness"])
+
+env.CheckSwig("python", ilang="c++")
+env.Append(SWIGFLAGS=" -Ipython")
 
 import lsst.tests
 tests = lsst.tests.Control(env, verbose = True)
 
-# tests.run("TestIO.py")
-tests.run("TestClipboard.py")
+tests.run("testTracingLog.cc")
+for target in tests.run("*.py"):
+    env.Depends(target, "../python/lsst/pex/harness/_harnessLib%s" % env['LDMODULESUFFIX'])
 

@@ -17,14 +17,19 @@
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Stage.h"
 
+using lsst::pex::logging::Log;
+
 /** Constructor.
  */
-Pipeline::Pipeline(void) {
-}
+Pipeline::Pipeline(void) 
+    : _pid(getpid()), pipelineLog(Log::getDefaultLog(),"harness"), 
+      _evbHost(""), outlog(0) 
+{ }
 
 /** Destructor.
  */
 Pipeline::~Pipeline(void) {
+    delete outlog;
 }
 
 /** Initialize the environment of the Pipeline.
@@ -44,45 +49,19 @@ void Pipeline::initialize() {
  */
 void Pipeline::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs to local files
                                 ) {
-    _pid = getpid();
-    char* _host = getenv("HOST");
-
+    char *logfile = "Pipeline.log";
     if(isLocalLogMode) {
-        /* Make a log file name coded to the rank    */
-
-        std::stringstream logfileBuffer;
-        std::string logfile;
-
-        logfileBuffer << "Pipeline";
-        /* logfileBuffer << _pid;   */ 
-        logfileBuffer << ".log"; 
-
-        logfileBuffer >> logfile;
-
         /* Make output file stream   */
-        outlog =  new ofstream(logfile.c_str());
-
-        boost::shared_ptr<LogFormatter> brief(new BriefFormatter(true));
-        boost::shared_ptr<LogDestination> tempPtr(new LogDestination(outlog, brief));
-        destPtr = tempPtr;
-        Log::getDefaultLog().addDestination(destPtr);
+        outlog =  new ofstream(logfile);
     }
+    boost::shared_ptr<TracingLog> 
+        lp(setupHarnessLogging(std::string(_runId), -1, _evbHost, outlog));
+    pipelineLog = *lp;
 
-    Log root = Log::getDefaultLog();
-    pipelineLog = Log(root, "pex.harness.pipeline");
-
-    Log localLog(pipelineLog, "initializeLogger()");       // localLog: a child log
-
-    localLog.log(Log::INFO,
-        boost::format("Pipeline Logger Initialized : _pid %d ") % _pid);
-
-    string* s1 = new string("PropertySetTest");
-    PropertySet ps3;
-    ps3.set("pipeline_keya", string("TestValue"));
-
-    localLog.log(Log::INFO, *s1, ps3 );
-
-    return;
+    pipelineLog.format(Log::INFO, 
+                       "Pipeline Logger initialized for pid=%d", _pid);
+    if (outlog) 
+        pipelineLog.format(Log::INFO, "replicating messages to %s", logfile);
 }
 
 /** Initialize the MPI environment of the Pipeline.

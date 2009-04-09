@@ -28,6 +28,7 @@
 #include "lsst/pex/policy/Policy.h"
 #include "lsst/utils/Utils.h"
 
+#include "lsst/pex/harness/TracingLog.h"
 #include "lsst/daf/base/PropertySet.h"
 #include "lsst/pex/logging/Component.h"
 #include "lsst/pex/logging/LogRecord.h"
@@ -84,6 +85,9 @@ public:
 
     void initialize();
     void initializeLogger(bool isLocalLogMode);
+    TracingLog& getLogger() {
+        return pipelineLog;
+    }
 
     void startSlices();  
     void invokeProcess(int iStage);
@@ -101,9 +105,12 @@ public:
     void setPolicyName(char* policyName);
     char* getPolicyName();
 
+    void setEventBrokerHost(const std::string& host) {
+        _evbHost = host;
+    }
+    const std::string& getEventBrokerHost() {  return _evbHost;  }
 
 private:
-    void initializeLogger();
     void initializeMPI();
     void configurePipeline();  
     void initializeQueues();  
@@ -124,8 +131,8 @@ private:
     int size;
     int universeSize;
 
-    Log pipelineLog;
-    boost::shared_ptr<LogDestination> destPtr;
+    TracingLog pipelineLog;
+    std::string _evbHost;
     ofstream* outlog;
 
 };
