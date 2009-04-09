@@ -77,7 +77,7 @@ class Slice:
         """
         Delete the Slice object: cleanup 
         """
-        self.log.log(self.VERB, 'Python Slice being deleted')
+        self.log.log(self.VERB1, 'Python Slice being deleted')
 
     def configureSlice(self):
         """
@@ -357,7 +357,7 @@ class Slice:
                 finalClipboard = finalQueue.getNextDataset()
                 finalClipboard.close()
                 del finalClipboard
-                looplog(Log.DEBUG, "Deleted final Clipboard")
+                looplog.log(Log.DEBUG, "Deleted final Clipboard")
             else:
                 looplog.log(self.VERB3, "Error flagged on this visit")
             looplog.done()
@@ -475,7 +475,7 @@ class Slice:
             self.populateClipboard(inputParamPropertySetPtr, iStage, thisTopic)
             log.log(self.VERB3, 'Received event; added payload to clipboard')
         else:
-            log.log(self.DEBUG, 'No event to handle')
+            log.log(Log.DEBUG, 'No event to handle')
 
         log.done()
 

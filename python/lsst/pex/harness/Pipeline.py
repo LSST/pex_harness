@@ -74,7 +74,7 @@ class Pipeline:
         """
         Delete the Pipeline object: clean up
         """
-        self.log.log(Log.DEBUG, 'Python Pipeline being deleted')
+        self.log.log(self.VERB1, 'Python Pipeline being deleted')
 
     def configurePipeline(self):
         """
