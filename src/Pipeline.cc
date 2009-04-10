@@ -55,7 +55,8 @@ void Pipeline::initializeLogger(bool isLocalLogMode  //!< A flag for writing log
         outlog =  new ofstream(logfile);
     }
     boost::shared_ptr<TracingLog> 
-        lp(setupHarnessLogging(std::string(_runId), -1, _evbHost, outlog));
+        lp(setupHarnessLogging(std::string(_runId), -1, _evbHost, outlog,
+                               "harness.pipeline"));
     pipelineLog = *lp;
 
     pipelineLog.format(Log::INFO, 

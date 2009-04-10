@@ -53,7 +53,8 @@ void Slice::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs t
     }
 
     boost::shared_ptr<TracingLog> 
-        lp(setupHarnessLogging(std::string(_runId),getRank(),_evbHost,outlog));
+        lp(setupHarnessLogging(std::string(_runId), getRank(), _evbHost,
+                               outlog, "harness.slice"));
     sliceLog = *lp;
 
     sliceLog.format(Log::INFO, "Slice Logger initialized for pid=%d", _pid);

@@ -43,7 +43,7 @@ using lsst::ctrl::events::EventLog;
 using lsst::pex::logging::Log;
 using lsst::pex::logging::Rec;
 using lsst::pex::logging::LogFormatter;
-using lsst::pex::logging::BriefFormatter;
+using lsst::pex::logging::IndentedFormatter;
 using lsst::pex::logging::LogDestination;
 
 TracingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
@@ -59,9 +59,9 @@ TracingLog *setupHarnessLogging(const std::string& runId, int sliceId,
     Log& root = Log::getDefaultLog();
 
     if (messageStrm != 0) {
-        boost::shared_ptr<LogFormatter> brief(new BriefFormatter(true));
+        boost::shared_ptr<LogFormatter> frmtr(new IndentedFormatter(true));
         boost::shared_ptr<LogDestination> 
-            dest(new LogDestination(messageStrm, brief, Log::DEBUG));
+            dest(new LogDestination(messageStrm, frmtr, Log::DEBUG));
         root.addDestination(dest);
     }
 
