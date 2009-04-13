@@ -9,7 +9,9 @@ msglev = { "silent": -30,
            "verb1":    1,
            "verb2":    2,
            "verb3":    3,
-           "debug":   10  }
+           "debug":   10,
+           "policy":  None,
+           "none":    None  }
 
 class RunSetupException(pexExcept.LsstException):
     """
@@ -27,16 +29,16 @@ class UsageError(RunSetupException):
     pass
     
 
-def addVerbosityOption(clparser, shortopt="L"):
+def addVerbosityOption(clparser, shortopt="L", dest="verbosity"):
     """
     add a command-line option that control message verbosity 
     """
     clparser.add_option("-"+shortopt, "--log-verbosity", type="str", 
-                        action="store", dest="verbosity", default=None, 
+                        action="store", dest=dest, default=None, 
                         metavar="lev",
-                        help="string or integer message verbosity level for the pipeline: silent=-21, quiet=-10, info=0, trace=1, verb1=1, verb2=2, verb3=3, debug=10")
+                        help="string or integer message verbosity level level for the pipeline: silent=-21, quiet=-10, info=0, trace=1, verb1=1, verb2=2, verb3=3, debug=10, policy=consult policy")
 
-def addAllVerbosityOptions(clparser, shortopt="L"):
+def addAllVerbosityOptions(clparser, shortopt="L", dest="verbosity"):
     """
     add command-line options that control message verbosity.  This adds the 
     --log-verbosity option (via addVerbosityOption()) along with several extra
@@ -44,17 +46,14 @@ def addAllVerbosityOptions(clparser, shortopt="L"):
     """
     addVerbosityOption(clparser, shortopt)
     clparser.add_option("-d", "--debug", action="store_const", const='debug',
-                        dest="verbosity",
-                        help="print maximum amount of messages")
+                        dest=dest, help="print maximum amount of messages")
     clparser.add_option("-v", "--verbose", action="store_const", const='verb3',
-                        dest="verbosity",
+                        dest=dest, 
                         help="print extra messages (same as -L verb3)")
     clparser.add_option("-q", "--quiet", action="store_const", const='quiet',
-                        dest="verbosity",
-                        help="print only warning & error messages")
+                        dest=dest, help="print only warning & error messages")
     clparser.add_option("-s", "--silent", action="store_const", const='silent',
-                        dest="verbosity",
-                        help="print nothing (if possible)")
+                        dest=dest, help="print nothing (if possible)")
 
 
 def verbosity2threshold(level):

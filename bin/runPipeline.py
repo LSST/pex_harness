@@ -61,12 +61,9 @@ def runPipeline(policyFile, runId, logthresh=None):
     @param logthresh    the logging threshold to use to control the verbosity
                            of messages.
     """
-    print policyFile, runId, logthresh
-    sys.exit(0)
-
     pyPipeline = Pipeline(runId, policyFile)
     if isinstance(logthresh, int):
-        pyPipeline.setThreshold(logthresh)
+        pyPipeline.setLogThreshold(logthresh)
 
     pyPipeline.configurePipeline()   
 

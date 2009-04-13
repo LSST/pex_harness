@@ -48,10 +48,9 @@ def runSlice(policyFile, runId, logthresh=None):
     """
     runSlice: Slice Main execution 
     """
-    print policyFile, runId, logthresh
-    sys.exit(0)
-
     pySlice = Slice(runId, policyFile)
+    if isinstance(logthresh, int):
+        pySlice.setLogThreshold(logthresh)
 
     pySlice.configureSlice()   
 
