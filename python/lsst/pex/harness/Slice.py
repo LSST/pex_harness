@@ -539,9 +539,9 @@ class Slice:
         self.logthresh = level
 
     def makeStageName(self, appStagePolicy):
-        if appstagePolicy.getValueType("stagePolicy") == appstagePolicy.FILE:
+        if appStagePolicy.getValueType("stagePolicy") == appStagePolicy.FILE:
             pfile = os.path.splitext(os.path.basename(
-                        appstagePolicy.getFile("stagePolicy").getPath()))[0]
+                        appStagePolicy.getFile("stagePolicy").getPath()))[0]
             return trailingpolicy.sub('', pfile)
         else:
             return None
