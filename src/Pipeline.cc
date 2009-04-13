@@ -122,15 +122,27 @@ int Pipeline::getUniverseSize() {
  * The number of Slices to be spawned nSlices is one less than the designated universe size.
  */ 
 void Pipeline::startSlices() {
-    std::ostringstream lev;
-    lev << Log::getDefaultLog().getThreshold();
-
     int *array_of_errcodes;
-    array_of_errcodes = (int *)malloc(4 * sizeof (int));
+    array_of_errcodes = (int *) malloc(4 * sizeof (int));
+
+    std::ostringstream levsb;
+    levsb << getLogger().getThreshold();
+    string levstr(levsb.str());
+    char *lev = (char *) malloc(levstr.length());
+    strcpy(lev, levstr.c_str());
 
     int errcodes[nSlices];
     char *myexec  = "runSlice.py";
-    char *argv[] = {_policyName, _runId, "-l", lev.c_str(), NULL};
+    char *argv[] = {_policyName, _runId, "-l", lev, NULL};
+    if (getLogger().sends(Log::DEBUG)) {
+        Log log(getLogger(), "startSlices.cpp");
+        std::ostringstream spawncmd;
+        spawncmd << myexec;
+        char **arg = argv;
+        while (*arg != NULL) 
+            spawncmd << " " << *(arg++);
+        log.log(Log::DEBUG, spawncmd.str());
+    }
 
     mpiError = MPI_Comm_spawn(myexec, argv, nSlices, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &sliceIntercomm, errcodes); 
 

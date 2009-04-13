@@ -16,14 +16,14 @@ import os
 import sys
 import optparse, traceback
 
-usage = """Usage: %prog [-dvqs] [-V lev] policy runID"""
+usage = """Usage: %prog [-dvqs] [-l lev] policy runID"""
 desc = """Execute a slice worker process for a pipeline described by the
 given policy, assigning it the given run ID.  This should not be executed
 outside the context of a pipline harness process.  
 """
 
 cl = optparse.OptionParser(usage=usage, description=desc)
-cl.add_option("-l", "--logthreshold", type="int", action="store",
+cl.add_option("-l", "--log-threshold", type="int", action="store",
               dest="logthresh", default=None, metavar="lev",
               help="the logging message level threshold")
 

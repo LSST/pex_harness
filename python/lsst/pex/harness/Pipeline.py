@@ -132,11 +132,13 @@ class Pipeline:
         if self.logthresh is not None:
             self.log.setThreshold(self.logthresh)
         else:
-            self.logthresh = Log.getDefaultLog().getThreshold()
+            self.logthresh = self.log.getThreshold()
         self.log.addDestination(cout, Log.DEBUG);
 
         log = Log(self.log, "configurePipeline")
-        LogRec(log, self.VERB1) << "Configuring Slice"        \
+        log.log(Log.INFO,
+                "Logging messages using threshold=%i" % log.getThreshold())
+        LogRec(log, self.VERB1) << "Configuring pipeline"        \
                                 << Prop("universeSize", self.universeSize) \
                                 << Prop("runID", self._runId) \
                                 << Prop("rank", -1)   \
@@ -249,7 +251,7 @@ class Pipeline:
             self.topology   =  topologyPolicy.getString('type')
             log.log(self.VERB3, "Using topology type: %s" % self.topology)
 
-        log.log(self.VERB1, "Slice configuration complete");
+        log.log(self.VERB1, "Pipeline configuration complete");
 
     def initializeQueues(self):
         """

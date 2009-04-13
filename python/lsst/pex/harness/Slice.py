@@ -136,9 +136,11 @@ class Slice:
         if self.logthresh is not None:
             self.log.setThreshold(self.logthresh)
         else:
-            self.logthresh = Log.getDefaultLog().getThreshold()
+            self.logthresh = self.log.getThreshold()
 
         log = Log(self.log, "configurePipeline")
+        log.log(Log.INFO,
+                "Logging messages using threshold=%i" % log.getThreshold())
         LogRec(log, self.VERB1) << "Configuring Slice"        \
                                 << Prop("universeSize", self.universeSize) \
                                 << Prop("runID", self._runId) \
