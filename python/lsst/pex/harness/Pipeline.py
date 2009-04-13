@@ -21,9 +21,7 @@ from lsst.daf.persistence import *
 
 import lsst.ctrl.events as events
 
-import os
-import sys
-import traceback
+import os, sys, re, traceback
 import threading
 
 from cStringIO import StringIO
@@ -51,6 +49,8 @@ class Pipeline:
         self.VERB1 = self.TRACE
         self.VERB2 = self.VERB1 - 1
         self.VERB3 = self.VERB2 - 1
+        self.log = None
+        self.logthresh = None
         
         self.queueList = []
         self.stageList = []
@@ -74,7 +74,8 @@ class Pipeline:
         """
         Delete the Pipeline object: clean up
         """
-        self.log.log(self.VERB1, 'Python Pipeline being deleted')
+        if self.log is not None:
+            self.log.log(self.VERB1, 'Python Pipeline being deleted')
 
     def configurePipeline(self):
         """
@@ -99,12 +100,7 @@ class Pipeline:
         stgcfg = p.getArray("appStage")
         self.stageNames = []
         for item in stgcfg:
-            if item.getValueType("stagePolicy") == item.FILE:
-                self.stageNames.append(
-                    os.path.splitext(os.path.basename(
-                        item.getFile("stagePolicy").getPath()))[0])
-            else:
-                self.stageNames.append(None)
+            self.stageNames.append(makeStageName(item))
         p.loadPolicyFiles()
 
         # Obtain the working directory space locators
@@ -131,7 +127,12 @@ class Pipeline:
 
         # The log for use in the Python Pipeline
         self.log = self.cppPipeline.getLogger()
-        self.log.setThreshold(Log.DEBUG)
+        if self.logthresh is None:
+            self.logthresh = p.get('logThreshold')
+        if self.logthresh is not None:
+            self.log.setThreshold(self.logthresh)
+        else:
+            self.logthresh = Log.getDefaultLog().getThreshold()
         self.log.addDestination(cout, Log.DEBUG);
 
         log = Log(self.log, "configurePipeline")
@@ -553,6 +554,41 @@ class Pipeline:
         """
         self._runId = run
 
+    def getLogThreshold(self):
+        """
+        return the default message importance threshold being used for 
+        recording messages.  The returned value reflects the threshold 
+        associated with the default root (system-wide) logger (or what it will
+        be after logging is initialized).  Some underlying components may 
+        override this threshold.
+        """
+        if self.log is None:
+            return self.logthresh
+        else:
+            return Log.getDefaultLog().getThreshold()
+
+    def setLogThreshold(self, level):
+        """
+        set the default message importance threshold to be used for 
+        recording messages.  This will value be applied to the default
+        root (system-wide) logger (or what it will be after logging is 
+        initialized) so that all software components are affected.
+        """
+        if self.log is not None:
+            Log.getDefaultLog().setThreshold(level)
+            self.log.log(Log.INFO, 
+                         "Upating Root Log Message Threshold to %i" % level)
+        self.logthresh = level
+
+    def makeStageName(self, appStagePolicy):
+        if appstagePolicy.getValueType("stagePolicy") == appstagePolicy.FILE:
+            pfile = os.path.splitext(os.path.basename(
+                        appstagePolicy.getFile("stagePolicy").getPath()))[0]
+            return trailingpolicy.sub('', pfile)
+        else:
+            return None
+        
+trailingpolicy = re.compile(r'_*(policy|dict)$', re.IGNORECASE)
 
 if (__name__ == '__main__'):
     """

@@ -68,7 +68,9 @@ TracingLog *setupHarnessLogging(const std::string& runId, int sliceId,
     TracingLog *out = 0;
     try {
         out = new TracingLog(root, name);
-        out->log(Log::DEBUG, "Harness Logger initialized");
+        out->format(Log::INFO, 
+                    "Harness Logger initialized with message threshold = %i", 
+                    out->getThreshold());
         return out;
     }
     catch (...) {

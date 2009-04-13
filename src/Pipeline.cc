@@ -13,6 +13,7 @@
   * \author  Greg Daues, NCSA
   */
 #include <cstring>
+#include <sstream>
 
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Stage.h"
@@ -121,13 +122,15 @@ int Pipeline::getUniverseSize() {
  * The number of Slices to be spawned nSlices is one less than the designated universe size.
  */ 
 void Pipeline::startSlices() {
+    std::ostringstream lev;
+    lev << Log::getDefaultLog().getThreshold();
 
     int *array_of_errcodes;
     array_of_errcodes = (int *)malloc(4 * sizeof (int));
 
     int errcodes[nSlices];
     char *myexec  = "runSlice.py";
-    char *argv[] = {_policyName, _runId, NULL};
+    char *argv[] = {_policyName, _runId, "-l", lev.c_str(), NULL};
 
     mpiError = MPI_Comm_spawn(myexec, argv, nSlices, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &sliceIntercomm, errcodes); 
 
