@@ -34,7 +34,7 @@ def addVerbosityOption(clparser, shortopt="L"):
     clparser.add_option("-"+shortopt, "--log-verbosity", type="str", 
                         action="store", dest="verbosity", default=None, 
                         metavar="lev",
-                        help="string or integer message verbosity level: silent=-21, quiet=-10, info=0, trace=1, verb1=1, verb2=2, verb3=3, debug=10")
+                        help="string or integer message verbosity level for the pipeline: silent=-21, quiet=-10, info=0, trace=1, verb1=1, verb2=2, verb3=3, debug=10")
 
 def addAllVerbosityOptions(clparser, shortopt="L"):
     """
