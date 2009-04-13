@@ -35,21 +35,6 @@ the given run ID.
 cl = optparse.OptionParser(usage=usage, description=desc)
 run.addVerbosityOption(cl)
 
-# ditch
-cl.add_option("-d", "--debug", action="store_const", const='debug',
-              dest="verbosity",
-              help="print maximum amount of messages")
-cl.add_option("-v", "--verbose", action="store_const", const='verb3',
-              dest="verbosity",
-              help="print extra messages (same as -L verb3)")
-cl.add_option("-q", "--quiet", action="store_const", const='quiet',
-              dest="verbosity",
-              help="print only warning & error messages")
-cl.add_option("-s", "--silent", action="store_const", const='silent',
-              dest="verbosity",
-              help="print nothing (if possible)")
-#
-
 def main():
     """parse the input arguments and execute the pipeline
     """
