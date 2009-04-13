@@ -100,7 +100,7 @@ class Pipeline:
         stgcfg = p.getArray("appStage")
         self.stageNames = []
         for item in stgcfg:
-            self.stageNames.append(makeStageName(item))
+            self.stageNames.append(self.makeStageName(item))
         p.loadPolicyFiles()
 
         # Obtain the working directory space locators
