@@ -56,12 +56,12 @@ def addAllVerbosityOptions(clparser, shortopt="L", dest="verbosity"):
                         dest=dest, help="print nothing (if possible)")
 
 
-def verbosity2threshold(level):
+def verbosity2threshold(level, defthresh=None):
     """convert the requested verbosity level into a logging threshold.  
     The input level can be given as a logical name or an integer.  An integer
     verbosity level is the negative of the required threshold.
     """
-    if level is None:  return None
+    if level is None:  return defthresh
 
     if isinstance(level, str):
         level = level.lower()
@@ -77,5 +77,8 @@ def verbosity2threshold(level):
 
     elif not isinstance(level, int):
         raise UsageError, "Verbosity level is not an integer or string"
+
+    if level is None:
+        return defverb
 
     return -1 * level
