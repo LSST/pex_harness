@@ -392,7 +392,7 @@ class Slice:
 
             for skey in sharedKeys:
 
-                synclog(Log.DEBUG,
+                synclog.log(Log.DEBUG,
                         "Executing C++ syncSlices for keyToShare: " + skey)
 
                 psPtr = clipboard.get(skey)
@@ -410,7 +410,7 @@ class Slice:
                                 "Added to Clipboard: %s: %s" % (neighborKey,
                                                                 testString))
                     
-                synclog(Log.DEBUG,
+                synclog.log(Log.DEBUG,
                         "Received PropertySet: " + valuesFromNeighbors)
 
             queue.addDataset(clipboard)
