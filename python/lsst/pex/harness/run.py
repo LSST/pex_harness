@@ -79,6 +79,6 @@ def verbosity2threshold(level, defthresh=None):
         raise UsageError, "Verbosity level is not an integer or string"
 
     if level is None:
-        return defverb
+        return defthresh
 
     return -1 * level
