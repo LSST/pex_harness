@@ -11,7 +11,7 @@ echo $0 $@
 if [ "$#" -lt 5 ]; then
    echo "---------------------------------------------------------------------"
    echo "Usage:  $0 <policy-file-name> <runId> <nodelist-file>" \
-        "<node-count> <proc-count> [ <verbsity> ]"
+        "<node-count> <proc-count> [ <verbsity> ] [ <name> ]"
    echo "---------------------------------------------------------------------"
    exit 0
 fi
@@ -22,6 +22,7 @@ nodelist=${3}
 nodes=${4}
 usize=${5}
 verbosity=${6}
+name=${7}
 
 localnode=`hostname | sed -e 's/\..*$//'`
 localncpus=`sed -e 's/#.*$//' $nodelist | egrep $localnode'|localhost' | sed -e 's/^.*://'`
@@ -33,6 +34,12 @@ echo "nodes ${nodes}"
 echo "nslices ${nslices}"
 echo "usize ${usize}"
 echo "ncpus ${localncpus}"
+if [ -z "$name" ]; then
+   echo "name: default"
+else
+   echo "name ${verbosity}"
+   name="-n $name"
+fi
 if [ -z "$verbosity" ]; then
    echo "verbosity: default"
 else
@@ -54,8 +61,8 @@ sleep 2s
 
 echo "Running mpiexec"
 
-echo mpiexec -usize ${usize} -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId} ${verbosity}
-mpiexec -usize ${usize}  -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId} ${verbosity}
+echo mpiexec -usize ${usize} -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId} ${verbosity} ${name} 
+mpiexec -usize ${usize}  -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId} ${verbosity} ${name} 
 
 sleep 1s
 

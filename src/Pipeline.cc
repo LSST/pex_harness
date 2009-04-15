@@ -20,11 +20,14 @@
 
 using lsst::pex::logging::Log;
 
-/** Constructor.
+/** 
+ * Constructor.
+ * @param name   a name to identify the pipeline.  This is used in setting 
+ *                 up the logger.
  */
-Pipeline::Pipeline(void) 
+Pipeline::Pipeline(const std::string& name) 
     : _pid(getpid()), pipelineLog(Log::getDefaultLog(),"harness"), 
-      _evbHost(""), outlog(0) 
+      _evbHost(""), _pipename(name), outlog(0) 
 { }
 
 /** Destructor.
@@ -56,8 +59,9 @@ void Pipeline::initializeLogger(bool isLocalLogMode  //!< A flag for writing log
         outlog =  new ofstream(logfile);
     }
     boost::shared_ptr<TracingLog> 
-        lp(setupHarnessLogging(std::string(_runId), -1, _evbHost, outlog,
-                               "harness.pipeline"));
+        lp(setupHarnessLogging(std::string(_runId), -1, _evbHost, _pipename,
+                               outlog, "harness.pipeline"));
+                               
     pipelineLog = *lp;
 
     pipelineLog.format(Log::INFO, 

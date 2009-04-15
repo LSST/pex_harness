@@ -18,11 +18,14 @@
 
 namespace pexPolicy = lsst::pex::policy;
 
-/** Constructor.
+/** 
+ * Constructor.
+ * @param pipename   a name to identify the pipeline.  This is used in setting 
+ *                      up the logger.
  */
-Slice::Slice(void) 
+Slice::Slice(const std::string& pipename) 
     : _pid(getpid()), _rank(-2), sliceLog(Log::getDefaultLog(),"harness"), 
-      _evbHost(""), outlog(0) 
+      _evbHost(""), _pipename(pipename), outlog(0) 
 { }
 
 /** Destructor.
@@ -54,7 +57,7 @@ void Slice::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs t
 
     boost::shared_ptr<TracingLog> 
         lp(setupHarnessLogging(std::string(_runId), getRank(), _evbHost,
-                               outlog, "harness.slice"));
+                               _pipename, outlog, "harness.slice"));
     sliceLog = *lp;
 
     sliceLog.format(Log::INFO, "Slice Logger initialized for pid=%d", _pid);

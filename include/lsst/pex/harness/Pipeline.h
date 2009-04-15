@@ -79,7 +79,7 @@ typedef vector<Queue*> QueueVector;
 
 class Pipeline {
 public:
-    Pipeline(); // constructor
+    Pipeline(const std::string& name="unnamed"); // constructor
 
     ~Pipeline(); // destructor
 
@@ -104,6 +104,11 @@ public:
 
     void setPolicyName(char* policyName);
     char* getPolicyName();
+
+    void setPipelineName(const std::string& name) {
+        _pipename = name;
+    }
+    const std::string& getPipelineName() {  return _pipename;  }
 
     void setEventBrokerHost(const std::string& host) {
         _evbHost = host;
@@ -133,6 +138,7 @@ private:
 
     TracingLog pipelineLog;
     std::string _evbHost;
+    std::string _pipename;
     ofstream* outlog;
 
 };

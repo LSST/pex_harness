@@ -87,7 +87,7 @@ typedef vector<Stage> StageVector;
 class Slice {
 
 public:
-    Slice(); // constructor
+    Slice(const std::string& pipename="unnamed"); // constructor
 
     ~Slice(); // destructor
 
@@ -110,6 +110,11 @@ public:
     void calculateNeighbors();
     std::vector<int> getRecvNeighborList();
     PropertySet::Ptr syncSlices(PropertySet::Ptr dpt);
+
+    void setPipelineName(const std::string& name) {
+        _pipename = name;
+    }
+    const std::string& getPipelineName() {  return _pipename;  }
 
     void setEventBrokerHost(const std::string& host) {
         _evbHost = host;
@@ -140,6 +145,7 @@ private:
 
     TracingLog sliceLog;
     std::string _evbHost;
+    std::string _pipename;
     ofstream* outlog;
 };
 

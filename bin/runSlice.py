@@ -16,7 +16,7 @@ import os
 import sys
 import optparse, traceback
 
-usage = """Usage: %prog [-dvqs] [-l lev] policy runID"""
+usage = """Usage: %prog [-l lev] [-n name] policy runID"""
 desc = """Execute a slice worker process for a pipeline described by the
 given policy, assigning it the given run ID.  This should not be executed
 outside the context of a pipline harness process.  
@@ -26,6 +26,8 @@ cl = optparse.OptionParser(usage=usage, description=desc)
 cl.add_option("-l", "--log-threshold", type="int", action="store",
               dest="logthresh", default=None, metavar="lev",
               help="the logging message level threshold")
+cl.add_option("-n", "--name", action="store", default=None, dest="name",
+              help="a name for identifying the pipeline")
 
 def main():
     """parse the input arguments and execute the pipeline
@@ -42,13 +44,16 @@ def main():
     pipelinePolicyName = cl.args[0]
     runId = cl.args[1]
 
-    runSlice(pipelinePolicyName, runId, cl.opts.logthresh)
+    runSlice(pipelinePolicyName, runId, cl.opts.logthresh, cl.opts.name)
 
-def runSlice(policyFile, runId, logthresh=None):
+def runSlice(policyFile, runId, name="unnamed", logthresh=None):
     """
     runSlice: Slice Main execution 
     """
-    pySlice = Slice(runId, policyFile)
+    if name is None or name == "None":
+        name = os.path.splitext(os.path.basename(policyFile))[0]
+    
+    pySlice = Slice(runId, policyFile, name)
     if isinstance(logthresh, int):
         pySlice.setLogThreshold(logthresh)
 

@@ -42,7 +42,7 @@ class Slice:
     '''Slice: Python Slice class implementation. Wraps C++ Slice'''
 
     #------------------------------------------------------------------------
-    def __init__(self, runId="TEST", pipelinePolicyName=None):
+    def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed"):
         """
         Initialize the Slice: create an empty Queue List and Stage List;
         Import the C++ Slice  and initialize the MPI environment
@@ -54,6 +54,8 @@ class Slice:
         self.VERB3 = self.VERB2 - 1
         self.log = None
         self.logthresh = None
+        
+        self._pipelineName = name
         
         self.queueList = []
         self.stageList = []
@@ -67,6 +69,8 @@ class Slice:
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
         self.cppSlice = slice.Slice()
+        #TODO: why does this fail?
+        # self.cppSlice.setPipelineName(self._pipelineName)
         self.cppSlice.setRunId(runId)
         self.cppSlice.initialize()
         self._rank = self.cppSlice.getRank()
@@ -123,7 +127,7 @@ class Slice:
         if (p.exists('eventBrokerHost')):
             self.eventBrokerHost = p.getString('eventBrokerHost')
         else:
-            self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
+            self.eventBrokerHost = "lsst4.ncsa.uiuc.edu"   # default value
         self.cppSlice.setEventBrokerHost(self.eventBrokerHost);
 
         doLogFile = p.getBool('localLogMode')
@@ -281,6 +285,7 @@ class Slice:
             stageObject.setRank(self._rank)
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
+            stageObject.setEventBrokerHost(self.eventBrokerHost)
             stageObject.initialize(outputQueue, inputQueue)
             # stageObject.setLookup(self._lookup)
             self.stageList.append(stageObject)

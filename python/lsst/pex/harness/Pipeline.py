@@ -32,14 +32,14 @@ The Pipeline is configured by reading a Policy file.   This Python Pipeline
 class imports the C++ Pipeline class via a python extension module in order 
 to setup and manage the MPI environment.
 Pipeline has a __main__ portion as it serves as the main executable program 
-("glue layer") for running a Pipeline. The Pipeline spawns Slice workers 
+('glue layer') for running a Pipeline. The Pipeline spawns Slice workers 
 using an MPI-2 Spawn operation. 
 """
 
 class Pipeline:
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
-    def __init__(self, runId='-1', pipelinePolicyName=None):
+    def __init__(self, runId='-1', pipelinePolicyName=None, name="unnamed"):
         """
         Initialize the Pipeline: create empty Queue and Stage lists;
         import the C++ Pipeline instance; initialize the MPI environment
@@ -51,6 +51,8 @@ class Pipeline:
         self.VERB3 = self.VERB2 - 1
         self.log = None
         self.logthresh = None
+
+        self._pipelineName = name
         
         self.queueList = []
         self.stageList = []
@@ -61,7 +63,7 @@ class Pipeline:
         self.shareDataList = []
         self.clipboardList = []
         self.executionMode = 0
-        self.cppPipeline = pipeline.Pipeline()
+        self.cppPipeline = pipeline.Pipeline(self._pipelineName)
         self.cppPipeline.setRunId(runId)
         self.cppPipeline.setPolicyName(pipelinePolicyName)
         self.cppPipeline.initialize()
@@ -281,6 +283,7 @@ class Pipeline:
             outputQueue = self.queueList[iStage]
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
+            stageObject.setEventBrokerHost(self.eventBrokerHost)
             # stageObject.setLookup(self._lookup)
             stageObject.initialize(outputQueue, inputQueue)
             self.stageList.append(stageObject)

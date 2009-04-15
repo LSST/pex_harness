@@ -178,15 +178,19 @@ private:
  * @param runId             the production run identifier that harness is 
  *                             running under
  * @param sliceId           the slice identifier (-1 for the master process)
+ * @param eventBrokerHost   the hostname where the desired event broker is 
+ *                             running
+ * @param pipename          the name used to identify the pipeline
  * @param messageStrm       if non-null, a (file) stream to replicate the 
  *                             messages in.
- * @param name              the name to give to the harness logger (default:
- *                             "harness"
+ * @param logname           the name to give to the harness logger (default:
+ *                             "harness")
  */
 TracingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
                                 const std::string& eventBrokerHost="", 
+                                const std::string& pipename="unnamed",
                                 std::ostream *messageStrm=0,
-                                const std::string& name="harness");
+                                const std::string& logname="harness");
 
 }}}     // end lsst::pex::harness
 

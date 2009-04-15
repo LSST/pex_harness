@@ -27,12 +27,14 @@ import os
 import sys
 import optparse, traceback
 
-usage = """Usage: %prog [-dvqs] [-V lev] policy runID"""
+usage = """Usage: %prog [-V lev] [-n name] policy runID"""
 desc = """Execute the pipeline described by the given policy, assigning it
 the given run ID.
 """
 
 cl = optparse.OptionParser(usage=usage, description=desc)
+cl.add_option("-n", "--name", action="store", default=None, dest="name",
+              help="a name for identifying the pipeline")
 run.addVerbosityOption(cl)
 
 def main():
@@ -51,9 +53,9 @@ def main():
     pipelinePolicyName = cl.args[0]
     runId = cl.args[1]
 
-    runPipeline(pipelinePolicyName, runId, logthresh)
+    runPipeline(pipelinePolicyName, runId, logthresh, cl.opts.name)
 
-def runPipeline(policyFile, runId, logthresh=None):
+def runPipeline(policyFile, runId, logthresh=None, name=None):
     """
     Create the Pipeline object and start the pipeline execution
     @param policyFile   the name of the policy file that defines the pipeline
@@ -61,7 +63,10 @@ def runPipeline(policyFile, runId, logthresh=None):
     @param logthresh    the logging threshold to use to control the verbosity
                            of messages.
     """
-    pyPipeline = Pipeline(runId, policyFile)
+    if name is None or name == "None":
+        name = os.path.splitext(os.path.basename(policyFile))[0]
+    
+    pyPipeline = Pipeline(runId, policyFile, name)
     if isinstance(logthresh, int):
         pyPipeline.setLogThreshold(logthresh)
 

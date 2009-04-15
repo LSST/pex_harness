@@ -7,7 +7,7 @@ from lsst.pex.logging import Log
 from lsst.pex.policy import Policy
 import lsst.pex.harness.run as run
 
-usage = """usage: %prog policy_file runid [-vqsd] [-L lev] [-n file]"""
+usage = """usage: %prog policy_file runid [pipelineName] [-vqsd] [-L lev] [-n file]"""
 
 desc = """
 Launch a pipeline with a given policy and Run ID.  If a node list file is not 
@@ -49,8 +49,12 @@ def main():
         if len(cl.args) < 2:
             print usage
             raise RuntimeError("Missing argument: runid")
+
+        name = None
+        if len(cl.args) > 2:
+            name = cl.args[2]
     
-        launchPipeline(cl.args[0], cl.args[1], cl.opts.verbosity)
+        launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity)
 
     except SystemExit:
         pass
@@ -62,7 +66,7 @@ def main():
         logger.log(Log.DEBUG, "".join(tb[0:-1]).strip())
         sys.exit(1)
 
-def launchPipeline(policyFile, runid, verbosity=None):
+def launchPipeline(policyFile, runid, name=None, verbosity=None):
     if not os.environ.has_key(pkgdirvar):
         raise RuntimeError(pkgdirvar + " env. var not setup")
 
@@ -93,6 +97,8 @@ def launchPipeline(policyFile, runid, verbosity=None):
 
     cmd = "runPipelin.sh.py %s %s %s %d %d" % \
           (policyFile, runid, nodesfile, nnodes, nprocs)
+    if name is not None:
+        cmd += " %s" % name
     if verbosity is not None:
         cmd += " %s" % verbosity
     logger.log(Log.DEBUG, "exec " + cmd)

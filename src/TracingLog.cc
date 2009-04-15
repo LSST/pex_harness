@@ -48,8 +48,9 @@ using lsst::pex::logging::LogDestination;
 
 TracingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
                                 const std::string& eventBrokerHost, 
+                                const std::string& pipename,
                                 std::ostream *messageStrm,
-                                const std::string& name)
+                                const std::string& logname)
 {
     if (eventBrokerHost.length() > 0) {
         EventSystem& eventSystem = EventSystem::getDefaultEventSystem();
@@ -57,6 +58,7 @@ TracingLog *setupHarnessLogging(const std::string& runId, int sliceId,
         EventLog::createDefaultLog(runId, sliceId);
     }
     Log& root = Log::getDefaultLog();
+    root.addPreambleProperty("pipeline", pipename);
 
     if (messageStrm != 0) {
         boost::shared_ptr<LogFormatter> frmtr(new IndentedFormatter(true));
@@ -67,7 +69,7 @@ TracingLog *setupHarnessLogging(const std::string& runId, int sliceId,
 
     TracingLog *out = 0;
     try {
-        out = new TracingLog(root, name);
+        out = new TracingLog(root, logname);
         out->format(Log::INFO, 
                     "Harness Logger initialized with message threshold = %i", 
                     out->getThreshold());
