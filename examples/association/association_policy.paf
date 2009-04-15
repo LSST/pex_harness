@@ -10,6 +10,7 @@
 #
 localLogMode: true  
 eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
+logThreshold: -3
 shutdownTopic: "triggerShutdownA" 
 
 appStage: { 
