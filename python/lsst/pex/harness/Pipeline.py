@@ -398,7 +398,7 @@ class Pipeline:
         """
         If needed, calls the C++ Pipeline invokeSyncSlices
         """
-        invlog = stageLog.traceBlock("invokeSyncSlices", self.TRACE-1)
+        invlog = stagelog.traceBlock("invokeSyncSlices", self.TRACE-1)
         if(self.shareDataList[iStage-1]):
             self.cppPipeline.invokeSyncSlices(); 
         invlog.done()
