@@ -34,7 +34,7 @@ def createLog():
     return log
 
 def setVerbosity(verbosity):
-    logger.setThreshold(run.verbosity2threshold(verbosity))  
+    logger.setThreshold(run.verbosity2threshold(verbosity, -1))  
 
 logger = createLog()
 
@@ -45,13 +45,15 @@ def main():
 
         if len(cl.args) < 1:
             print usage
-            raise RuntimeError("Missing arguments: dc3pipe_policy_file runId")
+            raise RuntimeError("Missing arguments: pipeline_policy_file runId")
         if len(cl.args) < 2:
             print usage
             raise RuntimeError("Missing argument: runid")
     
         launchPipeline(cl.args[0], cl.args[1], cl.opts.verbosity)
 
+    except SystemExit:
+        pass
     except:
         tb = traceback.format_exception(sys.exc_info()[0],
                                         sys.exc_info()[1],
