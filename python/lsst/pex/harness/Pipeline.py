@@ -4,7 +4,8 @@ from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.Stage import Stage
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.harness.Directories import Directories
-from lsst.pex.logging import Log, LogRec, cout
+from lsst.pex.harness.harnessLib import TracingLog
+from lsst.pex.logging import Log, LogRec, cout, Prop
 from lsst.pex.harness import harnessLib as pipeline
 
 import lsst.pex.policy as policy
@@ -20,9 +21,7 @@ from lsst.daf.persistence import *
 
 import lsst.ctrl.events as events
 
-import os
-import sys
-import traceback
+import os, sys, re, traceback
 import threading
 
 from cStringIO import StringIO
@@ -33,18 +32,28 @@ The Pipeline is configured by reading a Policy file.   This Python Pipeline
 class imports the C++ Pipeline class via a python extension module in order 
 to setup and manage the MPI environment.
 Pipeline has a __main__ portion as it serves as the main executable program 
-("glue layer") for running a Pipeline. The Pipeline spawns Slice workers 
+('glue layer') for running a Pipeline. The Pipeline spawns Slice workers 
 using an MPI-2 Spawn operation. 
 """
 
 class Pipeline:
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
-    def __init__(self, runId='-1', pipelinePolicyName=None):
+    def __init__(self, runId='-1', pipelinePolicyName=None, name="unnamed"):
         """
         Initialize the Pipeline: create empty Queue and Stage lists;
         import the C++ Pipeline instance; initialize the MPI environment
         """
+        # log message levels
+        self.TRACE = TracingLog.TRACE
+        self.VERB1 = self.TRACE
+        self.VERB2 = self.VERB1 - 1
+        self.VERB3 = self.VERB2 - 1
+        self.log = None
+        self.logthresh = None
+
+        self._pipelineName = name
+        
         self.queueList = []
         self.stageList = []
         self.stageClassList = []
@@ -54,7 +63,7 @@ class Pipeline:
         self.shareDataList = []
         self.clipboardList = []
         self.executionMode = 0
-        self.cppPipeline = pipeline.Pipeline()
+        self.cppPipeline = pipeline.Pipeline(self._pipelineName)
         self.cppPipeline.setRunId(runId)
         self.cppPipeline.setPolicyName(pipelinePolicyName)
         self.cppPipeline.initialize()
@@ -62,19 +71,13 @@ class Pipeline:
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
 
-        # we'll use these in our logging
-        self.statstart = dafBase.PropertySet()
-        self.statend   = dafBase.PropertySet()
-
-        self.statstart.setString("STATUS", str("start"))
-        self.statend.setString("STATUS", str("end"))
-        
 
     def __del__(self):
         """
         Delete the Pipeline object: clean up
         """
-        self.log.log(Log.DEBUG, 'Python Pipeline being deleted')
+        if self.log is not None:
+            self.log.log(self.VERB1, 'Python Pipeline being deleted')
 
     def configurePipeline(self):
         """
@@ -90,6 +93,17 @@ class Pipeline:
             p = topPolicy.get('execute')
         else:
             p = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+        # do some juggling to capture the actual stage policy names.  We'll
+        # use these to assign some logical names to the stages for logging
+        # purposes.  Note, however, that it is only convention that the
+        # stage policies will be specified as separate files; thus, we need
+        # a fallback.  
+        stgcfg = p.getArray("appStage")
+        self.stageNames = []
+        for item in stgcfg:
+            self.stageNames.append(self.makeStageName(item))
+        p.loadPolicyFiles()
 
         # Obtain the working directory space locators
         psLookup = lsst.daf.base.PropertySet()
@@ -108,40 +122,30 @@ class Pipeline:
             self.eventBrokerHost = p.getString('eventBrokerHost')
         else:
             self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
+        self.cppPipeline.setEventBrokerHost(self.eventBrokerHost);
 
-        eventSystem = events.EventSystem.getDefaultEventSystem()
-        eventSystem.createTransmitter(self.eventBrokerHost, "LSSTLogging")
-        events.EventLog.createDefaultLog(self._runId, -1)
-
-        # Check for localLogMode
-        if (p.exists('localLogMode')):
-            self.localLogMode = p.getBool('localLogMode')
-        else:
-            self.localLogMode = False   # default value
-
-        if (self.localLogMode == True):
-            # Initialize the logger in C++ to add a ofstream
-            self.cppPipeline.initializeLogger(True)
-        else:
-            self.cppPipeline.initializeLogger(False)
+        doLogFile = p.getBool('localLogMode')
+        self.cppPipeline.initializeLogger(doLogFile)
 
         # The log for use in the Python Pipeline
-        root     = Log.getDefaultLog()
-        self.log = Log(root, "pex.harness.pipeline")
-        self.log.setThreshold(Log.DEBUG)
+        self.log = self.cppPipeline.getLogger()
+        if self.logthresh is None:
+            self.logthresh = p.get('logThreshold')
+        if self.logthresh is not None:
+            self.log.setThreshold(self.logthresh)
+        else:
+            self.logthresh = self.log.getThreshold()
         self.log.addDestination(cout, Log.DEBUG);
 
-        psUniv  = dafBase.PropertySet()
-        psRunid = dafBase.PropertySet()
-        psUniv.setInt("universeSize", self.universeSize)
-        psRunid.setString("runID", self._runId)
-
         log = Log(self.log, "configurePipeline")
-        lr = LogRec(log, Log.INFO)
-        lr << "Initialized the Logger" \
-           << psUniv.toString(False) << psRunid.toString(False)
-        lr << LogRec.endr
-
+        log.log(Log.INFO,
+                "Logging messages using threshold=%i" % log.getThreshold())
+        LogRec(log, self.VERB1) << "Configuring pipeline"        \
+                                << Prop("universeSize", self.universeSize) \
+                                << Prop("runID", self._runId) \
+                                << Prop("rank", -1)   \
+                                << LogRec.endr;
+        
         # Configure persistence logical location map with values for directory 
         # work space locators
         dafPersist.LogicalLocation.setLocationMap(psLookup)
@@ -157,37 +161,32 @@ class Pipeline:
         if (p.exists('shareDataOn')):
             self.isDataSharingOn = p.getBool('shareDataOn')
 
-        psSharing  = dafBase.PropertySet()
-        psSharing.setBool("isDataSharingOn", self.isDataSharingOn)
-
-        lr = LogRec(log, Log.INFO)
-        lr << psSharing
-        lr << LogRec.endr
-
+        if self.isDataSharingOn:
+            log.log(self.VERB2, "Data sharing is on")
+        else:
+            log.log(self.VERB2, "Data sharing is off")
 
         # Process Application Stages
         fullStageList = p.getArray("appStage")
-
-        lr = LogRec(log, Log.INFO)
-        lr << "Read Stage list"
-        count = 1
-        fullStageNameList = [ ]
-        for item in fullStageList:
-            fullStageNameList.append(item.getString("stageName"))
-            psAppStage  = dafBase.PropertySet()
-            psAppStage.setString("appStage" + str(count), item.getString("stageName"))
-            lr << psAppStage
-            count += 1
-        lr << LogRec.endr
-
         self.nStages = len(fullStageList)
-        self.stageNames = [ ] 
+        log.log(self.VERB2, "Found %d stages" % len(fullStageList))
+
+        fullStageNameList = [ ]
+        self.stagePolicyList = [ ]
+        for stagei in xrange(self.nStages):
+            item = fullStageList[stagei]
+            fullStageNameList.append(item.getString("stageName"))
+            self.stagePolicyList.append(item.get("stagePolicy"))
+            if self.stageNames[stagei] is None:
+                self.stageNames[stagei] = fullStageNameList[-1].split('.')[-1]
+            log.log(self.VERB3,
+                    "Stage %d: %s: %s" % (stagei+1, self.stageNames[stagei],
+                                          fullStageNameList[-1]))
         for astage in fullStageNameList:
             fullStage = astage.strip()
             tokenList = astage.split('.')
             classString = tokenList.pop()
             classString = classString.strip()
-            self.stageNames.append(classString)
 
             package = ".".join(tokenList)
 
@@ -196,10 +195,6 @@ class Pipeline:
             StageClass = getattr(AppStage, classString)
             self.stageClassList.append(StageClass) 
 
-
-        lr = LogRec(log, Log.INFO)
-        lr << "Imported Stages"
-        lr << LogRec.endr
 
         # Process Event Topics
         self.eventTopicList = []
@@ -214,34 +209,24 @@ class Pipeline:
                 shareDataStage = item.getBool('shareData')
             self.shareDataList.append(shareDataStage)
 
-        lr = LogRec(log, Log.INFO)
-        lr << "Read event trigger topics"
-        count = 1
-        for item in self.eventTopicList:
-            psTopic  = dafBase.PropertySet()
-            psTopic.setString("eventTopic" + str(count), item)
-            lr << psTopic.toString(False)
-            count = count + 1
-        lr << LogRec.endr
+        log.log(self.VERB3, "Loading in %d trigger topics" % \
+                len(filter(lambda x: x != "None", self.eventTopicList)))
 
+        for iStage in xrange(len(self.eventTopicList)):
+            item = self.eventTopicList[iStage]
+            if self.eventTopicList[iStage] != "None":
+                log.log(self.VERB3, "eventTopic%d: %s" % (iStage+1, item))
+            else:
+                log.log(Log.DEBUG, "eventTopic%d: %s" % (iStage+1, item))
 
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.eventTopicList:
             if (topic == "None"):
-                lr = LogRec(log, Log.DEBUG)
-                lr << "The topic is None"
-                lr << LogRec.endr
                 self.eventReceiverList.append(None)
             else:
                 eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
                 self.eventReceiverList.append(eventReceiver)
-
-        # Process Stage Policies
-        # inputStagePolicy = policy.Policy.createPolicy("policy/inputStage.policy")
-        self.stagePolicyList = [ ]
-        for item in fullStageList:
-            self.stagePolicyList.append(item.get("stagePolicy"))
 
         # Check for executionMode of oneloop 
         if (p.exists('executionMode') and (p.getString('executionMode') == "oneloop")):
@@ -263,20 +248,12 @@ class Pipeline:
         if (p.exists('topology')):
             # Retrieve the topology policy and set it in C++
             topologyPolicy = p.get('topology')
+
             # Diagnostic print
             self.topology   =  topologyPolicy.getString('type')
-            lr = LogRec(log, Log.INFO)
-            lr << "Read topology"
-            psTop0  = dafBase.PropertySet()
-            psTop0.setString("topology_type", self.topology)
-            lr << psTop0
-            lr << LogRec.endr
+            log.log(self.VERB3, "Using topology type: %s" % self.topology)
 
-
-        
-        lr = LogRec(log, Log.INFO)
-        lr << "End configurePipeline"
-        lr << LogRec.endr
+        log.log(self.VERB1, "Pipeline configuration complete");
 
     def initializeQueues(self):
         """
@@ -290,10 +267,7 @@ class Pipeline:
         """
         Initialize the Stage List for the Pipeline
         """
-        log = Log(self.log, "initializeStages")
-        lr = LogRec(log, Log.INFO)
-        lr << "Start initializeStages" 
-        lr << LogRec.endr
+        log = self.log.traceBlock("initializeStages", self.TRACE-2)
 
         for iStage in range(1, self.nStages+1):
             # Make a Policy object for the Stage Policy file
@@ -309,28 +283,20 @@ class Pipeline:
             outputQueue = self.queueList[iStage]
             stageObject.setUniverseSize(self.universeSize)
             stageObject.setRun(self._runId)
+            stageObject.setEventBrokerHost(self.eventBrokerHost)
             # stageObject.setLookup(self._lookup)
             stageObject.initialize(outputQueue, inputQueue)
             self.stageList.append(stageObject)
 
-        lr = LogRec(log, Log.INFO)
-        lr << "End initializeStages" 
-        lr << LogRec.endr
+        log.done()
 
     def startSlices(self):
         """
         Initialize the Queue by defining an initial dataset list
         """
-        log = Log(self.log, "startSlices")
-        lr = LogRec(log, Log.INFO)
-        lr << "Start startSlices: spawning Slices" 
-        lr << LogRec.endr
-
+        log = self.log.traceBlock("startSlices", self.TRACE-2)
         self.cppPipeline.startSlices()
-
-        lr = LogRec(log, Log.INFO)
-        lr << "End startSlices" 
-        lr << LogRec.endr
+        log.done()
 
     def startInitQueue(self):
         """
@@ -353,11 +319,11 @@ class Pipeline:
         """
         Method to execute loop over Stages
         """
+        startStagesLoopLog = self.log.traceBlock("startStagesLoop", self.TRACE)
+        looplog = TracingLog(self.log, "visit", self.TRACE)
+        stagelog = TracingLog(looplog, "stage", self.TRACE-1)
 
         eventReceiver = events.EventReceiver(self.eventBrokerHost, self.shutdownTopic)
-
-        looplog = Log(self.log, "startStagesLoop", Log.INFO)
-
         visitcount = 0 
         while True:
 
@@ -368,63 +334,51 @@ class Pipeline:
                 break
             else:
                 visitcount += 1
-                loopnum  = dafBase.PropertySet()
-                loopnum.setInt("loopnum", visitcount)
-                LogRec(looplog, Log.INFO)                        \
-                       << "Starting Visit Loop iteration: loopnum " + str(visitcount)  \
-                       << loopnum  << self.statstart << LogRec.endr
+                looplog.setPreamblePropertyInt("loopnum", visitcount)
+                looplog.start()
+                stagelog.setPreamblePropertyInt("loopnum", visitcount)
+
                 self.cppPipeline.invokeContinue()
                 self.startInitQueue()    # place an empty clipboard in the first Queue
 
                 self.errorFlagged = 0
                 for iStage in range(1, self.nStages+1):
-
-                    psStage  = dafBase.PropertySet()
-                    psStage.setInt("iStage", iStage);
-
-                    LogRec(looplog, Log.INFO) \
-                        << "Top Stage Loop" \
-                        << loopnum \
-                        << psStage << LogRec.endr
+                    stagelog.setPreamblePropertyInt("stageId", iStage)
+                    stagelog.start(self.stageNames[iStage-1] + " loop")
 
                     stage = self.stageList[iStage-1]
 
-                    self.handleEvents(iStage)
+                    self.handleEvents(iStage, stagelog)
 
-                    self.tryPreProcess(iStage, stage)
+                    self.tryPreProcess(iStage, stage, stagelog)
 
                     if(self.isDataSharingOn):
-                        self.invokeSyncSlices(iStage) 
+                        self.invokeSyncSlices(iStage, stagelog)
 
                     self.cppPipeline.invokeProcess(iStage)
 
-                    self.tryPostProcess(iStage, stage)
+                    self.tryPostProcess(iStage, stage, stagelog)
 
-                    LogRec(looplog, Log.INFO) \
-                        << "Bottom Stage Loop" \
-                        << loopnum \
-                        << psStage << LogRec.endr
+                    stagelog.done()
+
                 else:
-                    # Done iStage for loop
-                    LogRec(looplog, Log.INFO)            \
-                           << "End Visit Loop iteration"   \
-                           << loopnum << self.statend << LogRec.endr
+                    looplog.log(self.VERB2, "Completed Stage Loop")
 
             # Uncomment to print a list of Citizens after each visit 
             # print datap.Citizen_census(0,0), "Objects:"
             # print datap.Citizen_census(datap.cout,0)
 
-            self.log.log(Log.DEBUG, 'Retrieving finalClipboard for deletion')
+            looplog.log(Log.DEBUG, 'Retrieving finalClipboard for deletion')
             finalQueue = self.queueList[self.nStages]
             finalClipboard = finalQueue.getNextDataset()
-            self.log.log(Log.DEBUG, "deleting final clipboard")
+            looplog.log(Log.DEBUG, "deleting final clipboard")
             # delete entries on the clipboard
             finalClipboard.close()
             del finalClipboard
 
-        self.log.log(Log.INFO, "Shutting down pipeline");
+        startStagesLoopLog.log(Log.INFO, "Shutting down pipeline");
         self.shutdown()
-
+        startStagesLoopLog.done()
 
     def shutdown(self): 
         """
@@ -443,109 +397,88 @@ class Pipeline:
         self.cppPipeline.shutdown()
 
 
-    def invokeSyncSlices(self, iStage):
+    def invokeSyncSlices(self, iStage, stagelog):
         """
         If needed, calls the C++ Pipeline invokeSyncSlices
         """
-
-        invlog = Log(self.log, "invokeSyncSlices", Log.INFO)
-
-        invlog.log(Log.INFO, "Start invokeSyncSlices", self.statstart)
+        invlog = stagelog.traceBlock("invokeSyncSlices", self.TRACE-1)
         if(self.shareDataList[iStage-1]):
             self.cppPipeline.invokeSyncSlices(); 
-        invlog.log(Log.INFO, "End invokeSyncSlices", self.statend)
+        invlog.done()
 
-    def tryPreProcess(self, iStage, stage):
+    def tryPreProcess(self, iStage, stage, stagelog):
         """
         Executes the try/except construct for Stage preprocess() call 
         """
-
-        prelog = Log(self.log, "tryPreProcess", Log.INFO)
+        prelog = stagelog.traceBlock("tryPreProcess", self.TRACE-2);
 
         # Important try - except construct around stage preprocess() 
         try:
             # If no error/exception has been flagged, run preprocess()
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
-                prelog.log(Log.INFO, "Starting preprocess", self.statstart)
+                processlog = stagelog.traceBlock("preprocess", self.TRACE)
                 stage.preprocess()
-                prelog = Log(self.log, "tryPreProcess", Log.INFO)
-                prelog.log(Log.INFO, "Ending preprocess", self.statend)
+                processlog.done()
             else:
+                prelog.log(self.TRACE, "Skipping process due to error")
                 self.transferClipboard(iStage)
 
         except:
             trace = "".join(traceback.format_exception(
                     sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
-            lr = LogRec(prelog, Log.FATAL)
-            lr << trace << LogRec.endr
+            prelog.log(Log.FATAL, trace)
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
             # Post the cliphoard that the Stage failed to transfer to the output queue
             self.postOutputClipboard(iStage)
 
-        prelog.log(Log.INFO, "Ending tryPreProcess", self.statend)
+        prelog.done()
         # Done try - except around stage preprocess 
 
-    def tryPostProcess(self, iStage, stage):
+    def tryPostProcess(self, iStage, stage, stagelog):
         """
         Executes the try/except construct for Stage postprocess() call 
         """
-
-        postlog = Log(self.log, "tryPostProcess", Log.INFO)
+        postlog = stagelog.traceBlock("tryPostProcess",self.TRACE-2);
 
         # Important try - except construct around stage postprocess() 
         try:
             # If no error/exception has been flagged, run postprocess()
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
-                postlog.log(Log.INFO,"Starting postprocess",self.statstart)
+                processlog = stagelog.traceBlock("postprocess", self.TRACE)
                 stage.postprocess()
-                postlog = Log(self.log, "tryPostProcess", Log.INFO)
-                postlog.log(Log.INFO, "Ending postprocess", self.statend)
+                processlog.done()
             else:
+                postlog.log(self.TRACE, "Skipping process due to error")
                 self.transferClipboard(iStage)
 
         except:
             trace = "".join(traceback.format_exception(
                     sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
-            lr = LogRec(postlog, Log.FATAL)
-            lr << trace << LogRec.endr
+            postlog.log(Log.FATAL, trace)
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
             # Post the cliphoard that the Stage failed to transfer to the output queue
             self.postOutputClipboard(iStage)
 
-        # Done try - except around stage preprocess 
+        # Done try - except around stage preprocess
+        postlog.done()
 
-    def handleEvents(self, iStage):
+    def handleEvents(self, iStage, stagelog):
         """
         Handles Events: transmit or receive events as specified by Policy
         """
-        log = Log(self.log, "handleEvents");
-
-        psStage  = dafBase.PropertySet()
-        psStage.setInt("iStage", iStage);
-
-        lr = LogRec(log, Log.INFO)
-        lr << "Start handleEvents"
-        lr << psStage
-        lr << LogRec.endr
+        log = stagelog.traceBlock("handleEvents", self.TRACE-2)
 
         thisTopic = self.eventTopicList[iStage-1]
         thisTopic = thisTopic.strip()
 
-        psTopic  = dafBase.PropertySet()
-        psTopic.setString("Topic", thisTopic);
-
-        lr = LogRec(log, Log.INFO)
-        lr << "Processing topic"
-        lr << psTopic
-        lr << LogRec.endr
-
         if (thisTopic != "None"):
+            log.log(self.VERB3, "Processing topic: " + thisTopic)
             fileStr = StringIO()
             fileStr.write(thisTopic)
             fileStr.write("_slice")
@@ -553,12 +486,13 @@ class Pipeline:
             eventReceiver    = self.eventReceiverList[iStage-1]
             eventTransmitter = events.EventTransmitter(self.eventBrokerHost, sliceTopic)
 
-            log.log(Log.INFO, "waiting on receive...")
-
+            waitlog = log.traceBlock("eventwait", self.TRACE,
+                                     "wait for event...")
             inputParamPropertySetPtr = eventReceiver.receive(self.eventTimeout)
+            waitlog.done()
 
             if (inputParamPropertySetPtr != None):
-                log.log(Log.INFO, "received event; sending it to Slices")
+                log.log(self.VERB2, "received event; sending it to Slices")
 
                 # Pipeline  does not disassemble the payload of the event.
                 # It knows nothing of the contents.
@@ -566,21 +500,17 @@ class Pipeline:
                 self.populateClipboard(inputParamPropertySetPtr, iStage, thisTopic)
                 eventTransmitter.publish(inputParamPropertySetPtr)
 
-                log.log(Log.DEBUG, "event sent")
+                log.log(self.VERB2, "event sent")
         else:
-            log.log(Log.INFO, 'No event to handle')
+            log.log(Log.DEBUG, 'No event to handle')
 
-        lr = LogRec(log, Log.INFO)
-        lr << "End handleEvents"
-        lr << psStage
-        lr << LogRec.endr
+        log.done()
 
     def populateClipboard(self, inputParamPropertySetPtr, iStage, eventTopic):
         """
         Place the event payload onto the Clipboard 
         """
-        log = Log(self.log, "populateClipboard");
-        log.log(Log.DEBUG,'Python Pipeline populateClipboard');
+        log = self.log.traceBlock("populateClipboard", self.TRACE-2);
 
         queue = self.queueList[iStage-1]
         clipboard = queue.element()
@@ -590,18 +520,9 @@ class Pipeline:
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertySetPtr)
 
-        print 'Python populateClipboard  : clipboard ', clipboard
+        # print 'Python populateClipboard  : clipboard ', clipboard
 
-        psClip = dafBase.PropertySet()
-        # psClip.setInt64("clipboard", id(clipboard))
-        psInput = dafBase.PropertySet()
-        # psInput.setInt64("inputParamPropertySetPtr", id(inputParamPropertySetPtr))
-
-        lr = LogRec(log, Log.INFO)
-        lr << "End populateClipboard"
-        # lr << psClip.toString(False)
-        # lr << psInput.toString(False)
-        lr << LogRec.endr
+        log.done()
 
     def postOutputClipboard(self, iStage):
         """
@@ -638,6 +559,41 @@ class Pipeline:
         """
         self._runId = run
 
+    def getLogThreshold(self):
+        """
+        return the default message importance threshold being used for 
+        recording messages.  The returned value reflects the threshold 
+        associated with the default root (system-wide) logger (or what it will
+        be after logging is initialized).  Some underlying components may 
+        override this threshold.
+        """
+        if self.log is None:
+            return self.logthresh
+        else:
+            return Log.getDefaultLog().getThreshold()
+
+    def setLogThreshold(self, level):
+        """
+        set the default message importance threshold to be used for 
+        recording messages.  This will value be applied to the default
+        root (system-wide) logger (or what it will be after logging is 
+        initialized) so that all software components are affected.
+        """
+        if self.log is not None:
+            Log.getDefaultLog().setThreshold(level)
+            self.log.log(Log.INFO, 
+                         "Upating Root Log Message Threshold to %i" % level)
+        self.logthresh = level
+
+    def makeStageName(self, appStagePolicy):
+        if appStagePolicy.getValueType("stagePolicy") == appStagePolicy.FILE:
+            pfile = os.path.splitext(os.path.basename(
+                        appStagePolicy.getFile("stagePolicy").getPath()))[0]
+            return trailingpolicy.sub('', pfile)
+        else:
+            return None
+        
+trailingpolicy = re.compile(r'_*(policy|dict)$', re.IGNORECASE)
 
 if (__name__ == '__main__'):
     """

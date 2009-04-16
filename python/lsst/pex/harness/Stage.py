@@ -25,6 +25,7 @@ class Stage:
         self._policy = stagePolicy
         self._runId = "TEST"
         self._lookup = {}
+        self._evbroker = None
 
 
     def __del__(self):
@@ -34,7 +35,7 @@ class Stage:
 	# print 'Python Stage %d being deleted' % self.stageId
         pass
 
-    def initialize(self, outQueue,  inQueue): 
+    def initialize(self, outQueue, inQueue): 
         """
         Initialize the references to the Queues for this Stage
         """
@@ -118,6 +119,17 @@ class Stage:
         set method for the runId
         """
         self._runId = run
+
+    def getEventBrokerHost(self):
+        """get the hostname where the event broker currently in use is
+        located"""
+        return self._evbroker
+
+    def setEventBrokerHost(self, host):
+        """set the hostname where the event broker currently in use is
+        located.  This is usually only be set by the harness framework.
+        """
+        self._evbroker = host
 
     def getLookup(self):
         """

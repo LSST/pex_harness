@@ -18,14 +18,20 @@
 
 namespace pexPolicy = lsst::pex::policy;
 
-/** Constructor.
+/** 
+ * Constructor.
+ * @param pipename   a name to identify the pipeline.  This is used in setting 
+ *                      up the logger.
  */
-Slice::Slice(void) {
-}
+Slice::Slice(const std::string& pipename) 
+    : _pid(getpid()), _rank(-2), sliceLog(Log::getDefaultLog(),"harness"), 
+      _evbHost(""), _pipename(pipename), outlog(0) 
+{ }
 
 /** Destructor.
  */
 Slice::~Slice(void) {
+    delete outlog;
 }
 
 /** Initialize the logger "sliceLog" to be used globally in the Slice class. 
@@ -34,14 +40,10 @@ Slice::~Slice(void) {
 void Slice::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs to local files
                             ) {
 
-    _pid = getpid();
-    char* _host = getenv("HOST");
-
-
+    std::string logfile;
     if(isLocalLogMode) { 
         /* Make a log file name coded to the rank    */ 
         std::stringstream logfileBuffer;
-        std::string logfile;
 
         logfileBuffer << "Slice";
         logfileBuffer << _rank;
@@ -50,30 +52,18 @@ void Slice::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs t
         logfileBuffer >> logfile;
 
         /* Make output file stream   */ 
-        /* ofstream outlog(logfile.c_str()); */ 
         outlog =  new ofstream(logfile.c_str());
+    }
 
-        boost::shared_ptr<LogFormatter> brief(new BriefFormatter(true));
-        boost::shared_ptr<LogDestination> tempPtr(new LogDestination(outlog, brief));
-        destPtr = tempPtr;
-        Log::getDefaultLog().addDestination(destPtr);
-    } 
+    boost::shared_ptr<TracingLog> 
+        lp(setupHarnessLogging(std::string(_runId), getRank(), _evbHost,
+                               _pipename, outlog, "harness.slice"));
+    sliceLog = *lp;
 
-    Log root = Log::getDefaultLog();
-    sliceLog = Log(root, "pex.harness.slice");
-
-    Log localLog(sliceLog, "initializeLogger()");       // localLog: a child log
-
-    localLog.log(Log::INFO,
-        boost::format("Logger Initialized : _rank %d ") % _rank);
-
-    string* s1 = new string("PropertySetTest"); 
-    PropertySet ps3;
-    ps3.set("keya", string("TestValue"));
-
-    localLog.log(Log::INFO, *s1, ps3 );
-
-    return;
+    sliceLog.format(Log::INFO, "Slice Logger initialized for pid=%d", _pid);
+    if (outlog) 
+        sliceLog.format(Log::INFO, 
+                        "replicating messages to %s", logfile.c_str());
 }
 
 /** Initialize the MPI environment of the Slice.

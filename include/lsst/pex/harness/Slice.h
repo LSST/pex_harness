@@ -23,6 +23,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "lsst/pex/harness/TracingLog.h"
 #include "lsst/pex/policy/Policy.h"
 #include "lsst/utils/Utils.h"
 
@@ -86,12 +87,16 @@ typedef vector<Stage> StageVector;
 class Slice {
 
 public:
-    Slice(); // constructor
+    Slice(const std::string& pipename="unnamed"); // constructor
 
     ~Slice(); // destructor
 
     void initialize();
     void initializeLogger(bool isLocalLogMode);
+    TracingLog& getLogger() {
+        return sliceLog;
+    }
+
     void invokeBcast(int iStage);
     void invokeBarrier(int iStage);
     void invokeShutdownTest();
@@ -105,6 +110,16 @@ public:
     void calculateNeighbors();
     std::vector<int> getRecvNeighborList();
     PropertySet::Ptr syncSlices(PropertySet::Ptr dpt);
+
+    void setPipelineName(const std::string& name) {
+        _pipename = name;
+    }
+    const std::string& getPipelineName() {  return _pipename;  }
+
+    void setEventBrokerHost(const std::string& host) {
+        _evbHost = host;
+    }
+    const std::string& getEventBrokerHost() {  return _evbHost;  }
 
 private:
     void initializeMPI();
@@ -128,11 +143,10 @@ private:
     std::list<int> recvNeighborList;
     string neighborString;
 
-    Log sliceLog;
-    boost::shared_ptr<LogDestination> destPtr; 
-    ofstream* outlog; 
-
-
+    TracingLog sliceLog;
+    std::string _evbHost;
+    std::string _pipename;
+    ofstream* outlog;
 };
 
     	} // namespace harness

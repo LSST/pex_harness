@@ -5,28 +5,21 @@ import re, sys, os, os.path, shutil, subprocess
 import optparse, traceback
 from lsst.pex.logging import Log
 from lsst.pex.policy import Policy
+import lsst.pex.harness.run as run
 
-usage = """usage: %%prog policy_file runid [-vqs] [-V int] [-n file]
+usage = """usage: %prog policy_file runid [pipelineName] [-vqsd] [-L lev] [-n file]"""
 
-Launch a pipeline with a given policy and Run ID.  This launching script 
-ensures that .mpd.conf files are in place by running ensureMpdConf on each 
-node in the node list file.  If a node list file is not provided via the 
--n option, a file called "nodelist.scr" in the current directory will be used.
+desc = """
+Launch a pipeline with a given policy and Run ID.  If a node list file is not 
+provided via the -n option, a file called "nodelist.scr" in the current 
+directory will be used.  If the policy_file refers to other policy files, 
+the path to those files will taken to be relative to the current directory.
+If a log verbosity is not specified, the default will be taken from the 
+policy file.
 """
 
-cl = optparse.OptionParser(usage)
-cl.add_option("-V", "--verbosity", type="int", action="store",
-              dest="verbosity", default=0, metavar="int",
-              help="verbosity level (0=normal, 1=debug, -1=quiet, -3=silent)")
-cl.add_option("-v", "--verbose", action="store_const", const=1,
-              dest="verbosity",
-              help="print extra messages")
-cl.add_option("-q", "--quiet", action="store_const", const=-1,
-              dest="verbosity",
-              help="print only warning & error messages")
-cl.add_option("-s", "--silent", action="store_const", const=-3,
-              dest="verbosity",
-              help="print only warning & error messages")
+cl = optparse.OptionParser(usage=usage, description=desc)
+run.addAllVerbosityOptions(cl)
 cl.add_option("-n", "--nodelist", action="store", dest="nodelist", 
               metavar="file", help="file containing the MPI machine list")
 
@@ -41,7 +34,7 @@ def createLog():
     return log
 
 def setVerbosity(verbosity):
-    logger.setThreshold(-10 * verbosity)  
+    logger.setThreshold(run.verbosity2threshold(verbosity, -1))  
 
 logger = createLog()
 
@@ -52,13 +45,19 @@ def main():
 
         if len(cl.args) < 1:
             print usage
-            raise RuntimeError("Missing arguments: dc3pipe_policy_file runId")
+            raise RuntimeError("Missing arguments: pipeline_policy_file runId")
         if len(cl.args) < 2:
             print usage
             raise RuntimeError("Missing argument: runid")
-    
-        launchPipeline(cl.args[0], cl.args[1])
 
+        name = None
+        if len(cl.args) > 2:
+            name = cl.args[2]
+    
+        launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity)
+
+    except SystemExit:
+        pass
     except:
         tb = traceback.format_exception(sys.exc_info()[0],
                                         sys.exc_info()[1],
@@ -67,7 +66,7 @@ def main():
         logger.log(Log.DEBUG, "".join(tb[0:-1]).strip())
         sys.exit(1)
 
-def launchPipeline(policyFile, runid):
+def launchPipeline(policyFile, runid, name=None, verbosity=None):
     if not os.environ.has_key(pkgdirvar):
         raise RuntimeError(pkgdirvar + " env. var not setup")
 
@@ -82,8 +81,11 @@ def launchPipeline(policyFile, runid):
     with file(nodesfile) as nodelist:
         for node in nodelist:
             node = node.strip()
-            if (node.startswith('#')): continue
-            (node, n) = node.split(':')
+            if len(node)==0 or node.startswith('#'): continue
+            if node.find(':') >= 0:
+                (node, n) = node.split(':')
+            else:
+                n = ''
             nnodes += 1
             n = n.strip()
             if n != '':
@@ -95,6 +97,10 @@ def launchPipeline(policyFile, runid):
 
     cmd = "runPipelin.sh.py %s %s %s %d %d" % \
           (policyFile, runid, nodesfile, nnodes, nprocs)
+    if name is not None:
+        cmd += " %s" % name
+    if verbosity is not None:
+        cmd += " %s" % verbosity
     logger.log(Log.DEBUG, "exec " + cmd)
     os.execvp("runPipeline.sh", cmd.split())
 

@@ -17,11 +17,13 @@ Access to the C++ harness classes from the lsst.pex.harness module
 #include "lsst/daf/persistence/PropertySetFormatter.h"
 #include "lsst/pex/logging/Log.h"
 #include "lsst/pex/logging/LogRecord.h"
+#include "lsst/pex/logging/Debug.h"
 #include "lsst/pex/harness/Clipboard.h"
 #include "lsst/pex/harness/Queue.h"
 #include "lsst/pex/harness/Stage.h"
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Slice.h"
+#include "lsst/pex/harness/TracingLog.h"
 %}
 
 %inline %{
@@ -67,6 +69,7 @@ import lsst.pex.harness
 %import "lsst/daf/base/PropertySet.h"
 %import "lsst/daf/persistence/PropertySetFormatter.h"
 %import "lsst/pex/exceptions.h"
+%import "lsst/pex/logging/Debug.h"
 %import "lsst/pex/logging/Log.h"
 %import "lsst/pex/logging/LogRecord.h"
 %import "lsst/pex/policy/Policy.h"
@@ -76,4 +79,5 @@ import lsst.pex.harness
 %include "lsst/pex/harness/Stage.h"
 %include "lsst/pex/harness/Pipeline.h"
 %include "lsst/pex/harness/Slice.h"
+%include "lsst/pex/harness/TracingLog.h"
 

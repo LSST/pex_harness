@@ -13,18 +13,27 @@
   * \author  Greg Daues, NCSA
   */
 #include <cstring>
+#include <sstream>
 
 #include "lsst/pex/harness/Pipeline.h"
 #include "lsst/pex/harness/Stage.h"
 
-/** Constructor.
+using lsst::pex::logging::Log;
+
+/** 
+ * Constructor.
+ * @param name   a name to identify the pipeline.  This is used in setting 
+ *                 up the logger.
  */
-Pipeline::Pipeline(void) {
-}
+Pipeline::Pipeline(const std::string& name) 
+    : _pid(getpid()), pipelineLog(Log::getDefaultLog(),"harness"), 
+      _evbHost(""), _pipename(name), outlog(0) 
+{ }
 
 /** Destructor.
  */
 Pipeline::~Pipeline(void) {
+    delete outlog;
 }
 
 /** Initialize the environment of the Pipeline.
@@ -44,45 +53,21 @@ void Pipeline::initialize() {
  */
 void Pipeline::initializeLogger(bool isLocalLogMode  //!< A flag for writing logs to local files
                                 ) {
-    _pid = getpid();
-    char* _host = getenv("HOST");
-
+    char *logfile = "Pipeline.log";
     if(isLocalLogMode) {
-        /* Make a log file name coded to the rank    */
-
-        std::stringstream logfileBuffer;
-        std::string logfile;
-
-        logfileBuffer << "Pipeline";
-        /* logfileBuffer << _pid;   */ 
-        logfileBuffer << ".log"; 
-
-        logfileBuffer >> logfile;
-
         /* Make output file stream   */
-        outlog =  new ofstream(logfile.c_str());
-
-        boost::shared_ptr<LogFormatter> brief(new BriefFormatter(true));
-        boost::shared_ptr<LogDestination> tempPtr(new LogDestination(outlog, brief));
-        destPtr = tempPtr;
-        Log::getDefaultLog().addDestination(destPtr);
+        outlog =  new ofstream(logfile);
     }
+    boost::shared_ptr<TracingLog> 
+        lp(setupHarnessLogging(std::string(_runId), -1, _evbHost, _pipename,
+                               outlog, "harness.pipeline"));
+                               
+    pipelineLog = *lp;
 
-    Log root = Log::getDefaultLog();
-    pipelineLog = Log(root, "pex.harness.pipeline");
-
-    Log localLog(pipelineLog, "initializeLogger()");       // localLog: a child log
-
-    localLog.log(Log::INFO,
-        boost::format("Pipeline Logger Initialized : _pid %d ") % _pid);
-
-    string* s1 = new string("PropertySetTest");
-    PropertySet ps3;
-    ps3.set("pipeline_keya", string("TestValue"));
-
-    localLog.log(Log::INFO, *s1, ps3 );
-
-    return;
+    pipelineLog.format(Log::INFO, 
+                       "Pipeline Logger initialized for pid=%d", _pid);
+    if (outlog) 
+        pipelineLog.format(Log::INFO, "replicating messages to %s", logfile);
 }
 
 /** Initialize the MPI environment of the Pipeline.
@@ -141,13 +126,27 @@ int Pipeline::getUniverseSize() {
  * The number of Slices to be spawned nSlices is one less than the designated universe size.
  */ 
 void Pipeline::startSlices() {
-
     int *array_of_errcodes;
-    array_of_errcodes = (int *)malloc(4 * sizeof (int));
+    array_of_errcodes = (int *) malloc(4 * sizeof (int));
+
+    std::ostringstream levsb;
+    levsb << getLogger().getThreshold();
+    string levstr(levsb.str());
+    char *lev = (char *) malloc(levstr.length());
+    strcpy(lev, levstr.c_str());
 
     int errcodes[nSlices];
     char *myexec  = "runSlice.py";
-    char *argv[] = {_policyName, _runId, NULL};
+    char *argv[] = {_policyName, _runId, "-l", lev, NULL};
+    if (getLogger().sends(Log::DEBUG)) {
+        Log log(getLogger(), "startSlices.cpp");
+        std::ostringstream spawncmd;
+        spawncmd << myexec;
+        char **arg = argv;
+        while (*arg != NULL) 
+            spawncmd << " " << *(arg++);
+        log.log(Log::DEBUG, spawncmd.str());
+    }
 
     mpiError = MPI_Comm_spawn(myexec, argv, nSlices, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &sliceIntercomm, errcodes); 
 

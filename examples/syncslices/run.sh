@@ -37,7 +37,7 @@ echo "usize ${usize}"
 # MPI commands will be in PATH if mpich2 is in build
 echo "Running mpdboot"
 
-mpdboot --totalnum=${nodes} --file=nodelist.2D --verbose
+mpdboot --totalnum=${nodes} --file=nodelist.scr --verbose
 
 sleep 3s
 echo "Running mpdtrace"
@@ -46,7 +46,7 @@ sleep 2s
 
 echo "Running mpiexec"
 
-mpiexec -usize ${usize}  -machinefile nodelist.2D -np 1 runPipeline.py ${pipelinePolicyName} ${runId}
+mpiexec -usize ${usize}  -machinefile nodelist.scr -np 1 runPipeline.py ${pipelinePolicyName} ${runId}
 
 sleep 1s
 

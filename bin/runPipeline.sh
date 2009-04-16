@@ -6,11 +6,12 @@ pwd=`pwd`
 # echo LSST_POLICY_DIR ${LSST_POLICY_DIR} 
 
 # Command line arguments 
-echo $@  echo $#
-if [ "$#" != 5 ]; then
+echo $0 $@  
+# echo $#
+if [ "$#" -lt 5 ]; then
    echo "---------------------------------------------------------------------"
    echo "Usage:  $0 <policy-file-name> <runId> <nodelist-file>" \
-        "<node-count> <proc-count>"
+        "<node-count> <proc-count> [ <verbsity> ] [ <name> ]"
    echo "---------------------------------------------------------------------"
    exit 0
 fi
@@ -20,9 +21,11 @@ runId=${2}
 nodelist=${3}
 nodes=${4}
 usize=${5}
+verbosity=${6}
+name=${7}
 
 localnode=`hostname | sed -e 's/\..*$//'`
-localncpus=`grep $localnode $nodelist | sed -e 's/^.*://'`
+localncpus=`sed -e 's/#.*$//' $nodelist | egrep $localnode'|localhost' | sed -e 's/^.*://'`
 
 # Subtract 1 to the number of slices to get the universe size 
 nslices=$(( $usize - 1 ))
@@ -31,6 +34,18 @@ echo "nodes ${nodes}"
 echo "nslices ${nslices}"
 echo "usize ${usize}"
 echo "ncpus ${localncpus}"
+if [ -z "$name" ]; then
+   echo "name: default"
+else
+   echo "name ${verbosity}"
+   name="-n $name"
+fi
+if [ -z "$verbosity" ]; then
+   echo "verbosity: default"
+else
+   echo "verbosity ${verbosity}"
+   verbosity="-L $verbosity"
+fi
 
 # MPI commands will be in PATH if mpich2 is in build
 echo "Running mpdboot"
@@ -46,8 +61,8 @@ sleep 2s
 
 echo "Running mpiexec"
 
-echo mpiexec -usize ${usize} -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId}
-mpiexec -usize ${usize}  -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId}
+echo mpiexec -usize ${usize} -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId} ${verbosity} ${name} 
+mpiexec -usize ${usize}  -machinefile ${nodelist} -np 1 -envall runPipeline.py ${pipelinePolicyName} ${runId} ${verbosity} ${name} 
 
 sleep 1s
 
