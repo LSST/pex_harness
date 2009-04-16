@@ -20,6 +20,6 @@ import lsst.tests
 tests = lsst.tests.Control(env, verbose = True)
 
 tests.run("testTracingLog.cc")
-for target in tests.run("*.py"):
+for target in tests.run("Test*.py"):
     env.Depends(target, "../python/lsst/pex/harness/_harnessLib%s" % env['LDMODULESUFFIX'])
 
