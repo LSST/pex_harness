@@ -46,7 +46,7 @@ def main():
 
     runSlice(pipelinePolicyName, runId, cl.opts.logthresh, cl.opts.name)
 
-def runSlice(policyFile, runId, name="unnamed", logthresh=None):
+def runSlice(policyFile, runId, logthresh=None, name="unnamed"):
     """
     runSlice: Slice Main execution 
     """

@@ -68,9 +68,7 @@ class Slice:
         self.shutdownTopic = "triggerShutdownEvent_slice"
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
-        self.cppSlice = slice.Slice()
-        #TODO: why does this fail?
-        # self.cppSlice.setPipelineName(self._pipelineName)
+        self.cppSlice = slice.Slice(self._pipelineName)
         self.cppSlice.setRunId(runId)
         self.cppSlice.initialize()
         self._rank = self.cppSlice.getRank()
