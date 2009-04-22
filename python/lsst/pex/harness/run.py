@@ -44,7 +44,7 @@ def addAllVerbosityOptions(clparser, shortopt="L", dest="verbosity"):
     --log-verbosity option (via addVerbosityOption()) along with several extra
     convenience options (-v, -q, -s, -d)
     """
-    addVerbosityOption(clparser, shortopt)
+    addVerbosityOption(clparser, shortopt, dest)
     clparser.add_option("-d", "--debug", action="store_const", const='debug',
                         dest=dest, help="print maximum amount of messages")
     clparser.add_option("-v", "--verbose", action="store_const", const='verb3',
