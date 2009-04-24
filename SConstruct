@@ -23,10 +23,16 @@ env = scons.makeEnv("pex_harness",
                      ["pex_logging", "lsst/pex/logging/Component.h", "pex_logging:C++"],
                      ["pex_policy", "lsst/pex/policy/Policy.h","pex_policy:C++"],
                      ["daf_persistence", "lsst/daf/persistence.h", "daf_persistence:C++"], 
+                     ["apr", "apr-1/apr.h", "apr-1"],
+                     ["activemqcpp", "activemq/core/ActiveMQConnectionFactory.h"],
                      ["ctrl_events", "lsst/ctrl/events/EventLog.h","ctrl_events:C++"],
-                     ["activemqcpp", "activemq/util/Number.h", "activemq-cpp:C++"],
                      ["python", "Python.h"],
                      ])
+
+env.Append(LIBPATH = os.path.join(os.environ["ACTIVEMQCPP_DIR"],"lib"))
+env.libs["activemqcpp"] += "activemq-cpp".split()
+env.libs["activemqcpp"] += env.getlibs("apr")
+env.libs["ctrl_events"] += env.getlibs("activemqcpp")
 
 pkg = env["eups_product"]
 env.libs[pkg] += env.getlibs(" ".join(dependencies))
