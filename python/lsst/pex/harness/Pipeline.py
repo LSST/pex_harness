@@ -336,6 +336,7 @@ class Pipeline:
                 looplog.setPreamblePropertyInt("loopnum", visitcount)
                 looplog.start()
                 stagelog.setPreamblePropertyInt("loopnum", visitcount)
+                proclog.setPreamblePropertyInt("loopnum", visitcount)
 
                 self.cppPipeline.invokeContinue()
                 self.startInitQueue()    # place an empty clipboard in the first Queue
