@@ -228,14 +228,14 @@ class Slice:
 
         count = 0
         for item in self.eventTopicList:
-            newitem = item + "_slice"
+            newitem = "%s_%s" % (item, self._pipelineName)
             self.sliceEventTopicList[count] = newitem
             count += 1
 
         # Make a List of corresponding eventReceivers for the eventTopics
         # eventReceiverList    
         for topic in self.sliceEventTopicList:
-            if (topic == "None_slice"):
+            if (topic == "None_" + self._pipelineName):
                 self.eventReceiverList.append(None)
             else:
                 eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
