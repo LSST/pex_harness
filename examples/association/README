@@ -2,6 +2,28 @@
 pex_harness examples/association 
 ----------------------------------------------
 
+Running the example:
+--------------------
+
+To place the example stages into the working PYTHONPATH :
+
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+
+or
+
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}     (tcsh)
+
+One executes the pipeline then with:
+
+% launchPipeline.py association_policy.paf  <some-run-id>
+
+such as
+
+% launchPipeline.py association_policy.paf test_2390
+
+Description
+-----------
+
 The association example is a mockup of the Association Pipeline that demonstrates the 
 trigger event dependence of the full version.  The mock association pipeline has 
 4 application stages:    
@@ -20,13 +42,9 @@ this time.
 By default the mock example will run with the Pipeline and one Slice on a single node.
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
-To execute this scenario, in one shell execute 
+To execute this scenario, in one shell execute, for example
 
-% ./run.sh association_policy.paf <some-run-id>
-
-such as  
-
-% ./run.sh association_policy.paf test_2001 
+% launchPipeline.py association_policy.paf test_2390
 
 and in a separate shell provide the trigger events
 
