@@ -2,8 +2,30 @@
 pex_harness examples/inputoutputfits
 ----------------------------------------------
 
-This policy file describes a Pipeline that peforms a test of IOStage.InputStage .
-and IOStage.OutputStage
+Running the example:
+--------------------
+
+To place the example stages into the working PYTHONPATH :
+
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+
+or
+
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}     (tcsh)
+
+One executes the pipeline then with:
+
+% launchPipeline.py inputoutputfits_policy.paf <some-run-id>
+
+such as
+
+% launchPipeline.py inputoutputfits_policy.paf test_2390
+
+Description
+-----------
+
+This example demonstrates a Pipeline that uses both IOStage.InputStage .
+and IOStage.OutputStage with FITS data. 
 
 The three stages in the pipeline are 
 InputStage
@@ -29,13 +51,9 @@ in its policy).
 By default this example will run with the Pipeline with one Slice on a single node.
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
-The pipeline is then executed via 
+The pipeline is then executed via, for example, 
 
-% ./run.sh inputoutputfits_policy.paf <some-run-id>
-
-such as  
-
-% ./run.sh inputoutputfits_policy.paf test_3001 
+% launchPipeline.py inputoutputfits_policy.paf test_2390
 
 The pipeline blocks for an event that will carry the exposureId of the image
 to process. This event can be supplied by running with in a separate shell
