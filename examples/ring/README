@@ -2,42 +2,54 @@
 Running an example interSlice communication pipeline: examples/ring/ 
 -------------------------------------------------------------------
 
+Running the example:
+--------------------
+
+To place the example stages into the working PYTHONPATH :
+
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+
+or
+
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}     (tcsh)
+
+One executes the pipeline then with:
+
+% launchPipeline.py ring.paf <some-run-id>
+
+such as
+
+% launchPipeline.py ring.paf test_2390
+
+Description
+-----------
+
 This example is found under pex_harness/examples/ring/ . 
-Change to this directory to find files
 
-% ls
-nodelist.scr  ring.paf  run.sh   README 
-
-The run.sh is a very simple launching script to test a Pipeline. 
-(A more configurable mechanism for setup and launching of pipelines 
-is developed within the dc2pipe/dc3pipe packages and the full 
-orchestration layer.) At the top of the run.sh one finds input 
-parameters that one can edit
-
-nodes=1
-nslices=5
-
-These default parameters of a single node and five slices 
-are sufficient to illustrate this ring topology example.
-
-The MPI "machine file" is called nodelist.scr and contains the entry
+The default parameters for this example are for execution on a single node 
+with a central Pipeline and 5 Slices. The launchPipeline.py derives the parameters 
+from the MPI "machine file" nodelist.scr, which contains the entry
 
 lsst8.ncsa.uiuc.edu:6
 
 The parameter value 6 that appears after the hostname specifies the total 
-number of MPI processes on the host, and so equals the sum of the 1 Pipeline 
-process and the 5 Slices.
+number of MPI processes on the host, and equals the sum of the 1 Pipeline 
+process and the 5 Slices. To increase the number of Slices in the MPI ring,
+simply increase this value. 
 
-The pipeline can be launched by placing the policy file and a runid 
-on the command line:
+The example pipeline can be launched by placing a policy file and a runid 
+on the command line of launchPipeline.py, for example, 
 
- ./run.sh ring.paf test_10001
+% launchPipeline.py ring.paf test_2390
 
-To understand the function of this pipeline we can examine pieces of 
+To understand elements of the execution of this pipeline we can examine pieces of 
 the ring.paf policy file :
 
 -----------------------------------
 localLogMode: true
+executionMode: "oneloop"
+logThreshold: -3
+eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 
 shareDataOn: true
 
@@ -69,8 +81,8 @@ we have the Slices in a line: 0 1 2 3 4 with the ends connected, hence,
 Slice 0 will have neighbors 4 and 1, Slice 1 will have neighbors 0 and 2, etc. 
 The communication will have the character that Slice 0 receives from Slice 4 
 and sends to Slice 1, Slice 1 receives from Slice 0 and sends to Slice 2, etc. 
-Because the option localLogMode: "Yes" is set, after execution logs files 
-Pipeline(#processid).log, Slice0.log, Slice1.log, ... will be found in 
+Because the option localLogMode: true is set, after execution log files 
+Pipeline.log, Slice0.log, Slice1.log, ... will be placed in 
 the working directory.
 
 The pipeline contains two Stages, SyncSetupStage and SyncTestStage. Within 
