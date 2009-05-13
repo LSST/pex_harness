@@ -2,6 +2,28 @@
 pex_harness examples/exitevent
 ----------------------------------------------
 
+Running the example:
+--------------------
+
+To place the example stages into the working PYTHONPATH :
+
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+
+or
+
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}     (tcsh)
+
+One executes the pipeline then with:
+
+% launchPipeline.py exitevent_policy.paf <some-run-id>
+
+such as
+
+% launchPipeline.py exitevent_policy.paf test_2390
+
+Description
+-----------
+
 The exitevent example demonstrates how to configure a Pipeline to issue an event 
 upon exiting. The event is issued at the middleware level, within shutdown, as
 opposed to a particular Stage. 
@@ -21,16 +43,10 @@ listenEvent.py script, which will block for the arrival of an event of topic "Sa
 
 % python listenEvent.py 
 
-In a separate shell the pipeline may be executed via 
+In a separate shell the pipeline may be executed via, for example, 
 
-% ./run.sh exitevent_policy.paf  <some-run-id>
-
-such as  
-
-% ./run.sh exitevent_policy.paf f test_239
+% launchPipeline.py exitevent_policy.paf test_2390
 
 The listenEvent.py should receive the event, unblock and terminate. 
-
-
 
 
