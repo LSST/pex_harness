@@ -7,9 +7,8 @@ executing a single Stage.  This example is found under pex_harness/examples/temp
 
 The template example has a single application stage, SampleStage (which may be 
 found in  pex_harness/examples/stages/lsst/pexhexamples/pipeline.py). 
-The full path to the directory pex_harness/examples/stages is added to the PYTHONPATH 
-by the executing "run.sh" script, and consequently the stage may be loaded dynamically 
-into the python context by the Pipeline. 
+
+
 The SampleStage is a dummy application stage that performs a few simple tasks: 
 -# overwrites the preprocess(), process(), postprocess() methods of generic Stage, 
 -# retrieves the Clipboard from its inputQueue at the start of the process() method,
@@ -81,16 +80,21 @@ class SampleStage(Stage):
 By default this example will run with the Pipeline with one Slice on a single node.
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
-The pipeline is then executed via 
+The full path to the directory pex_harness/examples/stages should be added to the PYTHONPATH:
+\code 
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (tcsh)
+\endcode
 
+The pipeline is then executed via 
 \code
-% ./run.sh template_policy.paf <some-run-id>
+% launchPipeline.py template_policy.paf <some-run-id>
 \endcode
 
 such as  
 
 \code
-% ./run.sh template_policy.paf test_1090
+% launchPipeline.py template_policy.paf test_1090
 \endcode
 
 After execution the messages from the SampleStage process()

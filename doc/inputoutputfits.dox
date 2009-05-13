@@ -11,6 +11,7 @@ The three stages in the pipeline are
 - ImageprocStage
 - OutputStage
 
+
 To configure the pipeline with the three application stages 
 we insert one "appStage" policy for each stage.  These will be gathered into
 an array by policy. Each appStage policy designates the Python package and class
@@ -20,6 +21,7 @@ The pipeline policy file inputoutputfits_policy.paf for this case is
 localLogMode: true
 executionMode: "oneloop"
 eventBrokerHost: "lsst8.ncsa.uiuc.edu"
+logThreshold: -3
 
 appStage: {
      stageName: "lsst.pex.harness.IOStage.InputStage"
@@ -38,6 +40,30 @@ appStage: {
      eventTopic: "None"
      stagePolicy: "policy/output_policy.paf"
 }
+
+
+dir: {
+
+    defaultRoot:  .
+    runDirPattern:  "sample"
+
+    # These indicate the directory that should be used for a named purpose.
+    # If relative paths are given, the resulting directory will be relative
+    # to the default run directory (determined by defaultRoot and the
+    # runDirPattern).  These can be given as patterns specified in the same
+    # format as runDirPattern.  (If a directory is given as an absolute path,
+    # using a pattern is recommended in order to distinguish between different
+    # production runs.)
+    #
+    work:     .    # the working directory, where the pipeline is started
+    input:    .    # the directory to cache/find input data
+    output:   .    # the directory to write output data
+    update:   .    # the directory where updatable data is deployed
+    scratch:  .    # a directory for temporary files that may be deleted
+                   # upon completion of the pipeline
+
+}
+
 \endcode
 The attribute localLogMode set to true will give local log files written to disk for 
 the Pipleline and each Slice. Because of the assignment eventTopic: "triggerImageprocEvent"
@@ -87,20 +113,26 @@ The OutputStage is configured to retrieve data from the Clipboard under the key 
 of PythonType: "lsst.afw.image.imageLib.MaskedImageF" and persist ot using Storage: "FitsStorage".
 The OutputStage encodes the exposureId within the name of the output file.  
 
-By default this example will run with the Pipeline with one Slice on a single node 
-(specified by parameters in run.sh).
+By default this example will run with the Pipeline with one Slice on a single node. 
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+Prior to running the example, the full path to the directory pex_harness/examples/stages
+should be added to the PYTHONPATH:
+\code
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (tcsh)
+\endcode
 
 The pipeline is then executed via 
 
 \code 
-% ./run.sh inputoutputfits_policy.paf <some-run-id>
+% launchPipeline.py inputoutputfits_policy.paf <some-run-id>
 \endcode
 
 such as  
 
 \code 
-% ./run.sh inputoutputfits_policy.paf test_3001 
+% launchPipeline.py inputoutputfits_policy.paf test_3001 
 \endcode
 
 The pipeline blocks for an event that will carry the exposureId of the image
