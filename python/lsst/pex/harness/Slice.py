@@ -477,6 +477,10 @@ class Slice:
                                      "wait for event...")
             inputParamPropertySetPtr = x.receive(self.eventTimeout)
             waitlog.done()
+            LogRec(log, self.TRACE) << "received event; contents: "        \
+                                << inputParamPropertySetPtr \
+                                << LogRec.endr;
+
 
             self.populateClipboard(inputParamPropertySetPtr, iStage, thisTopic)
             log.log(self.VERB3, 'Received event; added payload to clipboard')

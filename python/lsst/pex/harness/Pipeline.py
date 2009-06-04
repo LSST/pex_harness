@@ -490,6 +490,10 @@ class Pipeline:
                                      "wait for event...")
             inputParamPropertySetPtr = eventReceiver.receive(self.eventTimeout)
             waitlog.done()
+            LogRec(log, self.TRACE) << "received event; contents: "        \
+                                << inputParamPropertySetPtr \
+                                << LogRec.endr;
+
 
             if (inputParamPropertySetPtr != None):
                 log.log(self.VERB2, "received event; sending it to Slices")
