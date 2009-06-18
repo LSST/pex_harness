@@ -22,8 +22,16 @@ def createAdditionalData(stage, stagePolicy, clipboard):
             (rename, name) = pair.split("=")
             if name.find(".") != -1:
                 (clipKey, psKey) = name.split(".", 1)
-                additionalData.copy(rename, clipboard.get(clipKey), psKey)
+                cprops = clipboard.get(clipKey)
+                if cprops is None:
+                    raise RuntimeError, \
+                          "Expected data not found on clipboard: "+ clipKey
+                additionalData.copy(rename, cprops, psKey)
             else:
+                cprops = clipboard.get(name)
+                if cprops is None:
+                    raise RuntimeError, \
+                          "Expected data not found on clipboard: "+ name
                 additionalData.set(rename, clipboard.get(name))
             lsst.pex.logging.Trace("pex.harness.Utils.createAdditionalData", 3, \
                     "AdditionalData item: " + pair)

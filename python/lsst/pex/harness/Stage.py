@@ -25,6 +25,7 @@ class Stage:
         self._policy = stagePolicy
         self._runId = "TEST"
         self._lookup = {}
+        self._dataId = {}
         self._evbroker = None
 
 
@@ -144,4 +145,18 @@ class Stage:
         self._lookup = lookup.copy()
         # self._lookup = lookup.deepcopy()
 
+    def getDataId(self):
+        """
+        dataId is a PropertySet with information about the data this
+        stage is to operate on; generally, its key-value pairs can
+        substituted into the data path.
+        """
+        return self._dataId
 
+    def setDataId(self, dataId):
+        """
+        dataId is a PropertySet that tells this stage what data to
+        operate on; its key-value pairs can substituted into the data
+        path.
+        """
+        self._dataId = dataId.copy()

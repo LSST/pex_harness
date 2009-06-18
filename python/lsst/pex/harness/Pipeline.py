@@ -24,8 +24,6 @@ import lsst.ctrl.events as events
 import os, sys, re, traceback
 import threading
 
-from cStringIO import StringIO
-
 """
 Pipeline class manages the operation of a multi-stage parallel pipeline.
 The Pipeline is configured by reading a Policy file.   This Python Pipeline
@@ -322,6 +320,7 @@ class Pipeline:
         startStagesLoopLog = self.log.traceBlock("startStagesLoop", self.TRACE)
         looplog = TracingLog(self.log, "visit", self.TRACE)
         stagelog = TracingLog(looplog, "stage", self.TRACE-1)
+        proclog = TracingLog(stagelog, "process", self.TRACE)
 
         eventReceiver = events.EventReceiver(self.eventBrokerHost, self.shutdownTopic)
         visitcount = 0 
@@ -337,6 +336,7 @@ class Pipeline:
                 looplog.setPreamblePropertyInt("loopnum", visitcount)
                 looplog.start()
                 stagelog.setPreamblePropertyInt("loopnum", visitcount)
+                proclog.setPreamblePropertyInt("loopnum", visitcount)
 
                 self.cppPipeline.invokeContinue()
                 self.startInitQueue()    # place an empty clipboard in the first Queue
@@ -345,6 +345,7 @@ class Pipeline:
                 for iStage in range(1, self.nStages+1):
                     stagelog.setPreamblePropertyInt("stageId", iStage)
                     stagelog.start(self.stageNames[iStage-1] + " loop")
+                    proclog.setPreamblePropertyInt("stageId", iStage)
 
                     stage = self.stageList[iStage-1]
 
@@ -355,7 +356,9 @@ class Pipeline:
                     if(self.isDataSharingOn):
                         self.invokeSyncSlices(iStage, stagelog)
 
+                    proclog.start("process and wait")
                     self.cppPipeline.invokeProcess(iStage)
+                    proclog.done()
 
                     self.tryPostProcess(iStage, stage, stagelog)
 
@@ -479,10 +482,7 @@ class Pipeline:
 
         if (thisTopic != "None"):
             log.log(self.VERB3, "Processing topic: " + thisTopic)
-            fileStr = StringIO()
-            fileStr.write(thisTopic)
-            fileStr.write("_slice")
-            sliceTopic = fileStr.getvalue()
+            sliceTopic = "%s_%s" % (thisTopic, self._pipelineName)
             eventReceiver    = self.eventReceiverList[iStage-1]
             eventTransmitter = events.EventTransmitter(self.eventBrokerHost, sliceTopic)
 
@@ -490,6 +490,10 @@ class Pipeline:
                                      "wait for event...")
             inputParamPropertySetPtr = eventReceiver.receive(self.eventTimeout)
             waitlog.done()
+            LogRec(log, self.TRACE) << "received event; contents: "        \
+                                << inputParamPropertySetPtr \
+                                << LogRec.endr;
+
 
             if (inputParamPropertySetPtr != None):
                 log.log(self.VERB2, "received event; sending it to Slices")

@@ -118,7 +118,7 @@ class OutputStage (lsst.pex.harness.Stage.Stage):
                     itemData = clipboard.get(item)
                 except KeyError:
                     if itemRequired:
-                        raise Runtime, 'Missing output item: ' + item
+                        raise RuntimeError, 'Missing output item: ' + item
                     else:
                         continue
 
