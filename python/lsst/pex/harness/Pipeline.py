@@ -127,10 +127,8 @@ class Pipeline:
 
         # The log for use in the Python Pipeline
         self.log = self.cppPipeline.getLogger()
-        if self.logthresh is None:
-            self.logthresh = p.get('logThreshold')
         if self.logthresh is not None:
-            self.log.setThreshold(self.logthresh)
+            self.setLogThreshold(self.logthresh)
         else:
             self.logthresh = self.log.getThreshold()
         self.log.addDestination(cout, Log.DEBUG);
