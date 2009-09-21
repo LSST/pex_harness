@@ -127,10 +127,8 @@ class Pipeline:
 
         # The log for use in the Python Pipeline
         self.log = self.cppPipeline.getLogger()
-        if self.logthresh is None:
-            self.logthresh = p.get('logThreshold')
         if self.logthresh is not None:
-            self.log.setThreshold(self.logthresh)
+            self.setLogThreshold(self.logthresh)
         else:
             self.logthresh = self.log.getThreshold()
         self.log.addDestination(cout, Log.DEBUG);
@@ -490,6 +488,10 @@ class Pipeline:
                                      "wait for event...")
             inputParamPropertySetPtr = eventReceiver.receive(self.eventTimeout)
             waitlog.done()
+            LogRec(log, self.TRACE) << "received event; contents: "        \
+                                << inputParamPropertySetPtr \
+                                << LogRec.endr;
+
 
             if (inputParamPropertySetPtr != None):
                 log.log(self.VERB2, "received event; sending it to Slices")
