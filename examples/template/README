@@ -2,6 +2,28 @@
 pex_harness examples/template
 ----------------------------------------------
 
+Running the example:
+--------------------
+
+To place the example stages into the working PYTHONPATH : 
+
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+
+or 
+
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}     (tcsh) 
+
+One executes the pipeline then with:
+
+% launchPipeline.py template_policy.paf  <some-run-id>
+
+such as 
+
+% launchPipeline.py template_policy.paf  test_2390
+
+Description
+-----------
+
 The template example demonstrates how to set up a simple Pipeline with a single Slice 
 executing a single Stage. 
 
@@ -22,13 +44,9 @@ Stage that perform actual computation.
 By default this example will run with the Pipeline with one Slice on a single node.
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
-The pipeline is then executed via 
+The pipeline is then executed via, for example,
 
-% ./run.sh template_policy.paf <some-run-id>
-
-such as  
-
-% ./run.sh template_policy.paf test_2390
+% launchPipeline.py template_policy.paf  test_2390
 
 After execution the messages from the SampleStage 
 

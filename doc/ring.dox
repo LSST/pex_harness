@@ -3,49 +3,42 @@
 \page Example_Ring Running an example interSlice communication pipeline: examples/ring/ 
 
 This example is found under pex_harness/examples/ring/ . 
-Change to this directory to find files
 
-\code
-% ls
-nodelist.scr  ring.paf  run.sh   README 
-\endcode
-
-The run.sh is a very simple launching script to test a Pipeline. 
-(A more configurable mechanism for setup and launching of pipelines 
-is developed within the dc2pipe/dc3pipe packages and the full 
-orchestration layer.) At the top of the run.sh one finds input 
-parameters that one can edit
-
-\code
-nodes=1
-nslices=5
-\endcode
-
-These default parameters of a single node and five slices 
-are sufficient to illustrate this ring topology example.
-
-The MPI "machine file" is called nodelist.scr and contains the entry
+The default parameters for this example are for execution on a single node
+with a central Pipeline and 5 Slices. The launchPipeline.py derives the parameters
+from the MPI "machine file" nodelist.scr, which contains the entry
 
 \code
 lsst8.ncsa.uiuc.edu:6
 \endcode
 
-The parameter value 6 that appears after the hostname specifies the total 
-number of MPI processes on the host, and so equals the sum of the 1 Pipeline 
-process and the 5 Slices.
+The parameter value 6 that appears after the hostname specifies the total
+number of MPI processes on the host, and equals the sum of the 1 Pipeline
+process and the 5 Slices. To increase the number of Slices in the MPI ring,
+simply increase this value.
 
-The pipeline can be launched by placing the policy file and a runid 
-on the command line:
-
+Prior to running the example, the full path to the directory pex_harness/examples/stages
+should be added to the PYTHONPATH:
 \code
-./run.sh ring.paf test_10001
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (tcsh)
 \endcode
 
-To understand the function of this pipeline we can examine pieces of 
+The example pipeline can be launched by placing a policy file and a runid
+on the command line of launchPipeline.py, for example,
+
+\code
+% launchPipeline.py ring.paf test_2390
+\endcode
+
+To understand the operation of this pipeline we can examine pieces of 
 the ring.paf policy file :
 
 \code
 localLogMode: true
+executionMode: "oneloop"
+logThreshold: -3
+eventBrokerHost: "lsst8.ncsa.uiuc.edu"
 
 shareDataOn: true
 
@@ -103,6 +96,8 @@ prior to the execution of the process() method for this Stage. The
 received PropertySet is placed on the Clipboard under a key tagged with 
 the rank of the neighbor Slice, e.g., rankKey-0 for the case where Slice 1 
 receives data from Slice 0. 
+
+
 
 
 */

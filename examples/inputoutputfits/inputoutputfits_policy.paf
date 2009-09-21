@@ -4,6 +4,7 @@
 localLogMode: true 
 executionMode: "oneloop"
 eventBrokerHost: "lsst8.ncsa.uiuc.edu"
+logThreshold: -3
 
 appStage: {
      stageName: "lsst.pex.harness.IOStage.InputStage"

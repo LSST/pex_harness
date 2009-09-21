@@ -2,7 +2,29 @@
 pex_harness examples/inputoutput
 ----------------------------------------------
 
-This policy file describes a Pipeline that peforms a simple test of IOStage.InputStage .
+Running the example:
+--------------------
+
+To place the example stages into the working PYTHONPATH :
+
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+
+or
+
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}     (tcsh)
+
+One executes the pipeline then with:
+
+% launchPipeline.py inputoutput_policy.paf <some-run-id>
+
+such as
+
+% launchPipeline.py inputoutput_policy.paf test_2390
+
+Description
+-----------
+
+The inputoutput example currently peforms a simple test of IOStage.InputStage .
 
 The two stages in the pipeline are 
 InputStage
@@ -25,13 +47,9 @@ Clipboard and writes out the contents.
 By default this example will run with the Pipeline with one Slice on a single node.
 Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
-The pipeline is then executed via 
+The pipeline is then executed via, for example, 
 
-% ./run.sh inputoutput_policy.paf <some-run-id>
-
-such as  
-
-% ./run.sh inputoutput_policy.paf test_1001 
+% launchPipeline.py inputoutput_policy.paf test_2390
 
 The pipeline blocks for an event that will carry the viistid of the image
 to process. This event can be supplied by running with in a separate shell

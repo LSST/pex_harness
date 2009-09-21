@@ -54,7 +54,10 @@ def main():
         if len(cl.args) > 2:
             name = cl.args[2]
     
-        launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity)
+        if cl.opts.nodelist is not None:
+            run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity, cl.opts.nodelist)
+        else:
+            run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity)
 
     except SystemExit:
         pass
@@ -65,46 +68,6 @@ def main():
         logger.log(Log.FATAL, tb[-1].strip())
         logger.log(Log.DEBUG, "".join(tb[0:-1]).strip())
         sys.exit(1)
-
-def launchPipeline(policyFile, runid, name=None, verbosity=None):
-    if not os.environ.has_key(pkgdirvar):
-        raise RuntimeError(pkgdirvar + " env. var not setup")
-
-    nodesfile = "nodelist.scr"
-    if cl.opts.nodelist is not None:
-        nodesfile = cl.opts.nodelist
-
-    # ensure we have .mpd.conf files deployed on all nodes
-    nodes_set = []
-    nnodes = 0
-    nprocs = 0
-    with file(nodesfile) as nodelist:
-        for node in nodelist:
-            node = node.strip()
-            if len(node)==0 or node.startswith('#'): continue
-            if node.find(':') >= 0:
-                (node, n) = node.split(':')
-            else:
-                n = ''
-            nnodes += 1
-            n = n.strip()
-            if n != '':
-                nprocs += int(n)
-            else:
-                nprocs += 1
-
-            if node in nodes_set: continue
-
-    cmd = "runPipelin.sh.py %s %s %s %d %d" % \
-          (policyFile, runid, nodesfile, nnodes, nprocs)
-    if name is not None:
-        cmd += " %s" % name
-    if verbosity is not None:
-        cmd += " %s" % verbosity
-    logger.log(Log.DEBUG, "exec " + cmd)
-    os.execvp("runPipeline.sh", cmd.split())
-
-    raise RuntimeError("Failed to exec runPipeline.sh")
 
 def getNode(nodeentry):
     colon = nodeentry.find(':')

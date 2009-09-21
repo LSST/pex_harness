@@ -1,6 +1,11 @@
 #! /usr/bin/env python
 
+from __future__ import with_statement
+import re, sys, os
+
 import lsst.pex.exceptions as pexExcept
+from lsst.pex.logging import Log
+from lsst.pex.policy import Policy
 
 msglev = { "silent": -30,
            "quiet":  -10,
@@ -12,6 +17,8 @@ msglev = { "silent": -30,
            "debug":   10,
            "policy":  None,
            "none":    None  }
+
+pkgdirvar = "PEX_HARNESS_DIR"
 
 class RunSetupException(pexExcept.LsstException):
     """
@@ -82,3 +89,52 @@ def verbosity2threshold(level, defthresh=None):
         return defthresh
 
     return -1 * level
+
+def createLog():
+    log = Log(Log.getDefaultLog(), "harness.launchPipeline")
+    return log
+
+def launchPipeline(policyFile, runid, name=None, verbosity=None, nodesfile="nodelist.scr"):
+    """
+    Launch a pipeline with a given policy and Run ID.  A name, verbosity level, and 
+    node list file may also be provided. If no node list is provided, a file named "nodelist.scr" 
+    in the current directory will be used.  If the policy_file refers to other policy files,
+    the path to those files will taken to be relative to the current directory.
+    """
+    if not os.environ.has_key(pkgdirvar):
+        raise RuntimeError(pkgdirvar + " env. var not setup")
+
+    logger = createLog()
+
+    # ensure we have .mpd.conf files deployed on all nodes
+    nodes_set = []
+    nnodes = 0
+    nprocs = 0
+    with file(nodesfile) as nodelist:
+        for node in nodelist:
+            node = node.strip()
+            if len(node)==0 or node.startswith('#'): continue
+            if node.find(':') >= 0:
+                (node, n) = node.split(':')
+            else:
+                n = ''
+            nnodes += 1
+            n = n.strip()
+            if n != '':
+                nprocs += int(n)
+            else:
+                nprocs += 1
+
+            if node in nodes_set: continue
+
+    cmd = "runPipelin.sh.py %s %s %s %d %d" % \
+          (policyFile, runid, nodesfile, nnodes, nprocs)
+    if name is not None:
+        cmd += " %s" % name
+    if verbosity is not None:
+        cmd += " %s" % verbosity
+    logger.log(Log.DEBUG, "exec " + cmd)
+    os.execvp("runPipeline.sh", cmd.split())
+
+    raise RuntimeError("Failed to exec runPipeline.sh")
+
