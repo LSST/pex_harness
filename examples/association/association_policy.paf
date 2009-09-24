@@ -9,31 +9,39 @@
 # shutdownTopic: "triggerShutdownEvent" 
 #
 localLogMode: true  
-eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
+eventBrokerHost: "lsst4.ncsa.uiuc.edu" 
 logThreshold: -3
 shutdownTopic: "triggerShutdownA" 
 
-appStage: { 
-     stageName: "lsst.pexhexamples.pipeline.LoadStage" 
-     eventTopic: "triggerAssociationEvent"  
+appStage: {
+     name: "LoadStage"
+     serialClass: "lsst.pexhexamples.pipeline.LoadStageSerial"
+     parallelClass: "lsst.pexhexamples.pipeline.LoadStageParallel"
+     eventTopic: "triggerAssociationEvent"
      stagePolicy: "None"
 }
 
-appStage: { 
-     stageName: "lsst.pexhexamples.pipeline.MatchDiaSourceStage" 
-     eventTopic: "None" 
+appStage: {
+     name: "MatchDiaSourceStage"
+     serialClass: "lsst.pexhexamples.pipeline.MatchDiaSourceStageSerial"
+     parallelClass: "lsst.pexhexamples.pipeline.MatchDiaSourceStageParallel"
+     eventTopic: "None"
      stagePolicy: "None"
 }
 
-appStage: { 
-     stageName: "lsst.pexhexamples.pipeline.MatchMopStage" 
+appStage: {
+     name: "MatchMopStage"
+     serialClass: "lsst.pexhexamples.pipeline.MatchMopStageSerial"
+     parallelClass: "lsst.pexhexamples.pipeline.MatchMopStageParallel"
      eventTopic: "triggerMatchMopEvent"
      stagePolicy: "None"
 }
 
-appStage: { 
-     stageName: "lsst.pexhexamples.pipeline.StoreStage"  
-     eventTopic: "None" 
+appStage: {
+     name: "StoreStage"
+     serialClass: "lsst.pexhexamples.pipeline.StoreStageSerial"
+     parallelClass: "lsst.pexhexamples.pipeline.StoreStageParallel"
+     eventTopic: "None"
      stagePolicy: "None"
 }
 
