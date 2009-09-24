@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
 from lsst.pex.harness.Queue import Queue
-from lsst.pex.harness.Stage import Stage
+from lsst.pex.harness.stage import StageProcessing
+from lsst.pex.harness.stage import NoOpSerialProcessing
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.harness.Directories import Directories
 from lsst.pex.harness.harnessLib import TracingLog
@@ -99,15 +100,17 @@ class Pipeline:
         # a fallback.  
         stgcfg = p.getArray("appStage")
         self.stageNames = []
-        for item in stgcfg:
-            self.stageNames.append(self.makeStageName(item))
+        for subpol in stgcfg:
+            stageName = subpol.get("name") 
+            self.stageNames.append(stageName)
+            # self.stageNames.append(self.makeStageName(item))
         p.loadPolicyFiles()
 
         # Obtain the working directory space locators
         psLookup = lsst.daf.base.PropertySet()
         if (p.exists('dir')):
             dirPolicy = p.get('dir')
-            shortName = p.get('shortName')
+            shortName = dirPolicy.get('shortName')
             if shortName == None:
                 shortName = self.pipelinePolicyName.split('.')[0]
             dirs = Directories(dirPolicy, shortName, self._runId)
@@ -127,10 +130,11 @@ class Pipeline:
 
         # The log for use in the Python Pipeline
         self.log = self.cppPipeline.getLogger()
-        if self.logthresh is not None:
-            self.setLogThreshold(self.logthresh)
+        if (p.exists('logThreshold')):
+            self.logthresh = p.get('logThreshold')
         else:
-            self.logthresh = self.log.getThreshold()
+            self.logthresh = self.TRACE
+        self.setLogThreshold(self.logthresh)
         self.log.addDestination(cout, Log.DEBUG);
 
         log = Log(self.log, "configurePipeline")
@@ -170,9 +174,17 @@ class Pipeline:
         fullStageNameList = [ ]
         self.stagePolicyList = [ ]
         for stagei in xrange(self.nStages):
-            item = fullStageList[stagei]
-            fullStageNameList.append(item.getString("stageName"))
-            self.stagePolicyList.append(item.get("stagePolicy"))
+            fullStagePolicy = fullStageList[stagei]
+            if (fullStagePolicy.exists('serialClass')):
+                serialName = fullStagePolicy.getString('serialClass')
+                stagePolicy = fullStagePolicy.get('stagePolicy') 
+            else:
+                serialName = "lsst.pex.harness.stage.NoOpSerialProcessing"
+                stagePolicy = None
+
+            fullStageNameList.append(serialName)
+            self.stagePolicyList.append(stagePolicy)
+
             if self.stageNames[stagei] is None:
                 self.stageNames[stagei] = fullStageNameList[-1].split('.')[-1]
             log.log(self.VERB3,
@@ -207,6 +219,9 @@ class Pipeline:
 
         log.log(self.VERB3, "Loading in %d trigger topics" % \
                 len(filter(lambda x: x != "None", self.eventTopicList)))
+
+        log.log(self.VERB3, "Loading in %d shareData flags" % \
+                len(filter(lambda x: x != "None", self.shareDataList)))
 
         for iStage in xrange(len(self.eventTopicList)):
             item = self.eventTopicList[iStage]
@@ -271,16 +286,20 @@ class Pipeline:
             # Make an instance of the specifies Application Stage
             # Use a constructor with the Policy as an argument 
             StageClass = self.stageClassList[iStage-1]
+            sysdata = {} 
+            sysdata["name"] = self._pipelineName
+            sysdata["rank"] = -1 
+            sysdata["stageId"] = iStage 
+            sysdata["universeSize"] = self.universeSize 
+            sysdata["runId"] =  self._runId
             if (stagePolicy != "None"):
-                stageObject = StageClass(iStage, stagePolicy)
+                stageObject = StageClass(stagePolicy, self.log, self.eventBrokerHost, sysdata)  
+                # (self, policy=None, log=None, eventBroker=None, sysdata=None, callSetup=True):
             else:
-                stageObject = StageClass(iStage)
+                stageObject = StageClass(None, self.log, self.eventBrokerHost, sysdata)
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
-            stageObject.setUniverseSize(self.universeSize)
-            stageObject.setRun(self._runId)
-            stageObject.setEventBrokerHost(self.eventBrokerHost)
-            # stageObject.setLookup(self._lookup)
+
             stageObject.initialize(outputQueue, inputQueue)
             self.stageList.append(stageObject)
 
@@ -404,7 +423,8 @@ class Pipeline:
         """
         invlog = stagelog.traceBlock("invokeSyncSlices", self.TRACE-1)
         if(self.shareDataList[iStage-1]):
-            self.cppPipeline.invokeSyncSlices(); 
+            invlog.log(self.VERB3, "Calling invokeSyncSlices")
+            self.cppPipeline.invokeSyncSlices()  
         invlog.done()
 
     def tryPreProcess(self, iStage, stage, stagelog):
@@ -419,7 +439,7 @@ class Pipeline:
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
                 processlog = stagelog.traceBlock("preprocess", self.TRACE)
-                stage.preprocess()
+                self.interQueue = stage.applyPreprocess()
                 processlog.done()
             else:
                 prelog.log(self.TRACE, "Skipping process due to error")
@@ -450,7 +470,7 @@ class Pipeline:
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
                 processlog = stagelog.traceBlock("postprocess", self.TRACE)
-                stage.postprocess()
+                stage.applyPostprocess(self.interQueue)
                 processlog.done()
             else:
                 postlog.log(self.TRACE, "Skipping process due to error")
