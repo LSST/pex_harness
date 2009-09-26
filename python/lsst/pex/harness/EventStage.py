@@ -4,7 +4,7 @@
 Stage for publishing events, pulling contents off the Clipboard according to Policy. 
 """
 
-from lsst.pex.harness.Stage import Stage
+import lsst.pex.harness.stage as harnessStage
 from lsst.pex.logging import Log, Debug
 from lsst.pex.exceptions import LsstException
 
@@ -16,63 +16,60 @@ import lsst.pex.logging as logging
 import lsst.ctrl.events as events
 import time
 
-class EventStage(Stage):
+class EventStageSerial(harnessStage.SerialProcessing):
 
-    def __init__(self, stageId, stagePolicy):
-        Stage.__init__(self, stageId, stagePolicy)
-        self.log = Log(Log.getDefaultLog(), "harness.EventStage")
+    # def __init__(self, stageId, stagePolicy):
+    #     Stage.__init__(self, stageId, stagePolicy)
+    #     self.log = Log(Log.getDefaultLog(), "harness.EventStage")
 
-    def initialize(self, outQueue, inQueue): 
-        """
-        Initialize this stage.  This will make sure that an event broker
-        is available.  The event broker should have been set by the harness
-        framework as part of the stage creation and configuration.
-        """
-        Stage.initialize(self, outQueue, inQueue)
+    def setup(self):
+        self.runmode ="None"
+        if self.policy.exists('RunMode'):
+            self.runmode = self.policy.getString('RunMode')
         if self.getEventBrokerHost() is None:
             raise LsstException("No event broker host configured " +
                                 "for this EventStage")
 
-    #------------------------------------------------------------------------
-    def preprocess(self): 
+    # def initialize(self, outQueue, inQueue): 
+    #     """
+    #     Initialize this stage.  This will make sure that an event broker
+    #     is available.  The event broker should have been set by the harness
+    #     framework as part of the stage creation and configuration.
+    #     """
+    #     Stage.initialize(self, outQueue, inQueue)
+
+    def preprocess(self, clipboard):
         """
         Execute the needed preprocessing code for this Stage
         """
         log = Debug(self.log, "preprocess")
         log.debug(3, "stageId=%i, universeSize=%i" %
-                     (self.stageId, self._universeSize))
+                     (self.stageId, self.universeSize))
 
-        self.activeClipboard = self.inputQueue.getNextDataset()
-
-        if self._policy.exists('RunMode') and \
-                (self._policy.getString('RunMode') == 'process' or \
-                self._policy.getString('RunMode') == 'postprocess'):
+        if (self.runmode == 'process' or self.runmode == 'postprocess'):
             return
 
-        self._publish();
-
+        self._publish(clipboard);
         log.debug(3, "events published (stageId=%i)" % self.stageId)
 
     #------------------------------------------------------------------------
-    def postprocess(self): 
+    def postprocess(self, clipboard):
         """
         Execute the needed postprocessing code for this Stage
         """
         log = Debug(self.log, "postprocess")
         log.debug(3, "stageId=%i, universeSize=%i" %
-                     (self.stageId, self._universeSize))
+                     (self.stageId, self.universeSize))
 
-        if self._policy.exists('RunMode') and \
-                self._policy.getString('RunMode') == 'postprocess': 
-            self._publish()
+        if (self.runmode == 'postprocess'):
+            self._publish(clipboard)
             log.debug(3, "events published (stageId=%i)" % self.stageId)
 
         log.debug(3, "event processing done (stageId=%i)" % self.stageId)
-        self.outputQueue.addDataset(self.activeClipboard)
 
 
     #------------------------------------------------------------------------
-    def _publish(self, log=None):
+    def _publish(self, clipboard, log=None):
         """
         Publish events if required
         """
@@ -81,12 +78,12 @@ class EventStage(Stage):
         log = Debug(log, "publish")
         
         log.debug(4, "Looking for keysToPublish")
-        if not self._policy.exists('keysToPublish'):
+        if not self.policy.exists('keysToPublish'):
             log.log(Log.WARN,"Did not find keysToPublish in EventStage Policy")
             return
 
 	log.debug(4, "Found keysToPublish")
-        publKeyList = self._policy.getArray("keysToPublish") 
+        publKeyList = self.policy.getArray("keysToPublish") 
         if len(publKeyList) <= 0:
             log.log(Log.WARN, "Empty keysToPublish in EventStage Policy")
             return
@@ -98,7 +95,7 @@ class EventStage(Stage):
 	    log.debug(4, "eventName=%s, propertySetName=%s" %
                          (eventName, propertySetName))
 
-            psPtr = self.activeClipboard.get(propertySetName)
+            psPtr = clipboard.get(propertySetName)
             log.debug(4, "Got propertySet %s" % psPtr.toString(False))
             oneEventTransmitter = \
                   events.EventTransmitter(self.getEventBrokerHost(), eventName)
