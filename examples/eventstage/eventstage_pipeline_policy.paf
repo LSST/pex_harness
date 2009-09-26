@@ -5,19 +5,24 @@
 
 localLogMode: true
 executionMode: "oneloop"
-eventBrokerHost: "lsst8.ncsa.uiuc.edu"  
+eventBrokerHost: "lsst4.ncsa.uiuc.edu"  
 logThreshold: -3
 
-
-appStage: { 
-     stageName: "lsst.pexhexamples.apps.App1Stage" 
-     eventTopic: "None"  
+appStage: {
+     name: "App1Stage"
+     serialClass: "lsst.pexhexamples.apps.App1StageSerial"
+     # parallelClass: "lsst.pexhexamples.apps.App1StageParallel"
+     eventTopic: "None"
      stagePolicy: "None"
 }
 
-appStage: { 
-     stageName: "lsst.pex.harness.EventStage.EventStage" 
-     eventTopic: "None"  
+
+appStage: {
+     name: "EventStage"
+     serialClass: "lsst.pex.harness.EventStage.EventStageSerial"
+     # parallelClass: "lsst.pex.harness.EventStage.EventStageParallel"
+     eventTopic: "None"
      stagePolicy: @policy/eventstage.paf
 }
+
 
