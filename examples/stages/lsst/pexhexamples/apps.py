@@ -19,7 +19,7 @@ class App1StageSerial(harnessStage.SerialProcessing):
         Execute the needed preprocessing code for this Stage
         """
 	print 'Python apps.App1Stage preprocess : stageId %i' % self.stageId
-	print 'Python apps.App1Stage preprocess : universeSize %i' % self._universeSize
+	print 'Python apps.App1Stage preprocess : universeSize %i' % self.universeSize
 
         propertySet = dafBase.PropertySet()
 
