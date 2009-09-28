@@ -134,6 +134,30 @@ class StageProcessing(object):
         self.outputQueue = outQueue
         self.inputQueue  = inQueue
 
+    def getEventBrokerHost(self):
+        """
+        get the hostname where the event broker currently in use is located
+        """
+        return self.eventBroker
+
+    def getRun(self):
+        """
+        get the hostname where the event broker currently in use is located
+        """
+        return self.runId
+
+    def getRank(self):
+        """
+        get the hostname where the event broker currently in use is located
+        """
+        return self.rank
+
+    def getUniverseSize(self):
+        """
+        get the hostname where the event broker currently in use is located
+        """
+        return self.universeSize
+
     def shutdown():
         """
         discontinue processing and clean up and release resources.
