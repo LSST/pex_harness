@@ -3,28 +3,31 @@
 #
 localLogMode: true 
 executionMode: "oneloop"
-eventBrokerHost: "lsst8.ncsa.uiuc.edu"
+eventBrokerHost: "lsst4.ncsa.uiuc.edu"
 logThreshold: -3
 
 appStage: {
-     stageName: "lsst.pex.harness.IOStage.InputStage"
+     name: "InputStage"
+     parallelClass: "lsst.pex.harness.IOStage.InputStageParallel"
      eventTopic: "triggerImageprocEvent" 
      stagePolicy: @policy/input_policy.paf
 }
 
 appStage: {
-     stageName: "lsst.pexhexamples.apps.ImageprocStage" 
+     name: "ImageprocStage"
+     parallelClass: "lsst.pexhexamples.apps.ImageprocStageParallel" 
      eventTopic: "None" 
      stagePolicy: "None" 
 }
 
 appStage: {
-     stageName: "lsst.pex.harness.IOStage.OutputStage"
+     name: "OutputStage"
+     parallelClass: "lsst.pex.harness.IOStage.OutputStageParallel"
      eventTopic: "None" 
      stagePolicy: @policy/output_policy.paf
 }
 
-   dir: {
+dir: {
 
         # the default root directory all files read or written by pipelines
         # deployed on this platform.
@@ -49,5 +52,5 @@ appStage: {
         scratch:  .    # a directory for temporary files that may be deleted
                      #   upon completion of the pipeline
 
-    }
+}
 
