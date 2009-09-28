@@ -166,7 +166,7 @@ class ImageprocStageParallel(harnessStage.ParallelProcessing):
 
         print inputImage
 
-        self.clipboard.put('OutputImage', inputImage)
+        clipboard.put('OutputImage', inputImage)
 
 
 class IPDPStageParallel(harnessStage.ParallelProcessing):
