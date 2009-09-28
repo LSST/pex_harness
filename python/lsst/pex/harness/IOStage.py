@@ -130,6 +130,9 @@ class OutputStageSerial(harnessStage.SerialProcessing):
 
 class OutputStageParallel(harnessStage.ParallelProcessing):
 
+    def setup(self):
+        self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
+
     def process(self, clipboard):
         """
         Persist the requested data in the slice processes.
@@ -153,8 +156,7 @@ class OutputStageParallel(harnessStage.ParallelProcessing):
             self.log.log(Log.WARN, "No OutputItems found")
             return
 
-        additionalData = lsst.pex.harness.Utils.createAdditionalData(self, \
-            self.policy, clipboard)
+        additionalData = lsst.pex.harness.Utils.createAdditionalData(self, self.policy, clipboard)
 
         # Create a persistence object using policy, if present.
         if self.policy.exists('Persistence'):
@@ -200,7 +202,6 @@ class OutputStageParallel(harnessStage.ParallelProcessing):
                 location = policy.getString('Location')
                 logLoc = lsst.daf.persistence.LogicalLocation(location, additionalData)
                 self.log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
-
                 additionalData.add('StorageLocation.' + storageName, logLoc.locString())
                 storage = persistence.getPersistStorage(storageName,  logLoc)
                 storageList.append(storage)
