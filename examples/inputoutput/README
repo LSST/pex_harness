@@ -51,13 +51,13 @@ The pipeline is then executed via, for example,
 
 % launchPipeline.py inputoutput_policy.paf test_2390
 
-The pipeline blocks for an event that will carry the viistid of the image
+The pipeline blocks for an event that will carry the visitid of the image
 to process. This event can be supplied by running with in a separate shell
 the script:
 
 % python triggerIpdpEventTransmit.py
 
-if an ActiveMQbroker other than the LSST default (lsst8.ncsa.uiuc.edu)
+if an ActiveMQbroker other than the LSST default (lsst4.ncsa.uiuc.edu)
 is used, this needs to be specified in the pipeline policy file (under
 "eventBrokerHost") and the event trigger python script.
 

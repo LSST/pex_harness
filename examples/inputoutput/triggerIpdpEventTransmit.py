@@ -9,7 +9,7 @@ import time
 
 if __name__ == "__main__":
     print "starting...\n"
-    externalEventTransmitter = events.EventTransmitter("lsst8.ncsa.uiuc.edu", "triggerIpdpEvent")
+    externalEventTransmitter = events.EventTransmitter("lsst4.ncsa.uiuc.edu", "triggerIpdpEvent")
 
     root = PropertySet()
   
