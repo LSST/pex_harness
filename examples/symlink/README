@@ -1,0 +1,52 @@
+
+pex_harness examples/symlink 
+----------------------------------------------
+
+Running the example:
+--------------------
+
+To place the example stages into the working PYTHONPATH :
+
+% export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
+
+or
+
+% setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}     (tcsh)
+
+One executes the pipeline then with:
+
+% launchPipeline.py symlink_pipeline_policy.paf <some-run-id>
+
+such as
+
+% launchPipeline.py symlink_pipeline_policy.paf test_2390
+
+Description
+-----------
+
+The SymLinkStage example demonstrates how a Pipeline can set up the soft links in the 
+local work space to local data repository locations. 
+
+The current pipeline example has the single stage:    
+     SymLinkStage
+
+By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
+
+The pipeline is then executed via, for example, 
+
+% launchPipeline.py symlink_pipeline_policy.paf test_2390
+
+if an ActiveMQbroker other than the LSST default (lsst4.ncsa.uiuc.edu)
+is used, this needs to be specified in the pipeline policy file (under
+"eventBrokerHost") and the listener python script.
+
+Upon executing the pipeline, the runid coded working directory will contain appropriate 
+symlinks to the local image repository subdirectories. 
+
+% ls -l test_2390/
+total 0
+lrwxrwxrwx 1  ... 29 Sep 29 13:35 calib -> /lsst/images/repository/calib
+lrwxrwxrwx 1  ... 27 Sep 29 13:35 raw -> /lsst/images/repository/raw
+lrwxrwxrwx 1  ... 32 Sep 29 13:35 template -> /lsst/images/repository/template
+
