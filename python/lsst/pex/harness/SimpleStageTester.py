@@ -2,10 +2,11 @@
 
 import lsst.daf.base as dafBase
 import lsst.pex.policy as pexPolicy
-from Stage import Stage
 from Queue import Queue
 from Clipboard import Clipboard
 from lsst.pex.logging import Log, Debug
+
+from lsst.pex.harness.stage import StageProcessing
 
 class SimpleStageTester:
     """
@@ -16,7 +17,7 @@ class SimpleStageTester:
     data that goes into the input clipboard.  
     """
 
-    def __init__(self, stage, runID="simpleTest", mpiUniverseSize=1):
+    def __init__(self, stageSerial=None, stageParallel=None, runID="simpleTest", mpiUniverseSize=1):
         """create the test
         @param stage    a stage instance; the policy should have been passed
                           to the stage's constructor.
@@ -25,14 +26,21 @@ class SimpleStageTester:
                           running
         """
         self.log = Debug("SimpleStageTester")
-        self.stage = stage
         self.event = None
         self.inQ = Queue()
         self.outQ = Queue()
-        stage.setRun(runID)
-        stage.setUniverseSize(mpiUniverseSize)
-        stage.setLookup(dict(work=".", input=".", output=".",
-                             update=".", scratch="."))
+
+        if stageSerial is not None:
+            self.stageSerial = stageSerial
+            self.stageSerial.setRun(runID)
+            self.stageSerial.setUniverseSize(mpiUniverseSize)
+            # self.stageSerial.setLookup(dict(work=".", input=".", output=".", update=".", scratch="."))
+
+        if stageParallel is not None:
+            self.stageParallel = stageParallel
+            self.stageParallel.setRun(runID)
+            self.stageParallel.setUniverseSize(mpiUniverseSize)
+            # self.stageParallel.setLookup(dict(work=".", input=".", output=".", update=".", scratch="."))
 
     def run(self, clipboard, sliceID):
         """run the stage as a particular slice, returning the output clipboard
@@ -58,17 +66,17 @@ class SimpleStageTester:
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
-        self.stage.setRank(sliceID)
-        self.stage.initialize(self.outQ, self.inQ);
+        self.stageSerial.setRank(sliceID)
+        self.stageSerial.initialize(self.outQ, self.inQ);
 
         self.inQ.addDataset(clipboard)
 
         self.log.debug(5, "Calling Stage preprocess()")
-        self.stage.preprocess()
+        self.interQueue = self.stageSerial.applyPreprocess()
         self.log.debug(5, "Stage preprocess() complete")
 
         self.log.debug(5, "Calling Stage postprocess()")
-        self.stage.postprocess()
+        self.stageSerial.applyPostprocess(self.interQueue)
         self.log.debug(5, "Stage postprocess() complete")
 
         return self.outQ.getNextDataset()
@@ -88,12 +96,12 @@ class SimpleStageTester:
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
-        self.stage.setRank(sliceID)
-        self.stage.initialize(self.outQ, self.inQ);
+        self.stageParallel.setRank(sliceID)
+        self.stageParallel.initialize(self.outQ, self.inQ);
         self.inQ.addDataset(clipboard)
 
         self.log.debug(5, "Calling Stage process()")
-        self.stage.process()
+        self.stageParallel.applyProcess()
         self.log.debug(5, "Stage process() complete")
 
         return self.outQ.getNextDataset()
@@ -156,7 +164,7 @@ class SimpleStageTester:
         """
         return Log.getDefaultLog().willShowAll()
 
-def create(stage, policy, runID="simpleTest", mpiUniverseSize=1):
+def create(stageSerial, stageParallel, policy, runID="simpleTest", mpiUniverseSize=1):
     """create a SimpleStageTester from a stage and a policy
     @param stage    a stage, either as a string naming the fully-qualified 
                        class to be instantiated or a fully-qualified class
@@ -165,23 +173,46 @@ def create(stage, policy, runID="simpleTest", mpiUniverseSize=1):
                        an actual policy instance, or a string giving the
                        path to a policy file.
     """
-    if isinstance(stage, str):
-        stage = stage.strip()
-        tokens = stage.split('.')
+    if isinstance(stageSerial, str):
+        stageSerial = stageSerial.strip()
+        tokens = stageSerial.split('.')
         classString = tokens.pop().strip()
         pkg = ".".join(tokens)
         mod = __import__(pkg, globals(), locals(), [classString], -1)
-        stage = getattr(mod, classString)
-    if not issubclass(stage, Stage):
-        raise TypeError("Not a Stage subclass: " + str(stage))
+        stageSerial = getattr(mod, classString)
+    if not issubclass(stageSerial, StageProcessing):
+        raise TypeError("Not a StageProcessing subclass: " + str(stageSerial))
+
+    if isinstance(stageParallel, str):
+        stageSerial = stageParallel.strip()
+        tokens = stageParallel.split('.')
+        classString = tokens.pop().strip()
+        pkg = ".".join(tokens)
+        mod = __import__(pkg, globals(), locals(), [classString], -1)
+        stageSerial = getattr(mod, classString)
+    if not issubclass(stageParallel, StageProcessing):
+        raise TypeError("Not a StageProcessing subclass: " + str(stageParallel))
+
 
     if isinstance(policy, str) or isinstance(policy, pexPolicy.PolicyFile):
         policy = pexPolicy.Policy.createPolicy(policy)
     if policy is not None and not isinstance(policy, pexPolicy.Policy):
         raise TypeError("Not a Policy instance: " + policy)
 
-    stageInst = stage(0, policy)
-    return SimpleStageTester(stageInst, runID, mpiUniverseSize)
+    sysdata = {}
+    sysdata["name"] = "test1"
+    sysdata["rank"] = -1
+    sysdata["stageId"] = 1
+    sysdata["universeSize"] = 2
+    sysdata["runId"] = runID
+    # stageInst = stage(0, policy)
+    eventBrokerHost = "lsst4.ncsa.uiuc.edu"
+
+    stageSerialInst = stageSerial(policy, None, eventBrokerHost, sysdata)
+
+    stageParallelInst = stageParallel(policy, None, eventBrokerHost, sysdata)
+        
+    return SimpleStageTester(stageSerialInst, stageParallelInst, runID, mpiUniverseSize)
 
 def test(stage, runID="simpleTest", mpiUniverseSize=1):
     return SimpleStageTester(stage, runID, mpiUniverseSize)

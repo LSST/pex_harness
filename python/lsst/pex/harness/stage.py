@@ -140,21 +140,39 @@ class StageProcessing(object):
         """
         return self.eventBroker
 
+    def setRun(self, runId):
+        """
+        set the runid 
+        """
+        self.runId = runId
+
     def getRun(self):
         """
-        get the hostname where the event broker currently in use is located
+        get the runid
         """
         return self.runId
 
+    def setRank(self, rank):
+        """
+        set the MPI rank of the process running this stage
+        """
+        self.rank = rank
+
     def getRank(self):
         """
-        get the hostname where the event broker currently in use is located
+        get the MPI rank of the process running this stage
         """
         return self.rank
 
+    def setUniverseSize(self, universeSize):
+        """
+        set the MPI universe size
+        """
+        self.universeSize = universeSize
+
     def getUniverseSize(self):
         """
-        get the hostname where the event broker currently in use is located
+        get the MPI universe size, an integer
         """
         return self.universeSize
 
