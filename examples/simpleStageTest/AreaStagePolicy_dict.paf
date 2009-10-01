@@ -1,0 +1,35 @@
+#<?cfg paf dictionary ?>  
+# 
+# This is a dictionary.that defines the policy data expected by the example
+# AreaStage (in simpleStageTest.py).  
+# 
+# The first line above is a content identifier.  It can be used for
+# determining both the format and distinguising between a policy file
+# and a dictionary.  It's use is not required but recommended.
+#        
+target:  AreaStage
+definitions: {
+   inputScale: {
+      type:  int
+      default:  0
+      minOccurs:  0
+      maxOccurs:  1
+      description:  "the exponential unit scale associated with the input 
+                     width and height data.  For example, -2 implies the 
+                     the lengths are measured in cm; +3, in km."
+   }
+
+   outputScale: {
+      type:  int
+      default:  0
+      minOccurs:  0
+      maxOccurs:  1
+      description:  "the exponential unit scale associated with the output
+                     area data.  For example, -2 implies the 
+                     the area will be given in units of square cm; +3, in 
+                     square km."
+   }
+
+}
+
+               

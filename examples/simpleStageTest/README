@@ -1,0 +1,13 @@
+
+pex_harness examples/simpleStageTest
+----------------------------------------------
+
+Running the example:
+--------------------
+
+This example of the use of the SimpleStageTester may be executed be typing:
+
+% python simpleStageTest.py
+
+See inline comments for a detailed description of the elements. 
+
