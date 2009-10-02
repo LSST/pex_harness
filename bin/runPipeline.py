@@ -10,7 +10,6 @@ include format), it is assumed that the given path is relative to the
 current working directory where this script is executed. 
 """
 from lsst.pex.harness.Queue import Queue
-from lsst.pex.harness.Stage import Stage
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.harness.Pipeline import Pipeline
 import lsst.pex.harness.run as run
