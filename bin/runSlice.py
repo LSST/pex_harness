@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 from lsst.pex.harness.Queue import Queue
-from lsst.pex.harness.Stage import Stage
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.harness.Slice import Slice
 
