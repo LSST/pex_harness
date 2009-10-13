@@ -74,6 +74,8 @@ namespace lsst {
 
     	namespace harness {
 
+namespace pexPolicy = lsst::pex::policy;
+
 typedef vector<Stage> StageVector;
 
 /**
@@ -104,7 +106,7 @@ public:
     void setRank(int rank);
     int getRank();
     int getUniverseSize();
-    void setTopology(Policy::Ptr policy); 
+    void setTopology(pexPolicy::Policy::Ptr policy); 
     void setRunId(char* runId);
     char* getRunId();
     void calculateNeighbors();
@@ -127,7 +129,7 @@ private:
 
     int _pid;
     int _rank;
-    Policy::Ptr _topologyPolicy; 
+    pexPolicy::Policy::Ptr _topologyPolicy; 
     char* _runId;
 
     MPI_Comm sliceIntercomm;
