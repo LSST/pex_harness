@@ -10,7 +10,7 @@ import time
 if __name__ == "__main__":
     print "starting...\n"
 
-    eventBrokerHost = "lsst8.ncsa.uiuc.edu" 
+    eventBrokerHost = "lsst4.ncsa.uiuc.edu" 
 
     externalEventTransmitter = events.EventTransmitter(eventBrokerHost, "triggerAssociationEvent")
 

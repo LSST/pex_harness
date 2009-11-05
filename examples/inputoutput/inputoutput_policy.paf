@@ -13,17 +13,21 @@
 
 localLogMode: true
 executionMode: "oneloop"
-eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
+eventBrokerHost: "lsst4.ncsa.uiuc.edu" 
 logThreshold: -3
 
-appStage: { 
-     stageName: "lsst.pex.harness.IOStage.InputStage" 
+
+appStage: {
+     name: "InputStage"
+     # serialClass: "lsst.pex.harness.IOStage.InputStageSerial"
+     parallelClass: "lsst.pex.harness.IOStage.InputStageParallel"
      eventTopic: "triggerIpdpEvent"
      stagePolicy: @policy/inputipdp.policy
 }
 
 appStage: { 
-     stageName: "lsst.pexhexamples.apps.IPDPStage" 
+     # serialClass: "lsst.pexhexamples.apps.IPDPStageSerial"
+     parallelClass: "lsst.pexhexamples.apps.IPDPStageParallel"
      eventTopic: "None"
      stagePolicy: "None"
 }

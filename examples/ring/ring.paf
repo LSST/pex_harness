@@ -4,7 +4,7 @@
 localLogMode: true
 executionMode: "oneloop"
 logThreshold: -3
-eventBrokerHost: "lsst8.ncsa.uiuc.edu"
+eventBrokerHost: "lsst4.ncsa.uiuc.edu"
 
 shareDataOn: true
 
@@ -15,14 +15,19 @@ topology: {
 }
 
 appStage: {
-    stageName: "lsst.pexhexamples.apps.SyncSetupStage"
+    name: "SyncSetupStage"
+    serialClass: "lsst.pexhexamples.apps.SyncSetupStageSerial"
+    parallelClass: "lsst.pexhexamples.apps.SyncSetupStageParallel"
     eventTopic: "None"
     stagePolicy: "None"
     shareData: false
 }
 
+
 appStage: {
-    stageName: "lsst.pexhexamples.apps.SyncTestStage"
+    name: "SyncTestStage"
+    serialClass: "lsst.pexhexamples.apps.SyncTestStageSerial"
+    parallelClass: "lsst.pexhexamples.apps.SyncTestStageParallel"
     eventTopic: "None"
     stagePolicy: "None"
     shareData: true

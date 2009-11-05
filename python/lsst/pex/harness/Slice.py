@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
 from lsst.pex.harness.Queue import Queue
-from lsst.pex.harness.Stage import Stage
+from lsst.pex.harness.stage import StageProcessing
+from lsst.pex.harness.stage import NoOpParallelProcessing
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.harness.harnessLib import TracingLog
 from lsst.pex.harness.Directories import Directories
@@ -103,16 +104,20 @@ class Slice:
         # stage policies will be specified as separate files; thus, we need
         # a fallback.  
         stgcfg = p.getArray("appStage")
+
         self.stageNames = []
-        for item in stgcfg:
-            self.stageNames.append(self.makeStageName(item))
+        for subpol in stgcfg:
+            stageName = subpol.get("name")
+            self.stageNames.append(stageName)
+            # self.stageNames.append(self.makeStageName(item))
+
         p.loadPolicyFiles()
 
         # Obtain the working directory space locators  
         psLookup = lsst.daf.base.PropertySet()
         if (p.exists('dir')):
             dirPolicy = p.get('dir')
-            shortName = p.get('shortName')
+            shortName = dirPolicy.get('shortName')
             if shortName == None:
                 shortName = self.pipelinePolicyName.split('.')[0]
             dirs = Directories(dirPolicy, shortName, self._runId)
@@ -176,9 +181,17 @@ class Slice:
         fullStageNameList = [ ]
         self.stagePolicyList = [ ]
         for stagei in xrange(self.nStages):
-            item = fullStageList[stagei]
-            fullStageNameList.append(item.getString("stageName"))
-            self.stagePolicyList.append(item.get("stagePolicy"))
+            fullStagePolicy = fullStageList[stagei]
+            if (fullStagePolicy.exists('parallelClass')):
+                parallelName = fullStagePolicy.getString('parallelClass')
+                stagePolicy = fullStagePolicy.get('stagePolicy')
+            else:
+                parallelName = "lsst.pex.harness.stage.NoOpParallelProcessing"
+                stagePolicy = None
+
+            fullStageNameList.append(parallelName)
+            self.stagePolicyList.append(stagePolicy)
+
             if self.stageNames[stagei] is None:
                 self.stageNames[stagei] = fullStageNameList[-1].split('.')[-1]
             log.log(self.VERB3,
@@ -272,18 +285,24 @@ class Slice:
             # Make an instance of the specifies Application Stage
             # Use a constructor with the Policy as an argument
             StageClass = self.stageClassList[iStage-1]
+            sysdata = {}
+            sysdata["name"] = self._pipelineName
+            sysdata["rank"] = self._rank
+            sysdata["stageId"] = iStage
+            sysdata["universeSize"] = self.universeSize
+            sysdata["runId"] =  self._runId
+            # Here 
             if (stagePolicy != "None"):
-                stageObject = StageClass(iStage, stagePolicy)
+                stageObject = StageClass(stagePolicy, self.log, self.eventBrokerHost, sysdata)
+                # (self, policy=None, log=None, eventBroker=None, sysdata=None, callSetup=True):
             else:
-                stageObject = StageClass(iStage)
+                stageObject = StageClass(None, self.log, self.eventBrokerHost, sysdata)
+
             inputQueue  = self.queueList[iStage-1]
             outputQueue = self.queueList[iStage]
-            stageObject.setRank(self._rank)
-            stageObject.setUniverseSize(self.universeSize)
-            stageObject.setRun(self._runId)
-            stageObject.setEventBrokerHost(self.eventBrokerHost)
-            stageObject.initialize(outputQueue, inputQueue)
+
             # stageObject.setLookup(self._lookup)
+            stageObject.initialize(outputQueue, inputQueue)
             self.stageList.append(stageObject)
 
     def startInitQueue(self):
@@ -435,7 +454,7 @@ class Slice:
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
                 processlog = stagelog.traceBlock("process", self.TRACE)
-                stageObject.process()
+                stageObject.applyProcess()
                 processlog.done()
             else:
                 proclog.log(self.TRACE, "Skipping process due to error")

@@ -2,10 +2,13 @@
 
 import lsst.daf.base as dafBase
 import lsst.pex.policy as pexPolicy
-from Stage import Stage
 from Queue import Queue
 from Clipboard import Clipboard
 from lsst.pex.logging import Log, Debug
+
+import lsst.pex.harness.stage as hstage
+from lsst.pex.harness.stage import StageProcessing
+from lsst.pex.harness.stage import NoOpSerialProcessing, NoOpParallelProcessing
 
 class SimpleStageTester:
     """
@@ -16,23 +19,37 @@ class SimpleStageTester:
     data that goes into the input clipboard.  
     """
 
-    def __init__(self, stage, runID="simpleTest", mpiUniverseSize=1):
-        """create the test
-        @param stage    a stage instance; the policy should have been passed
-                          to the stage's constructor.
-        @param runID    the run identifier to provide to the stage
-        @param mpiUniverseSize  the number of MPI processes to pretend are
-                          running
+    def __init__(self, stage=None, name="1", runID="simpleTest",
+                 universeSize=1):
+                 
+        """create the tester
+        @param stage            a Stage instance for the first stage in a
+                                  simple pipeline.
+        @param name             the name to associate with this stage (for
+                                  display purposes.
+        @param runID            the run identifier to provide to the stage
+        @param universeSize     the number of parallel threads to pretend are
+                                  running
         """
-        self.log = Debug("SimpleStageTester")
         self.stage = stage
+        self.log = Debug("SimpleStageTester")
         self.event = None
         self.inQ = Queue()
         self.outQ = Queue()
-        stage.setRun(runID)
-        stage.setUniverseSize(mpiUniverseSize)
-        stage.setLookup(dict(work=".", input=".", output=".",
-                             update=".", scratch="."))
+
+        self.sysdata = {}
+        self.sysdata["runId"] = runID
+        self.sysdata["stageId"] = -1
+        self.sysdata["universeSize"] = universeSize
+
+        self.stages = []
+        if stage:
+            self.stages.append( (name, stage) )
+
+    def addStage(self, stage, name=None):
+        if name is None:
+            name = str(len(self.stages))
+        self.stages.append( (name, stage) )
 
     def run(self, clipboard, sliceID):
         """run the stage as a particular slice, returning the output clipboard
@@ -46,34 +63,61 @@ class SimpleStageTester:
         else:
             return self.runWorker(clipboard, sliceID)
 
-    def runMaster(self, clipboard, dopre=True, dopost=True, sliceID=-1):
+    def _makeStages(self, sliceID, isSerial):
+        sysdata = self.sysdata.copy()
+
+        stages = []
+        inQ = self.inQ
+        outQ = None
+        for name, stage in self.stages:
+            sysdata['stageId'] = len(stages) + 1
+            sysdata['name'] = name
+
+            if (isSerial): 
+                newstage = stage.createSerialProcessing(self.log, sysdata)
+            else:
+                newstage = stage.createParallelProcessing(sliceID, self.log,
+                                                          sysdata)
+            
+            stages.append( newstage )
+            if len(stages) == len(self.stages):
+                outQ = self.outQ
+            else:
+                outQ = Queue()
+            stages[-1].initialize(outQ, inQ)
+            inQ = outQ
+
+        return stages
+
+
+    def runMaster(self, clipboard, sliceID=0):
         """run the Stage as a master, calling its initialize() function,
         and then running the serial functions, preprocess() and postprocess()
         """
         if isinstance(clipboard, dict):
             clipboard = self.toClipboard(clipboard)
         if not isinstance(clipboard, Clipboard):
-            raise TypeError("runWorker input is not a clipboard")
+            raise TypeError("runMaster input is not a clipboard")
 
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
-        self.stage.setRank(sliceID)
-        self.stage.initialize(self.outQ, self.inQ);
+        stages = self._makeStages(sliceID, True)
 
         self.inQ.addDataset(clipboard)
+        for stage in stages:
+            self.log.debug(5, "Calling Stage preprocess() on " +
+                               stage.getName())
+            interQ = stage.applyPreprocess()
+            self.log.debug(5, "Stage preprocess() complete")
 
-        self.log.debug(5, "Calling Stage preprocess()")
-        self.stage.preprocess()
-        self.log.debug(5, "Stage preprocess() complete")
-
-        self.log.debug(5, "Calling Stage postprocess()")
-        self.stage.postprocess()
-        self.log.debug(5, "Stage postprocess() complete")
+            self.log.debug(5, "Calling Stage postprocess()")
+            stage.applyPostprocess(interQ)
+            self.log.debug(5, "Stage postprocess() complete")
 
         return self.outQ.getNextDataset()
 
-    def runWorker(self, clipboard, sliceID=0):
+    def runWorker(self, clipboard, sliceID=1):
         """run the Stage as a worker, running its process() function
         @param clipboard     a Clipboard or plain dictionary instance
                                 containing the Stage input data
@@ -83,18 +127,18 @@ class SimpleStageTester:
         if isinstance(clipboard, dict):
             clipboard = self.toClipboard(clipboard)
         if not isinstance(clipboard, Clipboard):
-            raise TypeError("runWorker input is not a clipboard")
+            raise TypeError("runMaster input is not a clipboard")
 
         if self.event is not None:
             clipboard(self.event[0], self.event[1])
 
-        self.stage.setRank(sliceID)
-        self.stage.initialize(self.outQ, self.inQ);
-        self.inQ.addDataset(clipboard)
+        stages = self._makeStages(sliceID, False)
 
-        self.log.debug(5, "Calling Stage process()")
-        self.stage.process()
-        self.log.debug(5, "Stage process() complete")
+        self.inQ.addDataset(clipboard)
+        for stage in stages:
+            self.log.debug(5, "Calling Stage process()")
+            stage.applyProcess()
+            self.log.debug(5, "Stage process() complete")
 
         return self.outQ.getNextDataset()
 
@@ -156,33 +200,49 @@ class SimpleStageTester:
         """
         return Log.getDefaultLog().willShowAll()
 
-def create(stage, policy, runID="simpleTest", mpiUniverseSize=1):
+def create(policy, stageSerial=None, stageParallel=None, runID="simpleTest",
+           universeSize=1):
     """create a SimpleStageTester from a stage and a policy
-    @param stage    a stage, either as a string naming the fully-qualified 
-                       class to be instantiated or a fully-qualified class
-                       type.
-    @param policy   the policy to configure the stage with.  This is either
-                       an actual policy instance, or a string giving the
-                       path to a policy file.
+    @param stageSerial    the serial component of the stage, either as a 
+                            string naming the fully-qualified SerialProcessing 
+                            class to be instantiated or a SerialProcessing 
+                            class type.
+    @param stageParallel  the parallel component of the stage, either as a 
+                           string naming the fully-qualified ParallelProcessing
+                           class to be instantiated or a ParallelProcessing 
+                           class type.
+    @param policy         the policy to configure the stage with.  This is 
+                            either an actual policy instance, or a string 
+                            giving the path to a policy file.
+    @param runID          the run identifier to provide to the stage
+    @param universeSize   the number of parallel threads to pretend are
+                            running
     """
-    if isinstance(stage, str):
-        stage = stage.strip()
-        tokens = stage.split('.')
-        classString = tokens.pop().strip()
-        pkg = ".".join(tokens)
-        mod = __import__(pkg, globals(), locals(), [classString], -1)
-        stage = getattr(mod, classString)
-    if not issubclass(stage, Stage):
-        raise TypeError("Not a Stage subclass: " + str(stage))
+    if stageSerial:
+        if isinstance(stageSerial, str):
+            stageSerial = hstage._createClass(stageSerial.strip())
+        if not issubclass(stageSerial, SerialProcessing):
+            raise TypeError("Not a SerialProcessing subclass: " +
+                            str(stageSerial))
+
+    if stageParallel:
+        if isinstance(stageParallel, str):
+            stageSerial = hstage._createClass(stageParallel.strip())
+        if not issubclass(stageParallel, ParallelProcessing):
+            raise TypeError("Not a ParallelProcessing subclass: " +
+                            str(stageParallel))
 
     if isinstance(policy, str) or isinstance(policy, pexPolicy.PolicyFile):
         policy = pexPolicy.Policy.createPolicy(policy)
     if policy is not None and not isinstance(policy, pexPolicy.Policy):
         raise TypeError("Not a Policy instance: " + policy)
 
-    stageInst = stage(0, policy)
-    return SimpleStageTester(stageInst, runID, mpiUniverseSize)
+    stage = hstage.Stage(policy)
+    stage.serialClass = stageSerial
+    stage.parallelClass = stageParallel
 
-def test(stage, runID="simpleTest", mpiUniverseSize=1):
-    return SimpleStageTester(stage, runID, mpiUniverseSize)
+    return SimpleStageTester(stage, runID, universeSize)
+
+def test(stage, runID="simpleTest", universeSize=1):
+    return SimpleStageTester(stage, runID, universeSize)
 

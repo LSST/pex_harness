@@ -1,31 +1,23 @@
-# inputoutputfits_policy.paf
+
+# symlink_pipeline_policy.paf
 #
-#
-localLogMode: true 
+# This policy file executes the Pipeline within a scenario that utilizes 
+# the SymLink stage.
+
+localLogMode: true
 executionMode: "oneloop"
 eventBrokerHost: "lsst4.ncsa.uiuc.edu"
 logThreshold: -3
 
+
+# Link input files into input directory
 appStage: {
-     name: "InputStage"
-     parallelClass: "lsst.pex.harness.IOStage.InputStageParallel"
-     eventTopic: "triggerImageprocEvent" 
-     stagePolicy: @policy/input_policy.paf
+    name: "SymLinkStage"
+    serialClass: "lsst.pex.harness.SymLinkStage.SymLinkStageSerial"
+    eventTopic: "None"
+    stagePolicy: @policy/symlink_stage.paf
 }
 
-appStage: {
-     name: "ImageprocStage"
-     parallelClass: "lsst.pexhexamples.apps.ImageprocStageParallel" 
-     eventTopic: "None" 
-     stagePolicy: "None" 
-}
-
-appStage: {
-     name: "OutputStage"
-     parallelClass: "lsst.pex.harness.IOStage.OutputStageParallel"
-     eventTopic: "None" 
-     stagePolicy: @policy/output_policy.paf
-}
 
 dir: {
 
@@ -34,8 +26,8 @@ dir: {
         # This can be overriden by any of the "named role" directories below.
         #
         defaultRoot:  .
-        # runDirPattern:  "%(runid)s"
-        runDirPattern:  "sample"
+        runDirPattern:  "%(runid)s"
+        # runDirPattern:  "sample"
 
         # These indicate the directory that should be used for a named purpose.
         # If relative paths are given, the resulting directory will be relative
@@ -53,4 +45,6 @@ dir: {
                      #   upon completion of the pipeline
 
 }
+
+
 

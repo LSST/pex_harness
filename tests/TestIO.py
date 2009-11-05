@@ -14,13 +14,21 @@ q2 = lsst.pex.harness.Queue.Queue()
 q3 = lsst.pex.harness.Queue.Queue()
 q4 = lsst.pex.harness.Queue.Queue()
 
+sysdata = {}
+sysdata["name"] = "testPipeline"
+sysdata["rank"] = 0
+sysdata["stageId"] = 1
+sysdata["universeSize"] = 100
+sysdata["runId"] =  "testrun"
+eventBrokerHost = "lsst4.ncsa.uiuc.edu"
+
 # Create and initialize the stages
-outputStage = lsst.pex.harness.IOStage.OutputStage(3, outputPolicy)
+outputStage = lsst.pex.harness.IOStage.OutputStageParallel(outputPolicy, None, eventBrokerHost, sysdata)
 outputStage.initialize(q2, q1)
-outputStage.setUniverseSize(100)
-inputStage = lsst.pex.harness.IOStage.InputStage(4, inputPolicy)
+
+sysdata["rank"] = -1
+inputStage = lsst.pex.harness.IOStage.InputStageSerial(inputPolicy, None, eventBrokerHost, sysdata)
 inputStage.initialize(q4, q3)
-inputStage.setUniverseSize(100)
 # Note: no direct connection between the stages!
 
 # Create the event PropertySet
@@ -42,7 +50,7 @@ clip.put("theProperty", ps)
 q1.addDataset(clip)
 
 # Run the output stage like a slice
-outputStage.process()
+outputStage.applyProcess()
 
 # Check the output queue: should have everything we put on the input
 assert q2.size() == 1
@@ -62,8 +70,8 @@ clip3.put("tcsEvent", event)
 q3.addDataset(clip3)
 
 # Run the input stage like a master process
-inputStage.preprocess()
-inputStage.postprocess()
+interQueue = inputStage.applyPreprocess()
+inputStage.applyPostprocess(interQueue)
 
 # Check the output queue: should have the event -- and now the DataProperty!
 assert q4.size() == 1

@@ -90,13 +90,12 @@ its process() method SyncSetupStage places a PropertySet on the Clipboard
 under the key "rankKey" and marks it as Shared:
 
         propertySet = dafBase.PropertySet()
-
         propertySet.setInt("sliceRank", self._rank)
         propertySet.setString("Level", "Debug")
 
-        self.activeClipboard.put("rankKey", propertySet)
+        clipboard.put("rankKey", propertySet)
 
-        self.activeClipboard.setShared("rankKey", True)
+        clipboard.setShared("rankKey", True)
 
 The next Stage SyncTestStage has the attribute shareData: true set, which 
 ensures that all items marked shared on the Clipboard will be communicated 

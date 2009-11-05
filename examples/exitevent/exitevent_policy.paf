@@ -6,15 +6,18 @@ execute: {
 
     executionMode: "oneloop"
     localLogMode: true  
-    eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
+    eventBrokerHost: "lsst4.ncsa.uiuc.edu" 
     logThreshold: -3
     exitTopic: "SampleExitTopic"
 
-    appStage: { 
-        stageName: "lsst.pexhexamples.pipeline.SampleStage" 
-        eventTopic: "None" 
+    appStage: {
+        name: "SampleStage"
+        serialClass: "lsst.pexhexamples.pipeline.SampleStageSerial"
+        parallelClass: "lsst.pexhexamples.pipeline.SampleStageParallel"
+        eventTopic: "None"
         stagePolicy: @policy/samplestage.paf
     }
+
 
 }
 

@@ -1,0 +1,16 @@
+RunMode: preprocess
+
+Links: {
+	sourcePath: /lsst/images/repository/raw
+	destPath: %(input)/raw
+}
+
+Links: {
+	sourcePath: /lsst/images/repository/calib
+	destPath: %(input)/calib
+}
+
+Links: {
+	sourcePath: /lsst/images/repository/template
+	destPath: %(input)/template
+}

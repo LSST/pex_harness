@@ -50,10 +50,10 @@ The pipeline is then executed via, for example,
 
 After execution the messages from the SampleStage 
 
-lsst.pexhexamples.pipeline.SampleStage.process:  rank 0
-lsst.pexhexamples.pipeline.SampleStage.process:  stageId 1
-lsst.pexhexamples.pipeline.SampleStage.process:  universeSize 2
-lsst.pexhexamples.pipeline.SampleStage.process:  RunMode from Policy process
+lsst.pexhexamples.pipeline.SampleStageParallel.process:  rank 0
+lsst.pexhexamples.pipeline.SampleStageParallel.process:  stageId 1
+lsst.pexhexamples.pipeline.SampleStageParallel.process:  universeSize 2
+lsst.pexhexamples.pipeline.SampleStageParallel.process:  RunMode from Policy process
 
 should be visible within Slice0.log.  
 

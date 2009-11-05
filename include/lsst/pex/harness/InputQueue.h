@@ -1,5 +1,5 @@
 // -*- lsst-c++ -*-
-/** \file inputQueue.h
+/** \file InputQueue.h
   *
   * \ingroup harness
   *
