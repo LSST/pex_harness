@@ -85,16 +85,14 @@ class AreaStageSerial(harnessStage.SerialProcessing):
         self.inputScale = self.policy.get("inputScale")
         self.outputScale = self.policy.get("outputScale")
 
-        # if we want to do some logging, this is a good time to create
-        # the log.  Here we assume that all of this Stage will use the
-        # same logger.  This uses the threshold for message printing
-        # inherited from the root logger.
-        #
-        # Use this for standard logger:
-        # self.log = Log(Log.getDefaultLog(), "AreaStage")
+        # It is important to use the internal logger provided by the
+        # framework at construction time; this is available as self.log.
+        # You can feel free to create child logs from it in the usual
+        # way:
+        #   self.log = Log(self.log, "AreaStage")
         #
         # Use this for additional debugging API sugar:
-        self.log = Debug("AreaStage")
+        self.log = Debug(self.log, "AreaStage")
         if self.outputScale != 0:
             self.log.log(Log.INFO, "Area scaling factor: %i"% self.outputScale)
 
@@ -149,7 +147,7 @@ class AreaStageParallel(harnessStage.ParallelProcessing):
         self.inputScale = self.policy.get("inputScale")
         self.outputScale = self.policy.get("outputScale")
 
-        self.log = Debug("AreaStage")
+        self.log = Debug(self.log, "AreaStage")
         if self.outputScale != 0:
             self.log.log(Log.INFO, "Area scaling factor: %i"% self.outputScale)
 
