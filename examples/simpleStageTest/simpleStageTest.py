@@ -4,13 +4,12 @@ This example illustrates not only how to create a simple Stage, but also
 how to use to test it using the SimpleStageTester class.  See in-lined
 comments for details.
 
-Multiple, chained stages could be tested in one script using
-multiple instances of SimpleStageTester; the script would simply pass the
-clipboard explicitly from one tester to the next.  
+Multiple, chained stages can be tested in one SimpleStageTester; one can
+add multiple stages via SimpleStageTester.addStage().
 """
 import lsst.pex.harness as pexHarness
 import lsst.pex.harness.stage as harnessStage
-from lsst.pex.harness.SimpleStageTester import SimpleStageTester
+from lsst.pex.harness.simpleStageTester import SimpleStageTester
 import lsst.pex.policy as pexPolicy
 from lsst.pex.logging import Log, Debug, LogRec, Prop
 from lsst.pex.exceptions import LsstCppException
