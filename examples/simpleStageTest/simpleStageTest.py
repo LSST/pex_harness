@@ -167,6 +167,9 @@ class AreaStageParallel(harnessStage.ParallelProcessing):
             # save the results to the clipboard
             clipboard.put("area", area)
 
+# Add this for convenience of testing with SimpleStageTester; otherwise,
+# this is not required.
+#
 class AreaStage(harnessStage.Stage):
     serialClass = AreaStageSerial
     parallelClass = AreaStageParallel
