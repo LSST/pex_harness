@@ -10,29 +10,20 @@ clipboard explicitly from one tester to the next.
 """
 import lsst.pex.harness as pexHarness
 import lsst.pex.harness.stage as harnessStage
-import lsst.pex.harness.SimpleStageTester
+from lsst.pex.harness.SimpleStageTester import SimpleStageTester
 import lsst.pex.policy as pexPolicy
 from lsst.pex.logging import Log, Debug, LogRec, Prop
 from lsst.pex.exceptions import LsstCppException
 
 def main():
 
-    # First create a tester.  To ensure that automatic Stage creation
-    # works properly, use SimpleStageTester.create(), passing in the
-    # fully qualified stage class name along with the policy file name.
+    # First create a tester.  For convenience, we use our special AreaStage
+    # factory class (which is defined below) to configure the tester.  
     # 
     file = pexPolicy.DefaultPolicyFile("pex_harness",
                                        "examples/simpleStageTest/AreaStagePolicy.paf")
-    tester = pexHarness.SimpleStageTester.create(AreaStageSerial, AreaStageParallel, file)
-
-    # Alternatively, you can instantiate the stage instance yourself, 
-    # passing in the policy.
-    #
-    # file = pexPolicy.DefaultPolicyFile("pex_harness",
-    #                                    "examples/AreaStagePolicy.paf")
-    # stagePolicy = pexPolicy.Policy.createPolicy(file)
-    # stage = AreaStage(0, stagePolicy)
-    # tester = pexHarness.SimpleStageTester.test(stage)
+    stagePolicy = pexPolicy.Policy.createPolicy(file)
+    tester = SimpleStageTester( AreaStage(stagePolicy) )
 
     # set the verbosity of the logger.  If the level is at least 5, you
     # will see debugging messages from the SimpleStageTester wrapper.
@@ -40,7 +31,7 @@ def main():
 
     # if you want to see all log message properties (including the DATE)
     # uncomment this line:
-    # tester.showAllLogProperties(False)
+    # tester.showAllLogProperties(True)
 
     # create a simple dictionary with the data expected to be on the
     # stage's input clipboard.  If this includes images, you will need to 
@@ -70,12 +61,10 @@ class AreaStageSerial(harnessStage.SerialProcessing):
     def setup(self):
         """configure this stage with a policy"""
 
-        # it's usually a good idea to call the super constructor
-        # pexHarness.Stage.Stage.__init__(self, stageId, policy)
-
         # You should create a default policy file that is installed
         # with your Stage implmenetation's package and merge it with
-        # that policy that is handed to you by the framework.
+        # that policy that wass handed to you by the framework (when
+        # this instance was constructed).  
         #
         # Here's how you do it.  Note that the default policy file can
         # be a dictionary.  Here, we indicated "examples" as the so-called
@@ -86,8 +75,6 @@ class AreaStageSerial(harnessStage.SerialProcessing):
                                            "examples/simpleStageTest" # dir containing policies
                                            )
         defpol = pexPolicy.Policy.createPolicy(file, file.getRepositoryPath())
-        print "self policy", self.policy 
-        print "self policy", defpol 
         if self.policy is None:
             self.policy = defpol
         else:
@@ -114,19 +101,11 @@ class AreaStageSerial(harnessStage.SerialProcessing):
 
         self.log.debug(3, "Running with sliceID = %s" % self.getRank())
 
-    # Usually, the initialize function does not need to be overridden;
-    # however, you may do so if you need to do some one-time setup that 
-    # depends on the the slice ID (as returned by getRank()).  Be sure to
-    # call the super version
-    # def initialize(self, outQueue, inQueue):
-    #     Stage.initialize(self, outQueue, inQueue)
-
-    # Most often, one need only to provide a process() implementation; this
-    # this is the code that will get run in parallel.  preprocess() gets
-    # execute only on the master node prior to process, and postprocess(),
-    # afterward.  We provide a pre- and postprocess() here mainly as an
-    # example; our excuse is to check that the clipboard has the inputs
-    # we need.  
+    # preprocess() and postprocess() provide the serial processing; the
+    # former gets executed only on the master node prior to process, and 
+    # the latter, afterward.  We provide a pre- and postprocess() here
+    # mainly as an example; our excuse is to check that the clipboard has 
+    # the inputs we need.  
     
     def preprocess(self, clipboard):
 
@@ -148,7 +127,8 @@ class AreaStageSerial(harnessStage.SerialProcessing):
 
 
     def postprocess(self, clipboard):
-        # 
+        # We didn't need to provide this; this is identical to the
+        # inherited implementation
         pass 
 
 
@@ -162,8 +142,6 @@ class AreaStageParallel(harnessStage.ParallelProcessing):
                                            "examples/simpleStageTest" # dir containing policies
                                            )
         defpol = pexPolicy.Policy.createPolicy(file, file.getRepositoryPath())
-        print "self policy", self.policy 
-        print "self policy", defpol 
         if self.policy is None:
             self.policy = defpol
         else:
@@ -191,6 +169,10 @@ class AreaStageParallel(harnessStage.ParallelProcessing):
 
             # save the results to the clipboard
             clipboard.put("area", area)
+
+class AreaStage(harnessStage.Stage):
+    serialClass = AreaStageSerial
+    parallelClass = AreaStageParallel
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import os, sys, re
 from Queue import Queue
+from lsst.pex.logging import Log
 
 class StageProcessing(object):
     """
@@ -175,6 +176,12 @@ class StageProcessing(object):
         get the MPI universe size, an integer
         """
         return self.universeSize
+
+    def getName(self):
+        """
+        return the name assigned to this stage.
+        """
+        return self.name
 
     def shutdown():
         """
@@ -373,41 +380,38 @@ class NoOpParallelProcessing(ParallelProcessing):
 class Stage(object):
     """
     a class that will create and initialize the StageProcessing classes that
-    constitute a stage according to policy configuration.
+    constitute a stage.
 
-    The policy this class expects is the part of a typical pipeline policy
-    that describes one stage of a pipeline with an "appStage" parameter. The
-    expected named contents of this policy are:
-      name           a short name for the stage meant for display purposes
-      serialClass    the fully qualified name for the SerialProcessing
-                         component
-      parallelClass  the fully qualified name for the SerialProcessing 
-                         component
-      stagePolicy    the stage-specific policy data that configures the
-                         stage
-      eventTopic     the topic name of an event that must be received and
-                         its contents placed on a clipboard in order for
-                         the stage to process the clipboard's contents
-    In general, all of these are optional; however, specific stages will
-    require some or all of these to be set in order to run as intended.
+    There three intended ways to create a Stage instance.  First is by
+    the makeStageFromPolicy() module function.  Intended for use inside the
+    Pipeline-constructing classes (like Pipeline and Slice), this method
+    takes as input a policy that provides the names of the SerialProcessing
+    and ParallelProcessing classes that define the stage.  Alternatively, 
+    one can pass these names explicitly via the makeStage() module function.
+    The third way is by directly constructing a subclass of Stage.  The
+    simplest way to create this subclass is as follows:
 
-    This class has two typical uses.  The first is simply as a factory class
-    that generates new instances of the SerialProcessing and
-    ParallelProcessing classes; the create*() functions support this.
-    These are intended for use by the Pipeline and Slice classes.  The second
-    use is to actually process data through the stage in a non-parallel,
-    scripting or interactive context; the ...
+        class MyStage(Stage):
+            serialClass   = MySerialProcessing
+            parallelClass = MyParallelProcessing
+
+    If the stage does not have a parallel component, then the 'parallelClass'
+    variable does not need to be updated; likewise, for serial component.
     """
 
-    def __init__(self, policy, log=None, eventBroker=None, sysdata=None):
+    serialClass   = NoOpSerialProcessing
+    parallelClass = NoOpParallelProcessing
+
+    def __init__(self, policy, log=None, stageId=-1, eventBroker=None,
+                 sysdata=None):
         """
         initialize this stage with the policy that defines the stage and
-        some contextual system data.
-        @param policy       the "appStage" policy data that defines the stage.
-                                (see class documentation above for details).
-        @param stageId      the integer identifier for this stage within the 
-                               sequence of stages that makes up a pipeline.
-                               Default=-1
+        some contextual system data.  Applications normally do not directly
+        call this constructor.  Instead they either construct a Stage subclass
+        or create a Stage instance using makeStage() or makeStageFromPolicy().
+        
+        @param policy       the policy that will configure the SerialProcessing
+                               and ParallelProcessing
         @param log          the log object the stage instance should 
                               should use.  If not provided, a default will be
                               used.
@@ -421,23 +425,49 @@ class Stage(object):
                               The name provided in the policy will override
                               the name in this dictionary
         """
-        self.sysdata = sysdata.copy()
-        
-        self.appStagePolicy = policy
-        if self.appStagePolicy.exists("name"):
-            self.sysdata["name"] = self.appStagePolicy.get("name")
-        if not sysdata.has_key("name"):
-            self.sysdata["name"] = "unknown stage"
-        self._safename = re.sub(r'\W+', '', self.sysdata)
-
+        if sysdata is None:
+            sysdata = {}
+        self.sysdata = sysdata
+        self.stagePolicy = policy
         self.eventBroker = eventBroker
         if log is None:
             log = Log(Log.getDefaultLog(), "stage")
         self.log = log
 
-        self._serialPart = None
-        self._parallPart = None
-        
+    def setLog(self, log):
+        """
+        set the logger that should be assigned to the stage components when
+        they are created.
+        """
+        self.log = log
+
+    def setEventBroker(self, broker):
+        """
+        set the instance of the event broker that the stage components should
+        use.
+        """
+        self.eventBroker = eventBroker
+
+    def updateSysProperty(self, sysdata):
+        """
+        override the current execution context data that will be passed to
+        the stage components when they are created with the given data.
+        Currently set data with names that are not included in the given
+        dictionary will not be affected.  
+        """
+        if not sysdata:
+            return
+        for name in sysdata.keys():
+            self.sysdata[name] = sysdata[name]
+
+    def getSysProperty(self, name):
+        """
+        return the currently set value for the execution context property or
+        None if it is not set.
+        @param name   the name of the property
+        """
+        return self.sysdata.get(name, None)
+
     def createSerialProcessing(self, log=None, extraSysdata=None):
         """
         create a new SerialProcessing instance.
@@ -453,10 +483,9 @@ class Stage(object):
         @param extraSysdata a dictionary of execution context data whose items
                               will override those set via the Stage constructor
         """
-        stageClass = None
-        if self.appStagePolicy.exists("serialClass"):
-            stageClass = self.appStagePolicy.get("serialClass")
-        return self._create(stageClass, -1, log, extraSysdata, True)
+        if log is None:
+            log = self.log
+        return self._create(self.serialClass, -1, log, extraSysdata)
 
     def createParallelProcessing(self, rank=1, log=None, extraSysdata=None):
         """
@@ -467,9 +496,6 @@ class Stage(object):
         @param rank     the integer identifier for the parallel thread 
                            that hosts this instance.  Default=-1.
                            indicating the master thread for the pipeline.
-        @param stageId  the integer identifier for this stage within the 
-                           sequence of stages that makes up a pipeline.
-                           Default=-1
         @param log      the log object the stage instance should stage
                           should use.  If not provided, a default will be
                           used.
@@ -479,35 +505,122 @@ class Stage(object):
                           this stage is a part of.  If None, a default will
                           be set.
         """
-        stageClass = None
-        if self.appStagePolicy.exists("parallelClass"):
-            stageClass = self.appStagePolicy.get("parallelClass")
-        return self._create(stageClass, rank, log, extraSysdata, False)
+        if not log:
+            log = self.log
+        return self._create(self.parallelClass, rank, log, extraSysdata)
 
-    def _create(self, className, rank, log, extraSysdata, isSerial):
+    def _create(self, cls, rank, log, extraSysdata):
+        # set the rank into the system data
         sysdata = self.sysdata.copy()
         for k in extraSysdata.keys():
             sysdata[k] = extraSysdata[k]
         sysdata["rank"] = rank
 
-        policy = None
-        if self.appStagePolicy.exists("stagePolicy"):
-            policy = self.appStagePolicy.getPolicy("stagePolicy")
-
         if log is None:
             log = self.log
 
-        if className:
-            (modn, cln) = self.serialClass.rsplit('.', 1)
-            mod = __import__(modn, globals(), locals(), [cln], -1)
-            stageClass = getattr(mod, cln)
+        return cls(self.stagePolicy, log, self.eventBroker, sysdata)
 
-            out = stageClass(policy, log, self.eventBroker, sysdata)
-        elif isSerial:
-            out = NoOpSerialProcessing(policy, log, self.eventBroker, sysdata)
-        else:
-            out = NoOpParallelProcessing(policy,log,self.eventBroker, sysdata)
-
-        return out
-
+def _createClass(name):
+    (modn, cln) = self.serialClass.rsplit('.', 1)
+    mod = __import__(modn, globals(), locals(), [cln], -1)
+    stageClass = getattr(mod, cln)
+    return stageClass
     
+def makeStageFromPolicy(stageDefPolicy, log=None, eventBroker=None,
+                        sysdata=None):
+    """
+    create a Stage instance from a "stage definition policy".  This policy
+    corresponds to the "appStage" parameter in a pipeline policy file that
+    defines a pipeline (described below).  The resulting instance is used
+    as the factory for creating instances of SerialProcessing and
+    ParallelProcessing.
+
+    The stage definition policy (the "appStage" parameter) has the following
+    contents:
+    
+      name             a short name identifying the name (e.g. with logs)
+      serialClass      a string containing the fully qualified
+                         SerialProcessing class name.  If the stage does not
+                         have a serial component, this parameter is not
+                         provided.
+      parallelClass    a string containing the fully qualified
+                         ParallelProcessing class name.  If the stage does not
+                         have a parallel component, this parameter is not
+                         provided.
+      eventTopic       the name of an event topic that the stage expects to
+                         be received and placed on the clipboard.  If no
+                         event is expected, this parameter is not provided.
+      stagePolicy      the policy that configures the stage and thus should
+                         be passed to the SerialProcessing and
+                         ParallelProcessing constructors.
+
+    @param stageDefPolicy  the policy for defining this stage (see above).  
+    @param log          the log object the stage instance should stage
+                          should use.  If not provided, a default will be
+                          used unless one is provided via setLog() on the
+                          returned Stage instance.
+    @param eventBroker  the name of the host where the event broker is
+                          running.  If not provided, an eventBroker will
+                          not be available to the stage unless setEventBroker()
+                          is called on the returned Stage instance.
+    @param sysdata      a dictionary of data describing the execution
+                          context.  The stage uses this information to
+                          set some of its internal data.  
+    """
+    if sysdata is None:
+        sysdata = {}
+    mysysdata = sysdata
+    
+    if not mysysdata.has_key("name"):
+        mysysdata = sysdata.copy()
+        if stageDefPolicy.exists("name"):
+            mysysdata["name"] = stageDefPolicy.get("name")
+        else:
+            mysysdata["name"] = "unknown stage"
+
+    stageConfigPolicy = stageDefPolicy.get("stagePolicy")
+
+    serialClass = None
+    parallelClass = None
+    if stageDefPolicy.exists("serialClass"):
+        serialClass = stageDefPolicy.get("serialClass")
+    if stageDefPolicy.exists("parallelClass"):
+        parallelClass = stageDefPolicy.get("parallelClass")
+
+    return makeStage(stageConfigPolicy, serialClass, parallelClass,
+                     log, eventBroker, mysysdata)
+
+
+def makeStage(policy=None, serClsName=None, paraClsName=None, log=None,
+              eventBroker=None, sysdata=None):
+    """
+    create a Stage instance that is defined by a SerialProcessing class
+    and/or a ParallelProcessing class.
+    @param policy       the stage configuration policy.  This policy will be
+                          passed to the SerialProcessing and ParallelProcessing
+                          class constructors.  
+    @param log          the log object the stage instance should stage
+                          should use.  If not provided, a default will be
+                          used unless one is provided via setLog() on the
+                          returned Stage instance.
+    @param eventBroker  the name of the host where the event broker is
+                          running.  If not provided, an eventBroker will
+                          not be available to the stage unless setEventBroker()
+                          is called on the returned Stage instance.
+    @param sysdata      a dictionary of data describing the execution
+                          context.  The stage uses this information to
+                          set some of its internal data.  
+    """
+    out = Stage(policy, log, eventBroker, sysdata)
+
+    if serClsName:
+        out.serialClass = _createClass(serClsName)
+        if not issubclass(out.serialClass, SerialProcessing):
+            raise ValueError("Not a SerialProcessing subclass: " + serClsName)
+    if paraClsName:
+        out.parallelClass = _createClass(paraClsName)
+        if not issubclass(out.serialClass, ParallelProcessing):
+            raise ValueError("Not a ParallelProcessing subclass: "+paraClsName)
+
+    return out
