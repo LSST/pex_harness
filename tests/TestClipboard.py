@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import lsst.pex.harness.Clipboard
+from lsst.daf.base import PropertySet
 
 # Create a PropertySet
 event = lsst.daf.base.PropertySet()
