@@ -106,27 +106,6 @@ def launchPipeline(policyFile, runid, name=None, verbosity=None, nodesfile="node
 
     logger = createLog()
 
-    # ensure we have .mpd.conf files deployed on all nodes
-    nodes_set = []
-    nnodes = 0
-    nprocs = 0
-    with file(nodesfile) as nodelist:
-        for node in nodelist:
-            node = node.strip()
-            if len(node)==0 or node.startswith('#'): continue
-            if node.find(':') >= 0:
-                (node, n) = node.split(':')
-            else:
-                n = ''
-            nnodes += 1
-            n = n.strip()
-            if n != '':
-                nprocs += int(n)
-            else:
-                nprocs += 1
-
-            if node in nodes_set: continue
-
     cmd = "runPipelin.sh.py %s %s %s %d %d" % \
           (policyFile, runid, nodesfile, nnodes, nprocs)
     if name is not None:
