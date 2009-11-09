@@ -5,6 +5,7 @@
 # application within the LSST middleware.
 #
 
+nSlices: 1
 executionMode: "oneloop"
 logThreshold: -3
 localLogMode: true  
