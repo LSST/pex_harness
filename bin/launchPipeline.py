@@ -54,10 +54,20 @@ def main():
         if len(cl.args) > 2:
             name = cl.args[2]
     
-        if cl.opts.nodelist is not None:
-            run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity, cl.opts.nodelist)
+        logger.log(Log.INFO, "command line option 0 : policyFile :  " + cl.args[0])
+        logger.log(Log.INFO, "command line option 1 : runid :  " + cl.args[1])
+
+        if (name == None):
+            logger.log(Log.INFO, "name is None")
         else:
-            run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity)
+            logger.log(Log.INFO, name)
+
+        if (cl.opts.verbosity == None):
+            logger.log(Log.INFO, "verbosity option not specified")
+        else:
+            logger.log(Log.INFO, cl.opts.verbosity)
+    
+        run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity)
 
     except SystemExit:
         pass
@@ -68,13 +78,6 @@ def main():
         logger.log(Log.FATAL, tb[-1].strip())
         logger.log(Log.DEBUG, "".join(tb[0:-1]).strip())
         sys.exit(1)
-
-def getNode(nodeentry):
-    colon = nodeentry.find(':')
-    if colon < 1:  
-        return nodeentry
-    else:
-        return nodeentry[0:colon]
 
 if __name__ == "__main__":
     main()
