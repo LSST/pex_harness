@@ -7,7 +7,12 @@ from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.harness.Directories import Directories
 from lsst.pex.harness.harnessLib import TracingLog
 from lsst.pex.logging import Log, LogRec, cout, Prop
-from lsst.pex.harness import harnessLib as pipeline
+from lsst.pex.harness import harnessLib as logutils
+
+from lsst.pex.harness.SliceThread import SliceThread
+
+from threading import Thread
+from threading import Event
 
 import lsst.pex.policy as policy
 
@@ -22,17 +27,14 @@ from lsst.daf.persistence import *
 
 import lsst.ctrl.events as events
 
-import os, sys, re, traceback
-import threading
+import os, sys, re, traceback, time
 
 """
 Pipeline class manages the operation of a multi-stage parallel pipeline.
-The Pipeline is configured by reading a Policy file.   This Python Pipeline
-class imports the C++ Pipeline class via a python extension module in order 
-to setup and manage the MPI environment.
+The Pipeline is configured by reading a Policy file.   
 Pipeline has a __main__ portion as it serves as the main executable program 
 ('glue layer') for running a Pipeline. The Pipeline spawns Slice workers 
-using an MPI-2 Spawn operation. 
+for parallel computations. 
 """
 
 class Pipeline:
@@ -62,13 +64,11 @@ class Pipeline:
         self.shareDataList = []
         self.clipboardList = []
         self.executionMode = 0
-        self.cppPipeline = pipeline.Pipeline(self._pipelineName)
-        self.cppPipeline.setRunId(runId)
-        self.cppPipeline.setPolicyName(pipelinePolicyName)
-        self.cppPipeline.initialize()
-        self.universeSize = self.cppPipeline.getUniverseSize()
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
+
+        self.cppLogUtils = logutils.LogUtils()
+
 
 
     def __del__(self):
@@ -78,64 +78,79 @@ class Pipeline:
         if self.log is not None:
             self.log.log(self.VERB1, 'Python Pipeline being deleted')
 
-    def configurePipeline(self):
+    def initializeLogger(self):
         """
-        Configure the Pipeline by reading a Policy File
+        Initialize the Logger after opening policy file 
         """
-
         if(self.pipelinePolicyName == None):
             self.pipelinePolicyName = "pipeline_policy.paf"
         dictName = "pipeline_dict.paf"
         topPolicy = policy.Policy.createPolicy(self.pipelinePolicyName)
 
         if (topPolicy.exists('execute')):
-            p = topPolicy.get('execute')
+            self.executePolicy = topPolicy.get('execute')
         else:
-            p = policy.Policy.createPolicy(self.pipelinePolicyName)
+            self.executePolicy = policy.Policy.createPolicy(self.pipelinePolicyName)
+
+        # Check for eventBrokerHost 
+        if (self.executePolicy.exists('eventBrokerHost')):
+            self.eventBrokerHost = self.executePolicy.getString('eventBrokerHost')
+        else:
+            self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
+        self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
+
+        doLogFile = self.executePolicy.getBool('localLogMode')
+        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId)
+
+        # The log for use in the Python Pipeline
+        self.log = self.cppLogUtils.getLogger()
+
+        if (self.executePolicy.exists('logThreshold')):
+            self.logthresh = self.executePolicy.get('logThreshold')
+        else:
+            if(self.logthresh == None):
+                self.logthresh = self.TRACE
+        self.setLogThreshold(self.logthresh)
+
+        self.log.addDestination(cout, Log.DEBUG);
+
+    def configurePipeline(self):
+        """
+        Configure the Pipeline by reading a Policy File
+        """
+
+        if (self.executePolicy.exists('nSlices')):
+            self.nSlices = self.executePolicy.getInt('nSlices')
+        else:
+            self.nSlices = 0   # default value
+        self.universeSize = self.nSlices + 1; 
+
 
         # do some juggling to capture the actual stage policy names.  We'll
         # use these to assign some logical names to the stages for logging
         # purposes.  Note, however, that it is only convention that the
         # stage policies will be specified as separate files; thus, we need
         # a fallback.  
-        stgcfg = p.getArray("appStage")
+        stgcfg = self.executePolicy.getArray("appStage")
         self.stageNames = []
         for subpol in stgcfg:
             stageName = subpol.get("name") 
             self.stageNames.append(stageName)
-            # self.stageNames.append(self.makeStageName(item))
-        p.loadPolicyFiles()
+
+        self.executePolicy.loadPolicyFiles()
 
         # Obtain the working directory space locators
         psLookup = lsst.daf.base.PropertySet()
-        if (p.exists('dir')):
-            dirPolicy = p.get('dir')
-            shortName = dirPolicy.get('shortName')
+        if (self.executePolicy.exists('dir')):
+            dirPolicy = self.executePolicy.get('dir')
+            shortName = self.executePolicy.get('shortName')
             if shortName == None:
                 shortName = self.pipelinePolicyName.split('.')[0]
             dirs = Directories(dirPolicy, shortName, self._runId)
             psLookup = dirs.getDirs()
-        if (p.exists('database.url')):
-            psLookup.set('dbUrl', p.get('database.url'))
+        if (self.executePolicy.exists('database.url')):
+            psLookup.set('dbUrl', self.executePolicy.get('database.url'))
 
-        # Check for eventBrokerHost 
-        if (p.exists('eventBrokerHost')):
-            self.eventBrokerHost = p.getString('eventBrokerHost')
-        else:
-            self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
-        self.cppPipeline.setEventBrokerHost(self.eventBrokerHost);
-
-        doLogFile = p.getBool('localLogMode')
-        self.cppPipeline.initializeLogger(doLogFile)
-
-        # The log for use in the Python Pipeline
-        self.log = self.cppPipeline.getLogger()
-        if (p.exists('logThreshold')):
-            self.logthresh = p.get('logThreshold')
-        else:
-            self.logthresh = self.TRACE
-        self.setLogThreshold(self.logthresh)
-        self.log.addDestination(cout, Log.DEBUG);
 
         log = Log(self.log, "configurePipeline")
         log.log(Log.INFO,
@@ -151,23 +166,13 @@ class Pipeline:
         dafPersist.LogicalLocation.setLocationMap(psLookup)
 
         # Check for eventTimeout
-        if (p.exists('eventTimeout')):
-            self.eventTimeout = p.getInt('eventTimeout')
+        if (self.executePolicy.exists('eventTimeout')):
+            self.eventTimeout = self.executePolicy.getInt('eventTimeout')
         else:
             self.eventTimeout = 10000000   # default value
 
-        # Check if inter-Slice communication, i.e., data sharing, is on
-        self.isDataSharingOn = False;
-        if (p.exists('shareDataOn')):
-            self.isDataSharingOn = p.getBool('shareDataOn')
-
-        if self.isDataSharingOn:
-            log.log(self.VERB2, "Data sharing is on")
-        else:
-            log.log(self.VERB2, "Data sharing is off")
-
         # Process Application Stages
-        fullStageList = p.getArray("appStage")
+        fullStageList = self.executePolicy.getArray("appStage")
         self.nStages = len(fullStageList)
         log.log(self.VERB2, "Found %d stages" % len(fullStageList))
 
@@ -240,27 +245,26 @@ class Pipeline:
                 self.eventReceiverList.append(eventReceiver)
 
         # Check for executionMode of oneloop 
-        if (p.exists('executionMode') and (p.getString('executionMode') == "oneloop")):
+        if (self.executePolicy.exists('executionMode') and (self.executePolicy.getString('executionMode') == "oneloop")):
             self.executionMode = 1 
 
         # Check for shutdownTopic 
-        if (p.exists('shutdownTopic')):
-            self.shutdownTopic = p.getString('shutdownTopic')
+        if (self.executePolicy.exists('shutdownTopic')):
+            self.shutdownTopic = self.executePolicy.getString('shutdownTopic')
         else:
             self.shutdownTopic = "triggerShutdownEvent"
 
         # Check for exitTopic 
-        if (p.exists('exitTopic')):
-            self.exitTopic = p.getString('exitTopic')
+        if (self.executePolicy.exists('exitTopic')):
+            self.exitTopic = self.executePolicy.getString('exitTopic')
         else:
             self.exitTopic = None
 
         # Log the input topology
-        if (p.exists('topology')):
+        if (self.executePolicy.exists('topology')):
             # Retrieve the topology policy and set it in C++
-            topologyPolicy = p.get('topology')
+            topologyPolicy = self.executePolicy.get('topology')
 
-            # Diagnostic print
             self.topology   =  topologyPolicy.getString('type')
             log.log(self.VERB3, "Using topology type: %s" % self.topology)
 
@@ -310,8 +314,29 @@ class Pipeline:
         Initialize the Queue by defining an initial dataset list
         """
         log = self.log.traceBlock("startSlices", self.TRACE-2)
-        self.cppPipeline.startSlices()
+
+        self.loopEventList = []
+        for i in range(self.nSlices):
+           loopEventA = Event()
+           self.loopEventList.append(loopEventA)
+           loopEventB = Event()
+           self.loopEventList.append(loopEventB)
+
+        self.sliceThreadList = []
+
+        for i in range(self.nSlices):
+            k = 2*i
+            loopEventA = self.loopEventList[k]
+            loopEventB = self.loopEventList[k+1]
+            oneSliceThread = SliceThread(i, self._pipelineName, self.pipelinePolicyName, \
+                    self._runId, self.logthresh, self.universeSize, loopEventA, loopEventB)
+            self.sliceThreadList.append(oneSliceThread)
+
+        for slicei in self.sliceThreadList:
+            slicei.start()
+
         log.done()
+
 
     def startInitQueue(self):
         """
@@ -341,12 +366,16 @@ class Pipeline:
 
         eventReceiver = events.EventReceiver(self.eventBrokerHost, self.shutdownTopic)
         visitcount = 0 
+
         while True:
 
             val = eventReceiver.receive(100)
             if ((val != None) or ((self.executionMode == 1) and (visitcount == 1))):
                 LogRec(looplog, Log.INFO)  << "terminating slices "
-                self.cppPipeline.invokeShutdown()
+                # self.cppPipeline.invokeShutdown()
+                # 
+                # Need to shutdown Threads here 
+                # 
                 break
             else:
                 visitcount += 1
@@ -355,7 +384,8 @@ class Pipeline:
                 stagelog.setPreamblePropertyInt("loopnum", visitcount)
                 proclog.setPreamblePropertyInt("loopnum", visitcount)
 
-                self.cppPipeline.invokeContinue()
+                # self.cppPipeline.invokeContinue()
+
                 self.startInitQueue()    # place an empty clipboard in the first Queue
 
                 self.errorFlagged = 0
@@ -368,16 +398,21 @@ class Pipeline:
 
                     self.handleEvents(iStage, stagelog)
 
+                    # synchronize before preprocess
+                    self.threadBarrier()
+
                     self.tryPreProcess(iStage, stage, stagelog)
 
-                    if(self.isDataSharingOn):
-                        self.invokeSyncSlices(iStage, stagelog)
+                    # synchronize after preprocess, before process
+                    self.threadBarrier()
 
-                    proclog.start("process and wait")
-                    self.cppPipeline.invokeProcess(iStage)
-                    proclog.done()
+                    # synchronize after process, before postprocess
+                    self.threadBarrier()
 
                     self.tryPostProcess(iStage, stage, stagelog)
+
+                    # synchronize after postprocess
+                    self.threadBarrier()
 
                     stagelog.done()
 
@@ -400,6 +435,31 @@ class Pipeline:
         self.shutdown()
         startStagesLoopLog.done()
 
+
+    def threadBarrier(self): 
+        """
+        Create an approximate barrier where all Slices intercommunicate with the Pipeline 
+        """
+
+        log = Log(self.log, "threadBarrier")
+
+        entryTime = time.time()
+        log.log(Log.DEBUG, "Entry time %f" % (entryTime)) 
+
+        for i in range(self.nSlices):
+            k = 2*i
+            loopEventA = self.loopEventList[k]
+            loopEventB = self.loopEventList[k+1]
+            time1 = time.time()
+            log.log(Log.DEBUG, "Signal to Slice  %d %f" % (i, time1)) 
+            loopEventA.set()
+            log.log(Log.DEBUG, "Wait for signal from Slice %d" % (i)) 
+            loopEventB.wait()
+            time2 = time.time()
+            log.log(Log.DEBUG, "Done waiting for signal from Slice %d %f" % (i, time2)) 
+            if(loopEventB.isSet()):
+                loopEventB.clear()
+
     def shutdown(self): 
         """
         Shutdown the Pipeline execution: delete the MPI environment
@@ -414,17 +474,25 @@ class Pipeline:
 
             oneEventTransmitter.publish(psPtr)
 
-        self.cppPipeline.shutdown()
+        for i in range(self.nSlices):
+            slice = self.sliceThreadList[i]
+            slice.join()
+            self.log.log(self.VERB2, 'Slice ' + str(i) + ' ended.')
+
+        sys.exit()
+        # self.cppPipeline.shutdown()
 
 
     def invokeSyncSlices(self, iStage, stagelog):
         """
+        THIS GOES AWAY in non MPI harness 
         If needed, calls the C++ Pipeline invokeSyncSlices
         """
         invlog = stagelog.traceBlock("invokeSyncSlices", self.TRACE-1)
         if(self.shareDataList[iStage-1]):
             invlog.log(self.VERB3, "Calling invokeSyncSlices")
-            self.cppPipeline.invokeSyncSlices()  
+            # self.cppPipeline.invokeSyncSlices()  
+            # invokeSyncSlices 
         invlog.done()
 
     def tryPreProcess(self, iStage, stage, stagelog):
@@ -542,8 +610,6 @@ class Pipeline:
         # It simply places the payload on the clipboard with key of the eventTopic
         clipboard.put(eventTopic, inputParamPropertySetPtr)
 
-        # print 'Python populateClipboard  : clipboard ', clipboard
-
         log.done()
 
     def postOutputClipboard(self, iStage):
@@ -565,16 +631,12 @@ class Pipeline:
         if (clipboard != None):
             queue2.addDataset(clipboard)
 
-# print __doc__
-
-    #------------------------------------------------------------------------
     def getRun(self):
         """
         get method for the runId
         """
         return self._runId
 
-    #------------------------------------------------------------------------
     def setRun(self, run):
         """
         set method for the runId
@@ -616,26 +678,5 @@ class Pipeline:
             return None
         
 trailingpolicy = re.compile(r'_*(policy|dict)$', re.IGNORECASE)
-
-if (__name__ == '__main__'):
-    """
-     Pipeline Main method 
-    """
-
-    pyPipeline = Pipeline()
-
-    pyPipeline.configurePipeline()   
-
-    pyPipeline.initializeQueues()  
-
-    pyPipeline.initializeStages()    
-
-    pyPipeline.startSlices()  
-
-    pyPipeline.startInitQueue()    # place an empty clipboard in the first Queue 
-
-    pyPipeline.startStagesLoop()
-
-    pyPipeline.shutdown()
 
 
