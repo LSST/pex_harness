@@ -8,6 +8,7 @@
 # executionMode: "oneloop" ,
 # shutdownTopic: "triggerShutdownEvent" 
 #
+nSlices: 1
 localLogMode: true  
 eventBrokerHost: "lsst4.ncsa.uiuc.edu" 
 logThreshold: -3
