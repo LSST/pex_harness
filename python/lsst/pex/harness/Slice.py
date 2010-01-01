@@ -24,6 +24,7 @@ from lsst.pex.exceptions import *
 
 import os, sys, re, traceback, time
 import threading
+from threading import Event as PyEvent
 
 
 """
@@ -38,7 +39,7 @@ class Slice:
     '''Slice: Python Slice class implementation. Wraps C++ Slice'''
 
     #------------------------------------------------------------------------
-    def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed", rank=-1):
+    def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed", rank=-1, stop=None):
         """
         Initialize the Slice: create an empty Queue List and Stage List;
         Import the C++ Slice  and initialize the MPI environment
@@ -59,7 +60,6 @@ class Slice:
         self.stagePolicyList = []
         self.sliceEventTopicList = []
         self.eventTopicList = []
-        self.eventReceiverList = []
         self.shareDataList = []
         self.shutdownTopic = "triggerShutdownEvent_slice"
         self.executionMode = 0
@@ -234,22 +234,13 @@ class Slice:
             self.sliceEventTopicList[count] = newitem
             count += 1
 
-        # Make a List of corresponding eventReceivers for the eventTopics
-        # eventReceiverList    
+        eventsSystem = events.EventSystem.getDefaultEventSystem()
         for topic in self.sliceEventTopicList:
             if (topic == "None_" + self._pipelineName):
-                self.eventReceiverList.append(None)
+                pass
             else:
-                eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
-                self.eventReceiverList.append(eventReceiver)
-
-        # Process topology policy
-        if (self.executePolicy.exists('topology')):
-            # Retrieve the topology policy and set it in C++
-            topologyPolicy = self.executePolicy.get('topology')
-
-            self.topology   =  topologyPolicy.getString('type')
-            log.log(self.VERB3, "Using topology type: %s" % self.topology)
+                eventsSystem.createReceiver(self.eventBrokerHost, topic)
+                log.log(self.VERB3, "Creating receiver %s" % (topic))
 
 
         log.log(self.VERB1, "Slice configuration complete");
@@ -328,6 +319,8 @@ class Slice:
         looplog = TracingLog(self.log, "visit", self.TRACE)
         stagelog = TracingLog(looplog, "stage", self.TRACE-1)
 
+        self.threadBarrier()
+
         visitcount = 0
         while True:
 
@@ -395,16 +388,20 @@ class Slice:
         log = Log(self.log, "threadBarrier")
 
         entryTime = time.time()
-
         log.log(Log.DEBUG, "Slice %d waiting for signal from Pipeline %f" % (self._rank, entryTime))
+
         self.loopEventA.wait()
-        time1 = time.time()
-        log.log(Log.DEBUG, "Slice %d done waiting; signaling back %f" % (self._rank, time1))
+
+        signalTime1 = time.time()
+        log.log(Log.DEBUG, "Slice %d done waiting; signaling back %f" % (self._rank, signalTime1))
+
         if(self.loopEventA.isSet()):
             self.loopEventA.clear()
+
         self.loopEventB.set()
-        time2 = time.time()
-        log.log(Log.DEBUG, "Slice %d sent signal back. Exit threadBarrier  %f" % (self._rank, time2))
+
+        signalTime2 = time.time()
+        log.log(Log.DEBUG, "Slice %d sent signal back. Exit threadBarrier  %f" % (self._rank, signalTime2))
 
     def shutdown(self): 
         """
@@ -456,22 +453,30 @@ class Slice:
         Handles Events: transmit or receive events as specified by Policy
         """
         log = stagelog.traceBlock("handleEvents", self.TRACE-2)
+        eventsSystem = events.EventSystem.getDefaultEventSystem()
 
         thisTopic = self.eventTopicList[iStage-1]
 
         if (thisTopic != "None"):
             log.log(self.VERB3, "Processing topic: " + thisTopic)
             sliceTopic = self.sliceEventTopicList[iStage-1]
-            # x = events.EventReceiver(self.eventBrokerHost, sliceTopic)
-            x  = self.eventReceiverList[iStage-1]
 
-            waitlog = log.traceBlock("eventwait", self.TRACE,
+            waitlog = log.traceBlock("eventwait " + sliceTopic, self.TRACE,
                                      "wait for event...")
-            inputParamPropertySetPtr = x.receive(self.eventTimeout)
+
+            # Recceive the event from the Pipeline 
+            # Call with a timeout , followed by a call to time sleep to free the GIL 
+            # periodically
+            inputParamPropertySetPtr = eventsSystem.receive(sliceTopic, 1000)
+            while( inputParamPropertySetPtr == None):
+                time.sleep(0.1)
+                inputParamPropertySetPtr = eventsSystem.receive(sliceTopic, 1000)
+     
+
             waitlog.done()
             LogRec(log, self.TRACE) << "received event; contents: "        \
                                 << inputParamPropertySetPtr \
-                                << LogRec.endr;
+                                << LogRec.endr
 
 
             self.populateClipboard(inputParamPropertySetPtr, iStage, thisTopic)

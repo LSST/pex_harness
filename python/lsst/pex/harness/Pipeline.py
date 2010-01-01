@@ -10,9 +10,12 @@ from lsst.pex.logging import Log, LogRec, cout, Prop
 from lsst.pex.harness import harnessLib as logutils
 
 from lsst.pex.harness.SliceThread import SliceThread
+from lsst.pex.harness.ShutdownThread import ShutdownThread
+
+import threading 
 
 from threading import Thread
-from threading import Event
+from threading import Event as PyEvent
 
 import lsst.pex.policy as policy
 
@@ -37,6 +40,7 @@ Pipeline has a __main__ portion as it serves as the main executable program
 for parallel computations. 
 """
 
+
 class Pipeline:
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
@@ -60,7 +64,6 @@ class Pipeline:
         self.stageClassList = []
         self.stagePolicyList = []
         self.eventTopicList = []
-        self.eventReceiverList = []
         self.shareDataList = []
         self.clipboardList = []
         self.executionMode = 0
@@ -68,8 +71,20 @@ class Pipeline:
         self.pipelinePolicyName = pipelinePolicyName
 
         self.cppLogUtils = logutils.LogUtils()
+        self._stop = PyEvent()
 
+    def stop (self):
+        self._stop.set()
 
+    def exit (self):
+
+        if self.log is not None:
+            self.log.log(self.VERB1, 'Killing Pipeline process immediately: shutdown level 1')
+
+        thisPid = os.getpid()
+        os.popen("kill -9 "+str(thisPid))
+ 
+        sys.exit()
 
     def __del__(self):
         """
@@ -165,11 +180,13 @@ class Pipeline:
         # work space locators
         dafPersist.LogicalLocation.setLocationMap(psLookup)
 
+        log.log(self.VERB2, "eventBrokerHost %s " % self.eventBrokerHost)
+
         # Check for eventTimeout
         if (self.executePolicy.exists('eventTimeout')):
             self.eventTimeout = self.executePolicy.getInt('eventTimeout')
         else:
-            self.eventTimeout = 10000000   # default value
+            self.eventTimeout = 10000000   # default value is 10 000 000
 
         # Process Application Stages
         fullStageList = self.executePolicy.getArray("appStage")
@@ -235,14 +252,15 @@ class Pipeline:
             else:
                 log.log(Log.DEBUG, "eventTopic%d: %s" % (iStage+1, item))
 
-        # Make a List of corresponding eventReceivers for the eventTopics
-        # eventReceiverList    
+
+        eventsSystem = events.EventSystem.getDefaultEventSystem()
+
         for topic in self.eventTopicList:
             if (topic == "None"):
-                self.eventReceiverList.append(None)
+                pass
             else:
-                eventReceiver = events.EventReceiver(self.eventBrokerHost, topic)
-                self.eventReceiverList.append(eventReceiver)
+                log.log(self.VERB2, "Creating receiver for topic %s" % (topic))
+                eventsSystem.createReceiver(self.eventBrokerHost, topic)
 
         # Check for executionMode of oneloop 
         if (self.executePolicy.exists('executionMode') and (self.executePolicy.getString('executionMode') == "oneloop")):
@@ -259,14 +277,6 @@ class Pipeline:
             self.exitTopic = self.executePolicy.getString('exitTopic')
         else:
             self.exitTopic = None
-
-        # Log the input topology
-        if (self.executePolicy.exists('topology')):
-            # Retrieve the topology policy and set it in C++
-            topologyPolicy = self.executePolicy.get('topology')
-
-            self.topology   =  topologyPolicy.getString('type')
-            log.log(self.VERB3, "Using topology type: %s" % self.topology)
 
         log.log(self.VERB1, "Pipeline configuration complete");
 
@@ -315,11 +325,13 @@ class Pipeline:
         """
         log = self.log.traceBlock("startSlices", self.TRACE-2)
 
+        log.log(self.VERB3, "Number of slices " + str(self.nSlices));
+
         self.loopEventList = []
         for i in range(self.nSlices):
-           loopEventA = Event()
+           loopEventA = PyEvent()
            self.loopEventList.append(loopEventA)
-           loopEventB = Event()
+           loopEventB = PyEvent()
            self.loopEventList.append(loopEventB)
 
         self.sliceThreadList = []
@@ -333,7 +345,17 @@ class Pipeline:
             self.sliceThreadList.append(oneSliceThread)
 
         for slicei in self.sliceThreadList:
+            log.log(self.VERB3, "Starting slice");
+            slicei.setDaemon(True) 
             slicei.start()
+            if slicei.isAlive():
+                log.log(self.VERB3, "slicei is Alive");
+            else:
+                log.log(self.VERB3, "slicei is not Alive");
+
+        self.oneShutdownThread = ShutdownThread(self)
+        self.oneShutdownThread.setDaemon(True)
+        self.oneShutdownThread.start()
 
         log.done()
 
@@ -343,7 +365,6 @@ class Pipeline:
         Place an empty Clipboard in the first Queue
         """
         clipboard = Clipboard()
-        #self.clipboardList.append(clipboard)
 
         #print "Python Pipeline Clipboard check \n"
         #acount=0
@@ -367,12 +388,12 @@ class Pipeline:
         eventReceiver = events.EventReceiver(self.eventBrokerHost, self.shutdownTopic)
         visitcount = 0 
 
+        self.threadBarrier()
+
         while True:
 
-            val = eventReceiver.receive(100)
-            if ((val != None) or ((self.executionMode == 1) and (visitcount == 1))):
-                LogRec(looplog, Log.INFO)  << "terminating slices "
-                # self.cppPipeline.invokeShutdown()
+            if (((self.executionMode == 1) and (visitcount == 1))):
+                LogRec(looplog, Log.INFO)  << "terminating pipeline after one loop/visit "
                 # 
                 # Need to shutdown Threads here 
                 # 
@@ -416,8 +437,12 @@ class Pipeline:
 
                     stagelog.done()
 
+                    self.checkExitByStage()
+
                 else:
                     looplog.log(self.VERB2, "Completed Stage Loop")
+
+                self.checkExitByVisit()
 
             # Uncomment to print a list of Citizens after each visit 
             # print datap.Citizen_census(0,0), "Objects:"
@@ -436,6 +461,36 @@ class Pipeline:
         startStagesLoopLog.done()
 
 
+    def getSliceThreadList(self):
+        return self.sliceThreadList
+
+    def setExitLevel(self, level):
+        self.exitLevel = level
+
+    def checkExitBySyncPoint(self): 
+        log = Log(self.log, "checkExitBySyncPoint")
+
+        if((self._stop.isSet()) and (self.exitLevel == 2)):
+            log.log(Log.INFO, "Pipeline stop is set at exitLevel of 2")
+            log.log(Log.INFO, "Exit here at a Synchronization point")
+            sys.exit()
+
+    def checkExitByStage(self): 
+        log = Log(self.log, "checkExitByStage")
+
+        if((self._stop.isSet()) and (self.exitLevel == 3)):
+            log.log(Log.INFO, "Pipeline stop is set at exitLevel of 3")
+            log.log(Log.INFO, "Exit here at the end of the Stage")
+            sys.exit()
+
+    def checkExitByVisit(self): 
+        log = Log(self.log, "checkExitByVisit")
+
+        if((self._stop.isSet()) and (self.exitLevel == 4)):
+            log.log(Log.INFO, "Pipeline stop is set at exitLevel of 4")
+            log.log(Log.INFO, "Exit here at the end of the Visit")
+            sys.exit()
+
     def threadBarrier(self): 
         """
         Create an approximate barrier where all Slices intercommunicate with the Pipeline 
@@ -443,22 +498,67 @@ class Pipeline:
 
         log = Log(self.log, "threadBarrier")
 
+        self.checkExitBySyncPoint()
+
+        # if((self._stop.isSet()) and (self.exitLevel == 2)):
+
+        #     log.log(Log.INFO, "Pipeline stop is set at exitLevel of 2; exit here at a synchronization point")
+        #     print "Pipeline stop is set at exitLevel of 2; exit here at a synchronization point" 
+            # os._exit() 
+        #    sys.exit()
+        #    log.log(Log.INFO, "Pipeline Ever reach here ?? ")
+
         entryTime = time.time()
         log.log(Log.DEBUG, "Entry time %f" % (entryTime)) 
+        
 
         for i in range(self.nSlices):
             k = 2*i
             loopEventA = self.loopEventList[k]
             loopEventB = self.loopEventList[k+1]
-            time1 = time.time()
-            log.log(Log.DEBUG, "Signal to Slice  %d %f" % (i, time1)) 
+
+            signalTime1 = time.time()
+            log.log(Log.DEBUG, "Signal to Slice  %d %f" % (i, signalTime1)) 
+
             loopEventA.set()
+
             log.log(Log.DEBUG, "Wait for signal from Slice %d" % (i)) 
-            loopEventB.wait()
-            time2 = time.time()
-            log.log(Log.DEBUG, "Done waiting for signal from Slice %d %f" % (i, time2)) 
+
+            # Wait for the B event to be set by the Slice
+            # Excute time sleep in between checks to free the GIL periodically 
+            while( not (loopEventB.isSet())):
+                 time.sleep(0.1)
+
+            signalTime2 = time.time()
+            log.log(Log.DEBUG, "Done waiting for signal from Slice %d %f" % (i, signalTime2)) 
+
             if(loopEventB.isSet()):
                 loopEventB.clear()
+
+    def forceShutdown(self): 
+        """
+        Shutdown the Pipeline execution: delete the MPI environment
+        Send the Exit Event if required
+        """
+
+        self.log.log(self.VERB2, 'Pipeline forceShutdown : Stopping Slices ')
+
+        for i in range(self.nSlices):
+            slice = self.sliceThreadList[i]
+            slice.stop()
+            self.log.log(self.VERB2, 'Slice ' + str(i) + ' stopped.')
+
+        for i in range(self.nSlices):
+            slice = self.sliceThreadList[i]
+            slice.join()
+            self.log.log(self.VERB2, 'Slice ' + str(i) + ' exited.')
+
+        # Also have to tell the shutdown Thread to stop  
+        # self.log.log(self.VERB2, 'Telling Shutdown thread to exit')
+        # self.oneShutdownThread.exit()
+        # self.log.log(self.VERB2, 'Shutdown thread has exited')
+        # self.log.log(self.VERB2, 'Main thread exiting ')
+        # sys.exit()
 
     def shutdown(self): 
         """
@@ -479,8 +579,12 @@ class Pipeline:
             slice.join()
             self.log.log(self.VERB2, 'Slice ' + str(i) + ' ended.')
 
+        # Also have to tell the shutdown Thread to stop  
+        self.oneShutdownThread.stop()
+        self.oneShutdownThread.join()
+        self.log.log(self.VERB2, 'Shutdown thread ended ')
+
         sys.exit()
-        # self.cppPipeline.shutdown()
 
 
     def invokeSyncSlices(self, iStage, stagelog):
@@ -562,36 +666,41 @@ class Pipeline:
         Handles Events: transmit or receive events as specified by Policy
         """
         log = stagelog.traceBlock("handleEvents", self.TRACE-2)
+        eventsSystem = events.EventSystem.getDefaultEventSystem()
 
         thisTopic = self.eventTopicList[iStage-1]
         thisTopic = thisTopic.strip()
 
+
         if (thisTopic != "None"):
             log.log(self.VERB3, "Processing topic: " + thisTopic)
             sliceTopic = "%s_%s" % (thisTopic, self._pipelineName)
-            eventReceiver    = self.eventReceiverList[iStage-1]
-            eventTransmitter = events.EventTransmitter(self.eventBrokerHost, sliceTopic)
 
-            waitlog = log.traceBlock("eventwait", self.TRACE,
+            waitlog = log.traceBlock("eventwait " + thisTopic, self.TRACE,
                                      "wait for event...")
-            inputParamPropertySetPtr = eventReceiver.receive(self.eventTimeout)
+            inputParamPropertySetPtr = eventsSystem.receive(thisTopic, self.eventTimeout)
             waitlog.done()
-            LogRec(log, self.TRACE) << "received event; contents: "        \
+
+            if (inputParamPropertySetPtr != None):
+                LogRec(log, self.TRACE) << "received event; contents: "        \
                                 << inputParamPropertySetPtr \
                                 << LogRec.endr;
 
-
-            if (inputParamPropertySetPtr != None):
-                log.log(self.VERB2, "received event; sending it to Slices")
+                log.log(self.VERB2, "received event; sending it to Slices " + sliceTopic)
 
                 # Pipeline  does not disassemble the payload of the event.
-                # It knows nothing of the contents.
-                # It simply places the payload on the clipboard with key of the eventTopic
+                # It places the payload on the clipboard with key of the eventTopic
                 self.populateClipboard(inputParamPropertySetPtr, iStage, thisTopic)
-                eventTransmitter.publish(inputParamPropertySetPtr)
 
-                log.log(self.VERB2, "event sent")
-        else:
+                eventsSystem.createTransmitter(self.eventBrokerHost, sliceTopic)
+                eventsSystem.publish(sliceTopic, inputParamPropertySetPtr)
+
+                log.log(self.VERB2, "event sent to Slices")
+            else: # event was not received after a long timeout
+                log.log(self.VERB2, "No more data: Shutting down : No more events received")
+                sys.exit()
+
+        else: # This stage has no event dependence 
             log.log(Log.DEBUG, 'No event to handle')
 
         log.done()
@@ -643,6 +752,19 @@ class Pipeline:
         """
         self._runId = run
 
+    def getShutdownTopic(self):
+        """
+        get method for the shutdown event topic 
+        """
+        return self.shutdownTopic
+
+    def getEventBrokerHost(self):
+        """
+        get method for the event broker host 
+        """
+        return self.eventBrokerHost
+
+
     def getLogThreshold(self):
         """
         return the default message importance threshold being used for 
@@ -668,6 +790,18 @@ class Pipeline:
             self.log.log(Log.INFO, 
                          "Upating Root Log Message Threshold to %i" % level)
         self.logthresh = level
+
+    def setEventTimeout(self, timeout):
+        """
+        set the default message importance threshold to be used for 
+        recording messages.  This will value be applied to the default
+        root (system-wide) logger (or what it will be after logging is 
+        initialized) so that all software components are affected.
+        """
+        if self.log is not None:
+            self.log.log(Log.INFO, 
+                         "Updating event timeout to %i" % timeout)
+        self.eventTimeout = timeout
 
     def makeStageName(self, appStagePolicy):
         if appStagePolicy.getValueType("stagePolicy") == appStagePolicy.FILE:
