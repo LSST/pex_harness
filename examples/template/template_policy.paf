@@ -5,11 +5,14 @@
 # application within the LSST middleware.
 #
 
+
+# nSlices: 3
 nSlices: 1
+
 executionMode: "oneloop"
 logThreshold: -3
 localLogMode: true  
-eventBrokerHost: "lsst4.ncsa.uiuc.edu" 
+eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
 
 appStage: {
      name: "SampleStage"

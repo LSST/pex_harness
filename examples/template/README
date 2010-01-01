@@ -21,34 +21,36 @@ such as
 
 % launchPipeline.py template_policy.paf  test_2390
 
+One can specify a name and a logging level on the command line as well:
+
+% launchPipeline.py template_policy.paf test_10025 mytemplate -L 3 
+
+
 Description
 -----------
 
 The template example demonstrates how to set up a simple Pipeline with a single Slice 
 executing a single Stage. 
 
-The template example has a single application stage, SampleStage, which may be 
-found in  pex_harness/examples/stages/lsst/pexhexamples/pipeline.py
-The full path to the directory pex_harness/examples/stages is added to the PYTHONPATH 
-by the executing "run.sh" script, and consequently the stage may be loaded dynamically 
-into the python context by the Pipeline. 
-The SampleStage is a dummy application stage that performs a few simple tasks: 
+The template example has a single application stage, SampleStageSerial/SampleStageParallel, 
+which may be found in  pex_harness/examples/stages/lsst/pexhexamples/pipeline.py
+
+The sample stage is a dummy application stage that performs a few simple tasks: 
 1) it overwrites the process() method of generic Stage,  
 2) it retrieves the Clipboard from its inputQueue at the start of the process() method,
    and posts it to the outputQueue at the end,
 3) it creates a version of the Log
 4) it retrieves elements from its stage policy file and write them to the Log
-As such, the SampleStage can serve as a useful template for building other application
-Stage that perform actual computation. 
+As such, the SampleStageSerial/SampleStageParallel can serve as a useful template for building 
+other application Stages that perform or wrap actual computation. 
 
 By default this example will run with the Pipeline with one Slice on a single node.
-Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
 The pipeline is then executed via, for example,
 
 % launchPipeline.py template_policy.paf  test_2390
 
-After execution the messages from the SampleStage 
+After execution the messages from the SampleStageParallel 
 
 lsst.pexhexamples.pipeline.SampleStageParallel.process:  rank 0
 lsst.pexhexamples.pipeline.SampleStageParallel.process:  stageId 1
