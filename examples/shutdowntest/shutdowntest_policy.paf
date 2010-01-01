@@ -1,0 +1,27 @@
+# template_policy.paf
+#
+# This policy file serves as a simple example/template running a minimal
+# pipeline with a single stage, i.e., the most basic framework for testing an
+# application within the LSST middleware.
+#
+
+
+# nSlices: 3
+nSlices: 1
+
+executionMode: "oneloop"
+logThreshold: -3
+localLogMode: true  
+eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
+shutdownTopic: "triggerShutdownA"
+
+appStage: {
+     name: "ShutdownTestStage"
+     serialClass: "lsst.pexhexamples.pipeline.ShutdownTestStageSerial"
+     parallelClass: "lsst.pexhexamples.pipeline.ShutdownTestStageParallel"
+     eventTopic: "None"
+     stagePolicy: @policy/shutdownstage.paf
+}
+
+
+
