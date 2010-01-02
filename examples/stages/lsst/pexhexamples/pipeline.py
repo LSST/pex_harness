@@ -3,6 +3,7 @@
 """
 Test Application Stages for proto association pipeline
 """
+import time
 
 import lsst.pex.harness.stage as harnessStage
 
@@ -24,8 +25,8 @@ class SampleStageSerial(harnessStage.SerialProcessing):
         Processing code for this Stage to be executed by the main Pipeline 
         prior to invoking Slice process 
         """
-        root =  Log.getDefaultLog()
-        log = Log(root, "lsst.pexhexamples.pipeline.SampleStageSerial.preprocess")
+        # root =  Log.getDefaultLog()
+        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageSerial.preprocess")
 
         log.log(Log.INFO, 'Executing SampleStageSerial preprocess')
 
@@ -34,9 +35,9 @@ class SampleStageSerial(harnessStage.SerialProcessing):
         Processing code for this Stage to be executed by the main Pipeline 
         after the completion of Slice process 
         """
-        root =  Log.getDefaultLog()
+        # root =  Log.getDefaultLog()
 
-        log = Log(root, "lsst.pexhexamples.pipeline.SampleStageSerial.postprocess")
+        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageSerial.postprocess")
         log.log(Log.INFO, 'Executing SampleStageSerial postprocess')
 
         lr = LogRec(log, Log.INFO)
@@ -58,8 +59,43 @@ class SampleStageParallel(harnessStage.ParallelProcessing):
         Processing code for this Stage to be executed within a Slice 
         """
 
-        root =  Log.getDefaultLog()
-        log = Log(root, "lsst.pexhexamples.pipeline.SampleStageParallel.process")
+        # root =  Log.getDefaultLog()
+        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageParallel.process")
+
+        lr = LogRec(log, Log.INFO)
+        lr << " rank " + str(self.rank)
+        lr << " stageId " + str(self.stageId) 
+        lr << " runId " + str(self.runId) 
+        lr << " universeSize " + str(self.universeSize) 
+        lr << " RunMode from Policy " + self.runmode 
+        lr << LogRec.endr
+
+class ShutdownTestStageSerial(harnessStage.SerialProcessing):
+
+    def setup(self): 
+        self.runmode ="None"
+        if self.policy.exists('RunMode'):
+            self.runmode = self.policy.getString('RunMode')
+
+    def preprocess(self, clipboard): 
+        """
+        Processing code for this Stage to be executed by the main Pipeline 
+        prior to invoking Slice process 
+        """
+        # root =  Log.getDefaultLog()
+        log = Log(self.log, "lsst.pexhexamples.pipeline.ShutdownTestStageSerial.preprocess")
+
+        log.log(Log.INFO, 'Executing SampleStageSerial preprocess')
+
+    def postprocess(self, clipboard): 
+        """
+        Processing code for this Stage to be executed by the main Pipeline 
+        after the completion of Slice process 
+        """
+        # root =  Log.getDefaultLog()
+
+        log = Log(self.log, "lsst.pexhexamples.pipeline.ShutdownStageSerial.postprocess")
+        log.log(Log.INFO, 'Executing SampleStageSerial postprocess')
 
         lr = LogRec(log, Log.INFO)
         lr << " rank " + str(self.rank)
@@ -68,6 +104,35 @@ class SampleStageParallel(harnessStage.ParallelProcessing):
         lr << " RunMode from Policy " + self.runmode 
         lr << LogRec.endr
 
+class ShutdownTestStageParallel(harnessStage.ParallelProcessing):
+
+    def setup(self): 
+        self.runmode ="None"
+        if self.policy.exists('RunMode'):
+            self.runmode = self.policy.getString('RunMode')
+
+    def process(self, clipboard): 
+        """
+        Processing code for this Stage to be executed within a Slice 
+        """
+
+        log = Log(self.log, "lsst.pexhexamples.pipeline.ShutdownTestStageParallel.process")
+
+        i = 0 
+        loopTime = 0.25
+        while(i < 100):
+            print "APP STAGE PROCESSING LOOP " + str(i) + " \n"; 
+            time.sleep(loopTime)
+            i=i+1
+
+
+        lr = LogRec(log, Log.INFO)
+        lr << " rank " + str(self.rank)
+        lr << " stageId " + str(self.stageId) 
+        lr << " runId " + str(self.runId) 
+        lr << " universeSize " + str(self.universeSize) 
+        lr << " RunMode from Policy " + self.runmode 
+        lr << LogRec.endr
 
 class LoadStageSerial(harnessStage.SerialProcessing):
 
