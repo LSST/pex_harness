@@ -8,9 +8,10 @@ import lsst.ctrl.events as events
 import time
 
 if __name__ == "__main__":
+
     print "starting...\n"
 
-    eventBrokerHost = "lsst4.ncsa.uiuc.edu" 
+    eventBrokerHost = "lsst8.ncsa.uiuc.edu" 
 
     externalEventTransmitter = events.EventTransmitter(eventBrokerHost, "triggerAssociationEvent")
 
@@ -19,7 +20,6 @@ if __name__ == "__main__":
     root.setInt("visitId", 1)
     root.setDouble("FOVRa", 273.48066298343)
     root.setDouble("FOVDec", -27.125)
-
 
     externalEventTransmitter.publish(root)
 

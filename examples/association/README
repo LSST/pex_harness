@@ -40,7 +40,6 @@ the Pipeline again blocks for the arrival of an event, of topic "triggerMatchMop
 this time.
 
 By default the mock example will run with the Pipeline and one Slice on a single node.
-Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
 To execute this scenario, in one shell execute, for example
 

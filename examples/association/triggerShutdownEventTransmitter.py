@@ -11,11 +11,16 @@ if __name__ == "__main__":
     print "starting...\n"
 
     shutdownTopic = "triggerShutdownA"
-    eventBrokerHost = "lsst4.ncsa.uiuc.edu"
+    eventBrokerHost = "lsst8.ncsa.uiuc.edu"
 
     externalEventTransmitter = events.EventTransmitter(eventBrokerHost, shutdownTopic )
 
     root = PropertySet()
+    # Shutdown at level 1 : stop immediately by killing process (ugly)
+    # Shutdown at level 2 : exit in a clean manner (Pipeline and Slices) at a synchronization point 
+    # Shutdown at level 3 : exit in a clean manner (Pipeline and Slices) at the end of a Stage
+    # Shutdown at level 4 : exit in a clean manner (Pipeline and Slices) at the end of a Visit
+    root.setInt("level", 2)
 
     externalEventTransmitter.publish(root)
 
