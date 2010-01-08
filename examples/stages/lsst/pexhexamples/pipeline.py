@@ -82,10 +82,9 @@ class ShutdownTestStageSerial(harnessStage.SerialProcessing):
         Processing code for this Stage to be executed by the main Pipeline 
         prior to invoking Slice process 
         """
-        # root =  Log.getDefaultLog()
         log = Log(self.log, "lsst.pexhexamples.pipeline.ShutdownTestStageSerial.preprocess")
 
-        log.log(Log.INFO, 'Executing SampleStageSerial preprocess')
+        log.log(Log.INFO, 'Executing ShutdownTestStageSerial preprocess')
 
     def postprocess(self, clipboard): 
         """
@@ -95,7 +94,7 @@ class ShutdownTestStageSerial(harnessStage.SerialProcessing):
         # root =  Log.getDefaultLog()
 
         log = Log(self.log, "lsst.pexhexamples.pipeline.ShutdownStageSerial.postprocess")
-        log.log(Log.INFO, 'Executing SampleStageSerial postprocess')
+        log.log(Log.INFO, 'Executing ShutdownTestStageSerial postprocess')
 
         lr = LogRec(log, Log.INFO)
         lr << " rank " + str(self.rank)
