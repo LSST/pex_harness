@@ -319,6 +319,12 @@ class Pipeline:
 
         log.done()
 
+    def startShutdownThread(self):
+
+        self.oneShutdownThread = ShutdownThread(self)
+        self.oneShutdownThread.setDaemon(True)
+        self.oneShutdownThread.start()
+
     def startSlices(self):
         """
         Initialize the Queue by defining an initial dataset list
@@ -353,10 +359,6 @@ class Pipeline:
             else:
                 log.log(self.VERB3, "slicei is not Alive");
 
-        self.oneShutdownThread = ShutdownThread(self)
-        self.oneShutdownThread.setDaemon(True)
-        self.oneShutdownThread.start()
-
         log.done()
 
 
@@ -385,7 +387,6 @@ class Pipeline:
         stagelog = TracingLog(looplog, "stage", self.TRACE-1)
         proclog = TracingLog(stagelog, "process", self.TRACE)
 
-        eventReceiver = events.EventReceiver(self.eventBrokerHost, self.shutdownTopic)
         visitcount = 0 
 
         self.threadBarrier()

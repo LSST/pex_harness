@@ -18,7 +18,6 @@ class SliceThread(threading.Thread):
         self.eventa = eventa
         self.eventb = eventb
         self.universeSize = usize
-        self._stop = PyEvent()
         self.pid = os.getpid()
 
     def getPid (self):
@@ -38,7 +37,7 @@ class SliceThread(threading.Thread):
         if self.name is None or self.name == "None":
             self.name = os.path.splitext(os.path.basename(self.pipelinePolicyName))[0]
 
-        self.pySlice = Slice(self._runId, self.pipelinePolicyName, self.name, self.rank, self._stop)
+        self.pySlice = Slice(self._runId, self.pipelinePolicyName, self.name, self.rank)
         if isinstance(self.logthresh, int):
             self.pySlice.setLogThreshold(self.logthresh)
 
