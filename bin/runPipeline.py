@@ -98,6 +98,8 @@ def runPipeline(policyFile, runId, logthresh=None, name=None):
 
     pyPipeline.initializeStages()    
 
+    pyPipeline.startShutdownThread()  
+
     pyPipeline.startSlices()  
 
     pyPipeline.startStagesLoop()
