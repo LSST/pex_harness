@@ -13,13 +13,14 @@ executionMode: "oneloop"
 logThreshold: -3
 localLogMode: true  
 eventBrokerHost: "lsst8.ncsa.uiuc.edu" 
+shutdownTopic: "triggerShutdownA"
 
 appStage: {
-     name: "SampleStage"
-     serialClass: "lsst.pexhexamples.pipeline.SampleStageSerial"
-     parallelClass: "lsst.pexhexamples.pipeline.SampleStageParallel"
+     name: "ShutdownTestStage"
+     serialClass: "lsst.pexhexamples.pipeline.ShutdownTestStageSerial"
+     parallelClass: "lsst.pexhexamples.pipeline.ShutdownTestStageParallel"
      eventTopic: "None"
-     stagePolicy: @policy/samplestage.paf
+     stagePolicy: @policy/shutdownstage.paf
 }
 
 

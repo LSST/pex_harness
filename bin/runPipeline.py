@@ -34,7 +34,15 @@ the given run ID.
 cl = optparse.OptionParser(usage=usage, description=desc)
 cl.add_option("-n", "--name", action="store", default=None, dest="name",
               help="a name for identifying the pipeline")
+cl.add_option("-V", "--verbosity", action="store", default=None, dest="verbosity",
+              help="verbosity level of logging for the pipeline")
 run.addVerbosityOption(cl)
+
+def createLog():
+    log = Log(Log.getDefaultLog(), "harness.runPipeline")
+    return log
+
+logger = createLog()
 
 def main():
     """parse the input arguments and execute the pipeline
@@ -51,6 +59,19 @@ def main():
 
     pipelinePolicyName = cl.args[0]
     runId = cl.args[1]
+
+    logger.log(Log.INFO, "pipelinePolicyName " + pipelinePolicyName)
+    logger.log(Log.INFO, "runId " + runId)
+
+    if (logthresh == None):
+        logger.log(Log.INFO, "logthresh is None")
+    else:
+        logger.log(Log.INFO, "logthresh " + str(logthresh))
+
+    if (cl.opts.name == None):
+        logger.log(Log.INFO, "cl.opts.name is None")
+    else: 
+        logger.log(Log.INFO, "name " + cl.opts.name)
 
     runPipeline(pipelinePolicyName, runId, logthresh, cl.opts.name)
 
@@ -69,20 +90,19 @@ def runPipeline(policyFile, runId, logthresh=None, name=None):
     if isinstance(logthresh, int):
         pyPipeline.setLogThreshold(logthresh)
 
+    pyPipeline.initializeLogger()   
+
     pyPipeline.configurePipeline()   
 
     pyPipeline.initializeQueues()  
 
     pyPipeline.initializeStages()    
 
+    pyPipeline.startShutdownThread()  
+
     pyPipeline.startSlices()  
 
-    # pyPipeline.startInitQueue()    # place an empty clipboard in the first Queue 
-
     pyPipeline.startStagesLoop()
-
-    pyPipeline.shutdown()
-
 
 
 if (__name__ == '__main__'):

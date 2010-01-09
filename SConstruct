@@ -5,7 +5,7 @@
 import glob, os.path, re, os
 import lsst.SConsUtils as scons
 
-dependencies = "boost mpich2 utils pex_policy pex_exceptions daf_base pex_logging daf_persistence ctrl_events python".split()
+dependencies = "boost utils pex_policy pex_exceptions daf_base pex_logging daf_persistence ctrl_events python".split()
 
 env = scons.makeEnv("pex_harness",
                     r"$HeadURL$",
@@ -15,8 +15,6 @@ env = scons.makeEnv("pex_harness",
                      ["boost", "boost/serialization/serialization.hpp", "boost_serialization:C++"],
                      ["boost", "boost/serialization/base_object.hpp", "boost_serialization:C++"],
                      ["boost", "boost/test/unit_test.hpp", "boost_unit_test_framework:C++"],                    
-                     ["mpich2", "mpi.h", "mpich:C++"],
-                     ["boost", "boost/mpi.hpp", "boost_mpi:C++"],
                      ["utils", "lsst/utils/Utils.h", "utils:C++"],
                      ["pex_exceptions", "lsst/pex/exceptions.h","pex_exceptions:C++"],
                      ["daf_base", "lsst/daf/base/Citizen.h", "pex_exceptions daf_base:C++"],
@@ -36,11 +34,6 @@ env.libs["ctrl_events"] += env.getlibs("activemqcpp")
 
 pkg = env["eups_product"]
 env.libs[pkg] += env.getlibs(" ".join(dependencies))
-
-env.Replace(CXX = 'mpicxx')
-# New 
-env.Append(INCLUDES = '-DMPICH')
-env.Append(CXXFLAGS = "-DMPICH_IGNORE_CXX_SEEK")
 
 #
 # Build/install things

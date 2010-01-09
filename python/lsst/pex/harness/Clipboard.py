@@ -7,10 +7,10 @@ accessed via a get() method where a suitable key (e.g., "primary_image")
 must be provided.
 """
 
+
 class Clipboard:
     '''Container for images: maintains Python dictionary'''
 
-    #------------------------------------------------------------------------
     def __init__ (self):
         """
         Initialize the Clipboard by defining an initial dictionary
@@ -18,7 +18,6 @@ class Clipboard:
         self.dict = {}
         self.isShared = {}
 
-    #------------------------------------------------------------------------
     def __del__ (self):
         """
         Delete the Clipboard 
@@ -26,12 +25,10 @@ class Clipboard:
         # print 'Clipboard being deleted'
         self.close()
 
-    #------------------------------------------------------------------------
     def close(self):
         # print 'Clearing Clipboard dictionary'
         self.dict.clear()
  
-    #------------------------------------------------------------------------
     def getKeys (self):
         """
         Returns the keys of the python dictionary (in the form of a python 
@@ -39,7 +36,6 @@ class Clipboard:
         """
         return self.dict.keys()
 
-    #------------------------------------------------------------------------
     def getSharedKeys (self):
         """
         Returns the shared keys of the python dictionary (in the form of a python 
@@ -52,16 +48,14 @@ class Clipboard:
                 sharedKeySet.append(key) 
         return sharedKeySet
 
-    #------------------------------------------------------------------------
     def getItem (self, key):
         """
         Return the value within the dictionary that corresponds to the 
         provided key 
         """
-        ##return self.dict[key]
+        # return self.dict[key]
         return self.dict.__getitem__(key)
 
-    #------------------------------------------------------------------------
     def get (self, key, defValue=None):
         """
         Return the value within the dictionary that corresponds to the 
@@ -69,7 +63,6 @@ class Clipboard:
         """
         return self.dict.get(key, defValue)
 
-    #------------------------------------------------------------------------
     def put (self, key, value, isShareable=False):
         """
         Add an entry to the dictionary using the provided name/value pair 
@@ -78,14 +71,12 @@ class Clipboard:
         self.dict[key]     = value
         self.isShared[key] = isShareable
 
-    #------------------------------------------------------------------------
     def setShared (self, key, isShareable):
         """
         Set the shared value for this key 
         """
         self.isShared[key] = isShareable
 
-    #------------------------------------------------------------------------
     def contains (self, key):
         """
         Return the value True if the dictionary has a key "key";
@@ -95,4 +86,13 @@ class Clipboard:
             return True
         else:
             return False
+
+    #
+    # Provide dictionary-like interface
+    #
+    __setitem__ = put
+    __getitem__ = getItem
+    clear = close
+    has_key = contains
+    keys = getKeys
 

@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # Shutdown at level 2 : exit in a clean manner (Pipeline and Slices) at a synchronization point 
     # Shutdown at level 3 : exit in a clean manner (Pipeline and Slices) at the end of a Stage
     # Shutdown at level 4 : exit in a clean manner (Pipeline and Slices) at the end of a Visit
-    root.setInt("level", 2)
+    root.setInt("level", 4)
 
     externalEventTransmitter.publish(root)
 

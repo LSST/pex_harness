@@ -9,6 +9,7 @@ Access to the C++ harness classes from the lsst.pex.harness module
 
 
 %{
+#include "lsst/utils/Utils.h"
 #include "lsst/daf/base/Citizen.h"
 #include "lsst/pex/exceptions.h"
 #include "lsst/pex/policy/Policy.h"
@@ -16,14 +17,12 @@ Access to the C++ harness classes from the lsst.pex.harness module
 #include "lsst/daf/base/PropertySet.h"
 #include "lsst/daf/persistence/PropertySetFormatter.h"
 #include "lsst/pex/logging/Log.h"
+#include "lsst/pex/logging/ScreenLog.h"
+#include "lsst/pex/logging/DualLog.h"
 #include "lsst/pex/logging/LogRecord.h"
 #include "lsst/pex/logging/Debug.h"
-#include "lsst/pex/harness/Clipboard.h"
-#include "lsst/pex/harness/Queue.h"
-#include "lsst/pex/harness/Stage.h"
-#include "lsst/pex/harness/Pipeline.h"
-#include "lsst/pex/harness/Slice.h"
 #include "lsst/pex/harness/TracingLog.h"
+#include "lsst/pex/harness/LogUtils.h"
 %}
 
 %inline %{
@@ -31,6 +30,7 @@ namespace lsst { namespace pex { namespace harness { } } }
 namespace lsst { namespace daf { namespace base { } } }
 namespace lsst { namespace daf { namespace persistence { } } }
 namespace lsst { namespace pex { namespace policy { } } }
+namespace lsst { namespace pex { namespace logging { } } }
 namespace lsst { namespace pex { namespace exceptions { } } }
 namespace boost { namespace filesystem {} }
 
@@ -39,6 +39,7 @@ using namespace lsst::pex::harness;
 using namespace lsst::daf::base;
 using namespace lsst::daf::persistence;
 using namespace lsst::pex::policy;
+using namespace lsst::pex::logging;
 using namespace lsst::pex::exceptions;
 %}
 
@@ -49,6 +50,7 @@ using namespace lsst::pex::exceptions;
 import lsst.daf.base
 import lsst.daf.persistence
 import lsst.pex.policy
+import lsst.pex.logging
 import lsst.pex.harness
 %}
 
@@ -74,10 +76,6 @@ import lsst.pex.harness
 %import "lsst/pex/logging/LogRecord.h"
 %import "lsst/pex/policy/Policy.h"
 
-%include "lsst/pex/harness/Clipboard.h"
-%include "lsst/pex/harness/Queue.h"
-%include "lsst/pex/harness/Stage.h"
-%include "lsst/pex/harness/Pipeline.h"
-%include "lsst/pex/harness/Slice.h"
 %include "lsst/pex/harness/TracingLog.h"
+%include "lsst/pex/harness/LogUtils.h"
 

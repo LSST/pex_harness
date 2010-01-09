@@ -91,50 +91,42 @@ def verbosity2threshold(level, defthresh=None):
     return -1 * level
 
 def createLog():
-    log = Log(Log.getDefaultLog(), "harness.launchPipeline")
+    log = Log(Log.getDefaultLog(), "harness.run.launchPipeline")
     return log
 
-def launchPipeline(policyFile, runid, name=None, verbosity=None, nodesfile="nodelist.scr"):
-    """
-    Launch a pipeline with a given policy and Run ID.  A name, verbosity level, and 
-    node list file may also be provided. If no node list is provided, a file named "nodelist.scr" 
-    in the current directory will be used.  If the policy_file refers to other policy files,
-    the path to those files will taken to be relative to the current directory.
-    """
+
+def launchPipeline(policyFile, runid, name=None, verbosity=None):
     if not os.environ.has_key(pkgdirvar):
         raise RuntimeError(pkgdirvar + " env. var not setup")
 
     logger = createLog()
 
-    # ensure we have .mpd.conf files deployed on all nodes
-    nodes_set = []
-    nnodes = 0
-    nprocs = 0
-    with file(nodesfile) as nodelist:
-        for node in nodelist:
-            node = node.strip()
-            if len(node)==0 or node.startswith('#'): continue
-            if node.find(':') >= 0:
-                (node, n) = node.split(':')
-            else:
-                n = ''
-            nnodes += 1
-            n = n.strip()
-            if n != '':
-                nprocs += int(n)
-            else:
-                nprocs += 1
+    logger.log(Log.INFO, "policyFile " + policyFile) 
+    logger.log(Log.INFO, "runid " + runid) 
+    if(name == None): 
+        logger.log(Log.INFO, "name is None") 
+    else:
+        logger.log(Log.INFO, name) 
 
-            if node in nodes_set: continue
+    if(verbosity == None): 
+        logger.log(Log.INFO, "verbosity is None") 
+    else:
+        logger.log(Log.INFO, verbosity) 
 
-    cmd = "runPipelin.sh.py %s %s %s %d %d" % \
-          (policyFile, runid, nodesfile, nnodes, nprocs)
+    clineOptions = ""
     if name is not None:
-        cmd += " %s" % name
+        clineOptions += " -n %s" % name
     if verbosity is not None:
-        cmd += " %s" % verbosity
-    logger.log(Log.DEBUG, "exec " + cmd)
-    os.execvp("runPipeline.sh", cmd.split())
+        clineOptions += " -V %s" % verbosity
 
-    raise RuntimeError("Failed to exec runPipeline.sh")
+    cmd = "runPipelin.sh.py %s %s %s" % \
+          (clineOptions, policyFile, runid)
+
+    logger.log(Log.INFO, "CMD to execute:") 
+    logger.log(Log.INFO, cmd) 
+
+    os.execvp("runPipeline.py", cmd.split())
+
+    raise RuntimeError("Failed to exec runPipeline.py")
+
 
