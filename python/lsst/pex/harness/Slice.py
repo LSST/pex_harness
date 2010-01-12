@@ -131,7 +131,9 @@ class Slice:
         psLookup = lsst.daf.base.PropertySet()
         if (self.executePolicy.exists('dir')):
             dirPolicy = self.executePolicy.get('dir')
-            shortName = dirPolicy.get('shortName')
+            shortName = None
+            if (dirPolicy.exists('shortName')):
+                shortName = dirPolicy.get('shortName')
             if shortName == None:
                 shortName = self.pipelinePolicyName.split('.')[0]
             dirs = Directories(dirPolicy, shortName, self._runId)
