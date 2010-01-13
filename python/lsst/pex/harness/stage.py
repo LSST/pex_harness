@@ -522,7 +522,7 @@ class Stage(object):
         return cls(self.stagePolicy, log, self.eventBroker, sysdata)
 
 def _createClass(name):
-    (modn, cln) = self.serialClass.rsplit('.', 1)
+    (modn, cln) = name.rsplit('.', 1)
     mod = __import__(modn, globals(), locals(), [cln], -1)
     stageClass = getattr(mod, cln)
     return stageClass
@@ -620,7 +620,7 @@ def makeStage(policy=None, serClsName=None, paraClsName=None, log=None,
             raise ValueError("Not a SerialProcessing subclass: " + serClsName)
     if paraClsName:
         out.parallelClass = _createClass(paraClsName)
-        if not issubclass(out.serialClass, ParallelProcessing):
+        if not issubclass(out.parallelClass, ParallelProcessing):
             raise ValueError("Not a ParallelProcessing subclass: "+paraClsName)
 
     return out
