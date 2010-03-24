@@ -407,3 +407,28 @@ class StoreStageParallel(harnessStage.ParallelProcessing):
                         print 'Python pipeline.StoreStage process() ', self.rank, key, name, self.visitId
 
 
+class AppFailureStageSerial(harnessStage.SerialProcessing):
+
+    def preprocess(self, clipboard): 
+        """
+        Execute the needed preprocessing code for this Stage
+        """
+        print 'Python pipeline.AppFailureStageSerial preprocess : stageId %i' % self.stageId
+        print 'Python pipeline.AppFailureStageSerial preprocess : universeSize %i' % self.universeSize
+
+    def postprocess(self, clipboard): 
+        """
+        Execute the needed postprocessing code for this Stage
+        """
+        print 'Python pipeline.AppFailureStageSerial postprocess : stageId %d' % self.stageId
+
+class AppFailureStageParallel(harnessStage.ParallelProcessing):
+
+    def process(self, clipboard): 
+        """
+        Execute the needed processing code for this Stage
+        """
+        print 'Python pipeline.AppFailureStageParallel process : _rank %i stageId %i' % (self.rank, self.stageId)
+        print 'Python pipeline.AppFailureStageParallel process : _rank %i universeSize %i' % (self.rank, self.universeSize)
+
+
