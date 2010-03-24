@@ -3,6 +3,7 @@
 # This policy file executes the Pipeline within a scenario that utilizes 
 # the Event stage for issueing .
 
+nSlices: 1
 localLogMode: true
 executionMode: "oneloop"
 eventBrokerHost: "lsst4.ncsa.uiuc.edu"  
