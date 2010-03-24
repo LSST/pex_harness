@@ -11,6 +11,7 @@
 # The required event is issued with the script triggerIpdpEventTransmit.py 
 #
 
+nSlices: 1
 localLogMode: true
 executionMode: "oneloop"
 eventBrokerHost: "lsst4.ncsa.uiuc.edu" 
