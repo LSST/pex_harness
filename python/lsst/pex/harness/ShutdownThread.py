@@ -41,7 +41,7 @@ class ShutdownThread(threading.Thread):
     def getPid (self):
         return self.pid
 
-    def stop (self):
+    def setStop (self):
         self._stop.set()
 
     def exit (self):
@@ -56,16 +56,16 @@ class ShutdownThread(threading.Thread):
         eventsSystem = events.EventSystem.getDefaultEventSystem()
         eventsSystem.createReceiver(eventBrokerHost, shutdownTopic)
 
-        pollingTime = 2.0 
-        timeout = 1000
+        sleepTimeout = 2.0
+        transTimeout = 900
 
         shutdownPropertySetPtr = None
         while(shutdownPropertySetPtr == None):
             if(self.logthresh == self.VERB3):
                 print "ShutdownThread Looping : checking for Shutdown event ... \n" 
 
-            time.sleep(pollingTime)
-            shutdownPropertySetPtr = eventsSystem.receive(shutdownTopic, timeout)
+            time.sleep(sleepTimeout)
+            shutdownPropertySetPtr = eventsSystem.receive(shutdownTopic, transTimeout)
     
             if (shutdownPropertySetPtr != None):
                self.level = shutdownPropertySetPtr.getInt("level")
@@ -84,17 +84,17 @@ class ShutdownThread(threading.Thread):
         # Shutdown at level 2 : exit in a clean manner (Pipeline and Slices) 
         # at a synchronization point 
         if (self.level == 2):
-            self.pipeline.stop()
+            self.pipeline.setStop()
 
         # Shutdown at level 3 : exit in a clean manner (Pipeline and Slices)
         # at the end of a Stage
         if (self.level == 3):
-            self.pipeline.stop()
+            self.pipeline.setStop()
 
         # Shutdown at level 4 : exit in a clean manner (Pipeline and Slices)
         # at the end of a Visit
         if (self.level == 4):
-            self.pipeline.stop()
+            self.pipeline.setStop()
 
         # Technique for handling no-more-date scenario still in discussion
         # if (self.level == 5):
