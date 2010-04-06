@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 
 import lsst.pex.policy as pexPolicy
-import lsst.ctrl.sched as ctrlSched
 import lsst.pex.harness.simpleStageTester as SST
 import lsst.pex.harness.IOStage as IOStage
 import lsst.daf.base as dafBase
-import lsst.daf.persistence as dafPersistence
+import lsst.daf.persistence as dafPersist
 import lsst.afw.image as afwImage
 
 lm = dafBase.PropertySet()
 lm.add("input", "tests")
 lm.add("output", ".")
-dafPersistence.LogicalLocation.setLocationMap(lm)
+dafPersist.LogicalLocation.setLocationMap(lm)
 ps = dafBase.PropertySet()
 ps.add("field", "D4")
 clip0 = {
     'inputDatasets': [
-        ctrlSched.Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=0),
-        ctrlSched.Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=1)
+        dafPersist.Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=0),
+        dafPersist.Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=1)
     ],
     'root': "raw",
     'ps': ps
