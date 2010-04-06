@@ -4,7 +4,7 @@ OutputItems: {
         Required: true
         StoragePolicy: {
             Storage: "BoostStorage"
-            Location: "theProperty.%{visitId}.%{sliceId}"
+            Location: "theProperty.%(visitId)"
         }
     }
 }

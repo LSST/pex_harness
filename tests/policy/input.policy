@@ -6,7 +6,7 @@ InputItems: {
         PythonType: "lsst.daf.base.PropertySet"
         StoragePolicy: {
             Storage: "BoostStorage"
-            Location: "theProperty.%{visitId}.%{sliceId}"
+            Location: "theProperty.%(visitId)"
         }
     }
 }
