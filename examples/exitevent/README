@@ -36,7 +36,6 @@ This will result in an event of this topic being issued. If the exitTopic
 entry in the policy file is absent, then no exit event is issued. 
 
 By default this example will run with the Pipeline with one Slice on a single node.
-Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
 One can test the exit event functionality by, in one shell running the provided 
 listenEvent.py script, which will block for the arrival of an event of topic "SampleExitTopic".
