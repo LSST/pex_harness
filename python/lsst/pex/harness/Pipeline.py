@@ -583,6 +583,8 @@ class Pipeline:
             if(loopEventB.isSet()):
                 loopEventB.clear()
 
+        self.checkExitBySyncPoint()
+
     def forceShutdown(self): 
         """
         Shutdown the Pipeline execution: delete the MPI environment
