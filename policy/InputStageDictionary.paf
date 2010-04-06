@@ -1,0 +1,48 @@
+#<?cfg paf dictionary ?>
+
+target: InputStage
+
+definitions: {
+    inputKeys: {
+        type: policy
+        maxOccurs: 1
+        dictionary: {
+            definitions: {
+                inputDatasets: {
+                    type: string
+                    description: "Specify the clipboard key of the list of input datasets to be processed."
+                    maxOccurs: 1
+                    default: "inputDatasets"
+                }
+            }
+        }
+    }
+    parameters: {
+        type: policy
+        maxOccurs: 1
+        dictionary: {
+            definitions: {
+                runMode: {
+                    type: string
+                    description: "Run in preprocess, process, or postprocess."
+                    maxOccurs: 1
+                    allowed: "preprocess" "process" "postprocess"
+                }
+                persistence: {
+                    type: policy
+                    # description: "Policy for configuring Persistence object."
+                    maxOccurs: 1
+                }
+                additionalData: {
+                    type: string
+                    description: "{psKey}={clipKey} mappings from clipboard keys to PropertySet keys for use in formatters and logical location substitutions."
+                }
+                inputItems: {
+                    type: policy
+                    # description: "Policy specifying items to input."
+                    maxOccurs: 1
+                }
+            }
+        }
+    }
+}

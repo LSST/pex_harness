@@ -1,0 +1,34 @@
+#<?cfg paf dictionary ?>
+
+target: OutputStage
+
+definitions: {
+    parameters: {
+        type: policy
+        maxOccurs: 1
+        dictionary: {
+            definitions: {
+                runMode: {
+                    type: string
+                    description: "Run in preprocess, process, or postprocess."
+                    maxOccurs: 1
+                    allowed: "preprocess" "process" "postprocess"
+                }
+                persistence: {
+                    type: policy
+                    # description: "Policy for configuring Persistence object."
+                    maxOccurs: 1
+                }
+                additionalData: {
+                    type: string
+                    description: "{psKey}={clipKey} mappings from clipboard keys to PropertySet keys for use in formatters and logical location substitutions."
+                }
+                outputItems: {
+                    type: policy
+                    # description: "Policy specifying items to input."
+                    maxOccurs: 1
+                }
+            }
+        }
+    }
+}

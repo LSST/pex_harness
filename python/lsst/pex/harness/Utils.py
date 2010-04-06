@@ -16,8 +16,8 @@ def createAdditionalData(stage, stagePolicy, clipboard):
     additionalData = lsst.daf.base.PropertySet()
     # Parse array of "key=clipboard-key" or
     # "key=clipboard-key.dataproperty-key" mappings
-    if stagePolicy.exists('AdditionalData'):
-        dataPairs = stagePolicy.getStringArray('AdditionalData')
+    if stagePolicy.exists('parameters.additionalData'):
+        dataPairs = stagePolicy.getStringArray('parameters.additionalData')
         for pair in dataPairs:
             (rename, name) = pair.split("=")
             if name.find(".") != -1:
