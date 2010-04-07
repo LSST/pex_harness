@@ -8,135 +8,79 @@ executing a single Stage.  This example is found under pex_harness/examples/temp
 The template example has a single application stage, SampleStage (which may be 
 found in  pex_harness/examples/stages/lsst/pexhexamples/pipeline.py). 
 
-\section  Example_classes Example Stage Classes  
 
-The first component of the SampleStage is a class SampleStageSerial that inherits from 
-lsst.pex.harness.stage.SerialProcessing.  This class performs a few simple tasks: 
--# overwrites the preprocess() and postprocess() methods of SerialProcessing, 
--# implements a setup() method that performs initializations at the time of construction (one example of setup() usage is accessing policy information and setting corresponding values to class fields)
--# accesses the default logger (self.log) within preprocess() and postprocess() 
--# writes fields provided to the class by the harness framework 
-(e.g., self.stageId, self.rank, etc) to the Log. 
+The SampleStage is a dummy application stage that performs a few simple tasks: 
+-# overwrites the preprocess(), process(), postprocess() methods of generic Stage, 
+-# retrieves the Clipboard from its inputQueue at the start of the process() method,
+   and posts it to the outputQueue at the end, ushering the Clipboard on to the next Stage 
+   that a Slice will process,
+-# retrieves the Clipboard from its inputQueue at the start of the preprocess() method,
+   and posts it to the outputQueue at the end of postprocess(), passing the Clipboard to the
+   next Stage for serial processing in the main Pipeline,
+-# creates an instance of the Log,
+-# retrieves elements from its stage policy file and write them to the Log. 
 
-If SampleStageSerial is designated as "serialClass" within the configuration of the stage 
-within Pipeline policy (see below), then its preprocess() method will be executed
-in the Pipeline prior to the work of the parallel Slices, and the postprocess() method
-will be executed in the Pipeline after the Slices finish their processing.  
-
+As such, the SampleStage can serve as a useful template for building other application
+Stage that perform actual computation.  The source for SampleStage : 
 \code
+from lsst.pex.harness.Stage import Stage
+import lsst.pex.harness.Utils
+from lsst.pex.logging import Log, LogRec
+import lsst.daf.base as dafBase
+from lsst.daf.base import *
 
-import lsst.pex.harness.stage as harnessStage
+class SampleStage(Stage):
 
-class SampleStageSerial(harnessStage.SerialProcessing):
-
-    def setup(self):
-        self.runmode ="None"
-        if self.policy.exists('RunMode'):
-            self.runmode = self.policy.getString('RunMode')
-
-    def preprocess(self, clipboard):
+    def preprocess(self):
         """
         Processing code for this Stage to be executed by the main Pipeline 
         prior to invoking Slice process 
         """
-        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageSerial.preprocess")
+        self.activeClipboard = self.inputQueue.getNextDataset()
 
-        log.log(Log.INFO, 'Executing SampleStageSerial preprocess')
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.pipeline.SampleStage.preprocess")
 
+        log.log(Log.INFO, 'SampleStage preprocess')
 
-    def postprocess(self, clipboard):
+    def postprocess(self):
         """
         Processing code for this Stage to be executed by the main Pipeline 
         after the completion of Slice process 
         """
-        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageSerial.postprocess")
-        log.log(Log.INFO, 'Executing SampleStageSerial postprocess')
+        root =  Log.getDefaultLog()
+
+        log = Log(root, "lsst.pexhexamples.pipeline.SampleStage.postprocess")
+        log.log(Log.INFO, 'SampleStage postprocess')
+
+        self.outputQueue.addDataset(self.activeClipboard)
+
+    def process(self):
+
+        self.activeClipboard = self.inputQueue.getNextDataset()
+
+        root =  Log.getDefaultLog()
+        log = Log(root, "lsst.pexhexamples.pipeline.SampleStage.process")
+
+        value ="None"
+        if self._policy.exists('RunMode'):
+            value = self._policy.getString('RunMode')
 
         lr = LogRec(log, Log.INFO)
-        lr << " rank " + str(self.rank)
+        lr << " rank " + str(self._rank)
         lr << " stageId " + str(self.stageId)
-        lr << " universeSize " + str(self.universeSize)
-        lr << " RunMode from Policy " + self.runmode
+        lr << " universeSize " + str(self._universeSize)
+        lr << " RunMode from Policy " + value
         lr << LogRec.endr
 
-\endcode
-
-
-The next component of the SampleStage is a class SampleStageParallel that inherits from 
-lsst.pex.harness.stage.ParallelProcessing.  This class does the following: 
--# overwrites the process() methods of ParallelProcessing, 
--# implements a setup() method that performs initializations at the time of Slice construction 
--# accesses the default logger (self.log) within process() 
--# writes fields provided to the class by the harness framework 
-(e.g., self.stageId, self.rank, etc) to the Log. 
-
-If SampleStageParallel is designated as "parallelClass" within the configuration of the stage 
-within Pipeline policy (see below), then its process() method will be executed
-by all parallel Slice workers.  
-
-\code
-
-class SampleStageParallel(harnessStage.ParallelProcessing):
-
-    def setup(self):
-        self.runmode ="None"
-        if self.policy.exists('RunMode'):
-            self.runmode = self.policy.getString('RunMode')
-
-    def process(self, clipboard):
-        """
-        Processing code for this Stage to be executed within a Slice 
-        """
-
-        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageParallel.process")
-
-        lr = LogRec(log, Log.INFO)
-        lr << " rank " + str(self.rank)
-        lr << " stageId " + str(self.stageId)
-        lr << " runId " + str(self.runId)
-        lr << " universeSize " + str(self.universeSize)
-        lr << " RunMode from Policy " + self.runmode
-        lr << LogRec.endr
-
+        self.outputQueue.addDataset(self.activeClipboard)
 
 \endcode
 
-\section  Sample_Pipeline Sample Pipeline Configuration 
+By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
-A simple Pipeline that runs one Slice and the single application stage SampleStage
-might be configured by the following policy. 
-
-In pex_harness at level >=3.5 explicit 
-dependence on MPI has been removed; in the default mode a Pipeline will run on 
-a single node with Python threads used to run parallel Slices. In this context the 
-number of Slices is specified with the attribute "nSlices" in the Pipeline policy file
-(in contrast to the specification of an MPI machine file in previous versions of pex_harness).  
-
-A designation of one of serialClass or parallelClass is required to have a nontrivial 
-stage execution, though specification of both serialClass and parallelClass is not required. 
-
-\code
-
-nSlices: 1
-
-executionMode: "oneloop"
-logThreshold: -3
-localLogMode: true
-eventBrokerHost: "lsst8.ncsa.uiuc.edu"
-
-appStage: {
-     name: "SampleStage"
-     serialClass: "lsst.pexhexamples.pipeline.SampleStageSerial"
-     parallelClass: "lsst.pexhexamples.pipeline.SampleStageParallel"
-     eventTopic: "None"
-     stagePolicy: @policy/samplestage.paf
-}
-
-\endcode
-
-\section  Sample_Pipeline_Exec Sample Pipeline Execiution 
-
-In order to execute this sample Pipeline, the path to the directory pex_harness/examples/stages should be added to the PYTHONPATH:
+The full path to the directory pex_harness/examples/stages should be added to the PYTHONPATH:
 \code 
 % export PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (bash)
 % setenv PYTHONPATH ${PWD}/../stages:${PYTHONPATH}    (tcsh)
@@ -152,6 +96,25 @@ such as
 \code
 % launchPipeline.py template_policy.paf test_1090
 \endcode
+
+After execution the messages from the SampleStage process()
+
+\code
+lsst.pexhexamples.pipeline.SampleStage.process:  rank 0
+lsst.pexhexamples.pipeline.SampleStage.process:  stageId 1
+lsst.pexhexamples.pipeline.SampleStage.process:  universeSize 2
+lsst.pexhexamples.pipeline.SampleStage.process:  RunMode from Policy process
+\endcode
+
+are located within Slice0.log, and the messages 
+
+\code 
+...
+lsst.pexhexamples.pipeline.SampleStage.preprocess: SampleStage preprocess
+...
+lsst.pexhexamples.pipeline.SampleStage.postprocess: SampleStage postprocess
+\endcode
+are located within Pipeline.log.
 
 Although this example does not use events, 
 the events system does make use of an ActiveMQ broker during initialization. If an ActiveMQ broker ("eventHostBroker") 

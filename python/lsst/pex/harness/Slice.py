@@ -36,7 +36,7 @@ A Slice obtains its configuration by reading a policy file.
 """
 
 class Slice:
-    '''Slice: Python Slice class implementation. '''
+    '''Slice: Python Slice class implementation. Wraps C++ Slice'''
 
     #------------------------------------------------------------------------
     def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed", rank=-1):
@@ -201,53 +201,6 @@ class Slice:
             self.stageClassList.append(StageClass)
 
         log.log(self.VERB2, "Imported Stage Classes")
-
-        #
-        # Configure the Failure Stage
-        #   - Read the policy information
-        #   - Import failure stage Class and make failure stage instance Object
-        #
-        self.failureStageName = None
-        self.failParallelName   = None
-        if (self.executePolicy.exists('failureStage')):
-            failstg = self.executePolicy.get("failureStage")
-            self.failureStageName = failstg.get("name")
-
-            if (failstg.exists('parallelClass')):
-                self.failParallelName = failstg.getString('parallelClass')
-                failStagePolicy = failstg.get('stagePolicy')
-            else:
-                self.failParallelName = "lsst.pex.harness.stage.NoOpParallelProcessing"
-                failStagePolicy = None
-
-            astage = self.failParallelName
-            tokenList = astage.split('.')
-            failClassString = tokenList.pop()
-            failClassString = failClassString.strip()
-
-            package = ".".join(tokenList)
-
-            # For example  package -> lsst.pex.harness.App1Stage  classString -> App1Stage
-            FailAppStage = __import__(package, globals(), locals(), [failClassString], -1)
-            FailStageClass = getattr(FailAppStage, failClassString)
-
-            sysdata = {}
-
-            sysdata["name"] = self._pipelineName
-            sysdata["rank"] = self._rank
-            sysdata["stageId"] = -1
-            sysdata["universeSize"] = self.universeSize
-            sysdata["runId"] =  self._runId
-
-            if (failStagePolicy != None):
-                self.failStageObject = FailStageClass(failStagePolicy, self.log, self.eventBrokerHost, sysdata)
-                # (self, policy=None, log=None, eventBroker=None, sysdata=None, callSetup=True):
-            else:
-                self.failStageObject = FailStageClass(None, self.log, self.eventBrokerHost, sysdata)
-
-            log.log(self.VERB2, "failureStage %s " % self.failureStageName)
-            log.log(self.VERB2, "failParallelName %s " % self.failParallelName)
-
 
         # Process Event Topics
         self.eventTopicList = [ ]
@@ -491,27 +444,8 @@ class Slice:
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
             # Post the cliphoard that the Stage failed to transfer to the output queue
-
-            if(self.failureStageName != None):
-                if(self.failParallelName != "lsst.pex.harness.stage.NoOpParallelProcessing"):
-
-                    LogRec(proclog, self.VERB2) << "failureStageName exists "    \
-                                           << self.failureStageName     \
-                                           << "and failParallelName exists "    \
-                                           << self.failParallelName     \
-                                           << LogRec.endr;
-
-                    inputQueue  = self.queueList[iStage-1]
-                    outputQueue = self.queueList[iStage]
-
-                    self.failStageObject.initialize(outputQueue, inputQueue)
-
-                    self.failStageObject.applyProcess()
-
-                else:
-                    proclog.log(self.VERB2, "No ParallelProcessing to do for failure stage")
-
             self.postOutputClipboard(iStage)
+
 
         proclog.log(self.VERB3, "Getting end of process signal from Pipeline")
         proclog.done()
@@ -532,17 +466,13 @@ class Slice:
             waitlog = log.traceBlock("eventwait " + sliceTopic, self.TRACE,
                                      "wait for event...")
 
-            # Receive the event from the Pipeline 
+            # Recceive the event from the Pipeline 
             # Call with a timeout , followed by a call to time sleep to free the GIL 
             # periodically
-
-            sleepTimeout = 0.1
-            transTimeout = 900
-
-            inputParamPropertySetPtr = eventsSystem.receive(sliceTopic, transTimeout)
-            while(inputParamPropertySetPtr == None):
-                time.sleep(sleepTimeout)
-                inputParamPropertySetPtr = eventsSystem.receive(sliceTopic, transTimeout)
+            inputParamPropertySetPtr = eventsSystem.receive(sliceTopic, 1000)
+            while( inputParamPropertySetPtr == None):
+                time.sleep(0.1)
+                inputParamPropertySetPtr = eventsSystem.receive(sliceTopic, 1000)
      
 
             waitlog.done()

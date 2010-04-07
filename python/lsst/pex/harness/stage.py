@@ -236,12 +236,8 @@ class SerialProcessing(StageProcessing):
         implementation, some may override it to take more control over the
         processing data from the input queue.
         """
-        # Don't pop it off because failureStage will then not be able to access it
-        # element() gives a reference
-        clipboard = self.inputQueue.element()
+        clipboard = self.inputQueue.getNextDataset()
         self.preprocess(clipboard)
-        # Pop it off at this point; a new reference is not needed, so it is a dummy
-        dummyClipboard = self.inputQueue.getNextDataset()
         out = Queue()
         out.addDataset(clipboard)
         return out
@@ -258,18 +254,14 @@ class SerialProcessing(StageProcessing):
     def applyPostprocess(self, queue):
         """
         apply the postprocess() function to an ordered set of clipboards.  
-        This implementation loops over the clipboards on the given InputQueue, 
+        This impementation loops over the clipboards on the given InputQueue, 
         calls postprocess() on each one, and posts it to the stage outputQueue.
 
         @param queue  the InputQueue instance returned by applyPreprocess()
         """
         while queue.size() > 0:
-            # Don't pop it off because failureStage will then not be able to access it 
-            # clipboard = queue.getNextDataset()
-            clipboard = queue.element()
+            clipboard = queue.getNextDataset()
             self.postprocess(clipboard)
-            # Pop it off at this point; a new reference is not needed, so it is a dummy
-            dummyClipboard = queue.getNextDataset()
             self.outputQueue.addDataset(clipboard)
         
 
@@ -325,12 +317,8 @@ class ParallelProcessing(StageProcessing):
         subclasses will inherit this default implementation, some may 
         override it to take more control over how much data to process.
         """
-        # Don't pop it off because failureStage will then not be able to access it 
-        # clipboard = self.inputQueue.getNextDataset()
-        clipboard = self.inputQueue.element()
+        clipboard = self.inputQueue.getNextDataset()
         self.process(clipboard)
-        # Pop it off at this point; a new reference is not needed, so it is a dummy
-        dummyClipboard = self.inputQueue.getNextDataset()
         self.outputQueue.addDataset(clipboard)
 
     def process(self, clipboard):

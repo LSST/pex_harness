@@ -48,6 +48,7 @@ listener that blocks for an event of topic outgoingEvent.
 % python listenEvent.py 
 
 By default this example will run with the Pipeline with one Slice on a single node.
+Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
 The pipeline is then executed via, for example, 
 

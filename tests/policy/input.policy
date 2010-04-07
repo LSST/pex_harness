@@ -1,14 +1,12 @@
-parameters: {
-    additionalData: "visitId=tcsEvent.visitId"
-    runMode: "postprocess"
-    inputItems: {
-        theProperty: {
-            type: "PropertySet"
-            pythonType: "lsst.daf.base.PropertySet"
-            storagePolicy: {
-                storage: "BoostStorage"
-                location: "theProperty.%(visitId)"
-            }
+AdditionalData: "visitId=tcsEvent.visitId"
+RunMode: "postprocess"
+InputItems: {
+    theProperty: {
+        Type: "PropertySet"
+        PythonType: "lsst.daf.base.PropertySet"
+        StoragePolicy: {
+            Storage: "BoostStorage"
+            Location: "theProperty.%(visitId)"
         }
     }
 }
