@@ -16,6 +16,7 @@ import sys
 import lsst.pex.harness.stage as harnessStage
 
 import lsst.pex.harness.Utils
+from lsst.pex.harness import Dataset
 import lsst.daf.base as dafBase
 import lsst.daf.persistence as dafPersist
 import lsst.pex.policy as pexPolicy
@@ -197,9 +198,9 @@ def _output(stage, policy, clipboard, log):
        
         # Create a list of Storages for the item based on policy.
         storageList = dafPersist.StorageList()
-        for policy in policyList:
-            storageName = policy.getString('storage')
-            location = policy.getString('location')
+        for storagePolicy in policyList:
+            storageName = storagePolicy.getString('storage')
+            location = storagePolicy.getString('location')
             logLoc = dafPersist.LogicalLocation(location, additionalData)
             log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
             additionalData.add('StorageLocation.' + storageName, logLoc.locString())
@@ -212,6 +213,24 @@ def _output(stage, policy, clipboard, log):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
+
+        if itemPolicy.exists('datasetId'):
+            dsPolicy = itemPolicy.getPolicy('datasetId')
+            ds = Dataset(dsPolicy.get('datasetType'), ids={})
+            if dsPolicy.exists('set'):
+                setPolicy = dsPolicy.getPolicy('set')
+                for param in setPolicy.paramNames():
+                    ds.ids[param] = setPolicy.get(param)
+            if dsPolicy.exists('fromClipboard'):
+                jobIdentity = clipboard.get(policy.get('inputKeys.jobIdentity'))
+                for id in dsPolicy.getStringArray('fromClipboard'):
+                    ds.ids[id] = jobIdentity[id]
+            outputKey = policy.get('outputKeys.outputDatasets')
+            dsList = clipboard.get(outputKey)
+            if dsList is None:
+                dsList = []
+                clipboard.put(outputKey, dsList)
+            dsList.append(ds)
 
 def _input(stage, policy, clipboard, log):
     """Perform the retrieval of items from the clipboard as controlled by policy.

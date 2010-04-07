@@ -1,0 +1,25 @@
+inputKeys: {
+    jobIdentity: "jobIdentity"
+}
+outputKeys: {
+    outputDatasets: "outputDatasets"
+}
+parameters: {
+    additionalData: "root=root"
+    additionalData: "field=ps.field"
+    outputItems: {
+        ps: {
+            datasetId: {
+                datasetType: postIsr
+                fromClipboard: "name" "visit" "ccd" "snap" "filter"
+                set: {
+                    field: deep
+                }
+            }
+            storagePolicy: {
+                storage: BoostStorage
+                location: %(output)/PS-%(field).boost
+            }
+        }
+    }
+}

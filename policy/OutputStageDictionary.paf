@@ -3,6 +3,34 @@
 target: OutputStage
 
 definitions: {
+    inputKeys: {
+        type: policy
+        maxOccurs: 1
+        dictionary: {
+            definitions: {
+                jobIdentity: {
+                    type: string
+                    description: "Key for the dictionary defining the job identity."
+                    maxOccurs: 1
+                    default: "jobIdentity"
+                }
+            }
+        }
+    }
+    outputKeys: {
+        type: policy
+        maxOccurs: 1
+        dictionary: {
+            definitions: {
+                outputDatasets: {
+                    type: string
+                    description: "Key for the list of output dataset ids to append to."
+                    maxOccurs: 1
+                    default: "outputDatasets"
+                }
+            }
+        }
+    }
     parameters: {
         type: policy
         maxOccurs: 1
