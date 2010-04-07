@@ -16,14 +16,11 @@ import sys
 import lsst.pex.harness.stage as harnessStage
 
 import lsst.pex.harness.Utils
-import lsst.daf.base
-import lsst.daf.persistence
-import lsst.pex.policy
-import lsst.pex.logging
+import lsst.daf.base as dafBase
+import lsst.daf.persistence as dafPersist
+import lsst.pex.policy as pexPolicy
 from lsst.pex.logging import Log
 import re
-
-# __all__ = ['OutputStage', 'InputStage']
 
 class OutputStageSerial(harnessStage.SerialProcessing):
     """
@@ -32,8 +29,11 @@ class OutputStageSerial(harnessStage.SerialProcessing):
 
     def setup(self):
         self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
-   #  def __init__(self, stageId = -1, policy = None):
-   #      lsst.pex.harness.Stage.Stage.__init__(self, stageId, policy)
+        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
+                "OutputStageDictionary.paf", "policy")
+        defaults = pexPolicy.Policy.createPolicy(defaultFile,
+                defaultFile.getRepositoryPath())
+        self.policy.mergeDefaults(defaults)
 
     def preprocess(self, clipboard):
         """
@@ -41,9 +41,9 @@ class OutputStageSerial(harnessStage.SerialProcessing):
         (subclass) processing, if desired.
         """
 
-        if self.policy.exists('RunMode') and \
-                self.policy.getString('RunMode') == 'preprocess':
-            self._output(clipboard)
+        if self.policy.exists('parameters.runMode') and \
+                self.policy.getString('parameters.runMode') == 'preprocess':
+            _output(self, self.policy, clipboard, self.log)
 
 
     def postprocess(self, clipboard):
@@ -52,166 +52,51 @@ class OutputStageSerial(harnessStage.SerialProcessing):
         (subclass) processing, if desired.
         """
 
-        if self.policy.exists('RunMode') and \
-                self.policy.getString('RunMode') == 'postprocess':
-            self._output(clipboard)
-
-
-    def _output(self, clipboard):
-        """
-        Perform the actual persistence.
-        """
-
-        if not self.policy.exists('OutputItems'):
-            # Propagate the clipboard to the output queue, but otherwise
-            # do nothing.
-            self.log.log(Log.WARN, "No OutputItems found")
-            return
-
-        additionalData = lsst.pex.harness.Utils.createAdditionalData(self, \
-            self.policy, clipboard)
-
-        # Create a persistence object using policy, if present.
-        if self.policy.exists('Persistence'):
-            persistencePolicy = lsst.pex.policy.Policy( \
-                        self.policy.getPolicy('Persistence'))
-        else:
-            persistencePolicy = lsst.pex.policy.Policy()
-        persistence = lsst.daf.persistence.Persistence.getPersistence( \
-                    persistencePolicy)
-
-        # Iterate over items in OutputItems policy.
-        outputPolicy = self.policy.getPolicy('OutputItems')
-        itemNames = outputPolicy.policyNames(True)
-        for item in itemNames:
-
-            itemPolicy = outputPolicy.getPolicy(item)
-
-            # Skip the item if it is not required and is not present.
-            itemRequired = itemPolicy.exists('Required') and \
-                    itemPolicy.getBool('Required')
-            try:
-                itemData = clipboard.get(item)
-            except KeyError:
-                if itemRequired:
-                    raise RuntimeError, 'Missing output item: ' + item
-                else:
-                    continue
-
-            # Add the item name to the additionalData.
-            additionalData.set('itemName', item)
-
-            # Get the item's StoragePolicy.
-            if itemPolicy.isArray('StoragePolicy'):
-                policyList = itemPolicy.getPolicyArray('StoragePolicy')
-            else:
-                policyList = []
-                policyList.append(itemPolicy.getPolicy('StoragePolicy'))
-
-            # Create a list of Storages for the item based on policy.
-            storageList = lsst.daf.persistence.StorageList()
-            for policy in policyList:
-                storageName = policy.getString('Storage')
-                location = policy.getString('Location')
-                logLoc = lsst.daf.persistence.LogicalLocation(location, additionalData)
-                self.log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
-
-                additionalData.add('StorageLocation.' + storageName, logLoc.locString())
-                storage = persistence.getPersistStorage(storageName,  logLoc)
-                storageList.append(storage)
-
-            # Persist the item.
-            if '__deref__' in dir(itemData):
-                # We have a smart pointer, so dereference it.
-                persistence.persist(itemData.__deref__(), storageList, additionalData)
-            else:
-                persistence.persist(itemData, storageList, additionalData)
-
+        if self.policy.exists('parameters.runMode') and \
+                self.policy.getString('parameters.runMode') == 'postprocess':
+            _output(self, self.policy, clipboard, self.log)
 
 class OutputStageParallel(harnessStage.ParallelProcessing):
 
     def setup(self):
         self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
+        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
+                "OutputStageDictionary.paf", "policy")
+        defaults = pexPolicy.Policy.createPolicy(defaultFile,
+                defaultFile.getRepositoryPath())
+        self.policy.mergeDefaults(defaults)
 
     def process(self, clipboard):
         """
         Persist the requested data in the slice processes.
         """
 
-        if self.policy.exists('RunMode') and \
-                (self.policy.getString('RunMode') == 'preprocess' or \
-                self.policy.getString('RunMode') == 'postprocess'):
+        if self.policy.exists('parameters.runMode') and \
+                (self.policy.getString('parameters.runMode') == 'preprocess' or \
+                self.policy.getString('parameters.runMode') == 'postprocess'):
             return
+        _output(self, self.policy, clipboard, self.log)
 
-        self._output(clipboard)
+class InputStageParallel(harnessStage.ParallelProcessing):
 
-    def _output(self, clipboard):
+    def setup(self):
+        self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.input")
+        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
+                "InputStageDictionary.paf", "policy")
+        defaults = pexPolicy.Policy.createPolicy(defaultFile,
+                defaultFile.getRepositoryPath())
+        self.policy.mergeDefaults(defaults)
+
+    def process(self, clipboard):
         """
-        Perform the actual persistence.
+        Retrieve the requested data in the slice processes.
         """
 
-        if not self.policy.exists('OutputItems'):
-            # Propagate the clipboard to the output queue, but otherwise
-            # do nothing.
-            self.log.log(Log.WARN, "No OutputItems found")
+        if self.policy.exists('parameters.runMode') and \
+                (self.policy.getString('parameters.runMode') == 'preprocess' or \
+                self.policy.getString('parameters.runMode') == 'postprocess'):
             return
-
-        additionalData = lsst.pex.harness.Utils.createAdditionalData(self, self.policy, clipboard)
-
-        # Create a persistence object using policy, if present.
-        if self.policy.exists('Persistence'):
-            persistencePolicy = lsst.pex.policy.Policy( \
-                        self.policy.getPolicy('Persistence'))
-        else:
-            persistencePolicy = lsst.pex.policy.Policy()
-        persistence = lsst.daf.persistence.Persistence.getPersistence( \
-                    persistencePolicy)
-
-        # Iterate over items in OutputItems policy.
-        outputPolicy = self.policy.getPolicy('OutputItems')
-        itemNames = outputPolicy.policyNames(True)
-        for item in itemNames:
-
-            itemPolicy = outputPolicy.getPolicy(item)
-
-            # Skip the item if it is not required and is not present.
-            itemRequired = itemPolicy.exists('Required') and \
-                    itemPolicy.getBool('Required')
-            try:
-                itemData = clipboard.get(item)
-            except KeyError:
-                if itemRequired:
-                    raise RuntimeError, 'Missing output item: ' + item
-                else:
-                    continue
-
-            # Add the item name to the additionalData.
-            additionalData.set('itemName', item)
-
-            # Get the item's StoragePolicy.
-            if itemPolicy.isArray('StoragePolicy'):
-                policyList = itemPolicy.getPolicyArray('StoragePolicy')
-            else:
-                policyList = []
-                policyList.append(itemPolicy.getPolicy('StoragePolicy'))
-
-            # Create a list of Storages for the item based on policy.
-            storageList = lsst.daf.persistence.StorageList()
-            for policy in policyList:
-                storageName = policy.getString('Storage')
-                location = policy.getString('Location')
-                logLoc = lsst.daf.persistence.LogicalLocation(location, additionalData)
-                self.log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
-                additionalData.add('StorageLocation.' + storageName, logLoc.locString())
-                storage = persistence.getPersistStorage(storageName,  logLoc)
-                storageList.append(storage)
-
-            # Persist the item.
-            if '__deref__' in dir(itemData):
-                # We have a smart pointer, so dereference it.
-                persistence.persist(itemData.__deref__(), storageList, additionalData)
-            else:
-                persistence.persist(itemData, storageList, additionalData)
+        _input(self, self.policy, clipboard, self.log)
 
 class InputStageSerial(harnessStage.SerialProcessing):
     """
@@ -220,9 +105,11 @@ class InputStageSerial(harnessStage.SerialProcessing):
 
     def setup(self):
         self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.input")
-
-    # def __init__(self, stageId = -1, policy = None):
-    #     lsst.pex.harness.Stage.Stage.__init__(self, stageId, policy)
+        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
+                "InputStageDictionary.paf", "policy")
+        defaults = pexPolicy.Policy.createPolicy(defaultFile,
+                defaultFile.getRepositoryPath())
+        self.policy.mergeDefaults(defaults)
 
     def preprocess(self, clipboard):
         """
@@ -230,9 +117,9 @@ class InputStageSerial(harnessStage.SerialProcessing):
         (subclass) processing, if desired.
         """
 
-        if self.policy.exists('RunMode') and \
-                self.policy.getString('RunMode') == 'preprocess':
-            self._input(clipboard)
+        if self.policy.exists('parameters.runMode') and \
+                self.policy.getString('parameters.runMode') == 'preprocess':
+            _input(self, self.policy, clipboard, self.log)
 
     def postprocess(self, clipboard):
         """
@@ -240,185 +127,208 @@ class InputStageSerial(harnessStage.SerialProcessing):
         (subclass) processing, if desired.
         """
 
-        if self.policy.exists('RunMode') and \
-                self.policy.getString('RunMode') == 'postprocess':
-            self._input(clipboard)
-
-    def _input(self, clipboard):
-        """
-        Perform the actual retrieval.
-        """
+        if self.policy.exists('parameters.runMode') and \
+                self.policy.getString('parameters.runMode') == 'postprocess':
+            _input(self, self.policy, clipboard, self.log)
 
 
-        if not self.policy.exists('InputItems'):
-            # Propagate the clipboard to the output queue, but otherwise
-            # do nothing.
-            self.log.log(Log.WARN, "No InputItems found")
-            return
+class InputStage(harnessStage.Stage):
+    serialClass = InputStageSerial
+    parallelClass = InputStageParallel
 
-        additionalData = lsst.pex.harness.Utils.createAdditionalData(self, \
-                    self.policy, clipboard)
+class OutputStage(harnessStage.Stage):
+    serialClass = OutputStageSerial
+    parallelClass = OutputStageParallel
 
-        # Create a persistence object using policy, if present.
-        if self.policy.exists('Persistence'):
-            persistencePolicy = lsst.pex.policy.Policy( \
-                        self.policy.getPolicy('Persistence'))
+
+###############################################################################
+
+
+def _output(stage, policy, clipboard, log):
+    """Perform the actual persistence.
+    
+    @param stage     The stage requesting output.
+    @param policy    The policy for the stage.
+    @param clipboard The clipboard for the stage.  The persisted objects are taken from this.
+    @param log       A logger for messages.
+    """
+
+    if not policy.exists('parameters.outputItems'):
+        # Propagate the clipboard to the output queue, but otherwise
+        # do nothing.
+        log.log(Log.WARN, "No outputItems found")
+        return
+
+    additionalData = lsst.pex.harness.Utils.createAdditionalData(stage,
+            policy, clipboard)
+
+    # Create a persistence object using policy, if present.
+    if policy.exists('parameters.persistence'):
+        persistencePolicy = pexPolicy.Policy(
+                policy.getPolicy('parameters.persistence'))
+    else:
+        persistencePolicy = pexPolicy.Policy()
+    persistence = dafPersist.Persistence.getPersistence(
+            persistencePolicy)
+
+    # Iterate over items in OutputItems policy.
+    outputPolicy = policy.getPolicy('parameters.outputItems')
+    itemNames = outputPolicy.policyNames(True)
+    for item in itemNames:
+
+        itemPolicy = outputPolicy.getPolicy(item)
+
+        # Skip the item if it is not required and is not present.
+        itemRequired = itemPolicy.exists('required') and \
+                itemPolicy.getBool('required')
+        if itemRequired and not clipboard.contains(item):
+            raise RuntimeError, 'Missing output item: ' + item
+        itemData = clipboard.get(item)
+
+        # Add the item name to the additionalData.
+        additionalData.set('itemName', item)
+
+        # Get the item's StoragePolicy.
+        if itemPolicy.isArray('storagePolicy'):
+            policyList = itemPolicy.getPolicyArray('storagePolicy')
         else:
-            persistencePolicy = lsst.pex.policy.Policy()
-        persistence = lsst.daf.persistence.Persistence.getPersistence( \
-                    persistencePolicy)
+            policyList = []
+            policyList.append(itemPolicy.getPolicy('storagePolicy'))
+       
+        # Create a list of Storages for the item based on policy.
+        storageList = dafPersist.StorageList()
+        for policy in policyList:
+            storageName = policy.getString('storage')
+            location = policy.getString('location')
+            logLoc = dafPersist.LogicalLocation(location, additionalData)
+            log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
+            additionalData.add('StorageLocation.' + storageName, logLoc.locString())
+            storage = persistence.getPersistStorage(storageName,  logLoc)
+            storageList.append(storage)
 
-        # Iterate over items in InputItems policy.
-        inputPolicy = self.policy.getPolicy('InputItems')
-        itemNames = inputPolicy.policyNames(True)
-        for item in itemNames:
+        # Persist the item.
 
-            itemPolicy = inputPolicy.getPolicy(item)
-            itemType = itemPolicy.getString('Type')
-            pythonType = itemPolicy.getString('PythonType')
+        if hasattr(itemData, '__deref__'):
+            persistence.persist(itemData.__deref__(), storageList, additionalData)
+        else:
+            persistence.persist(itemData, storageList, additionalData)
 
-            # import this pythonType dynamically 
-            pythonTypeTokenList = pythonType.split('.')
-            importClassString = pythonTypeTokenList.pop()
-            importClassString = importClassString.strip()
-            importPackage = ".".join(pythonTypeTokenList)
+def _input(stage, policy, clipboard, log):
+    """Perform the retrieval of items from the clipboard as controlled by policy.
+    
+    @param stage     The stage requesting input.
+    @param policy    The policy for the stage.
+    @param clipboard The clipboard for the stage.  The retrieved objects are added to this.
+    @param log       A logger for messages.
+    """
 
-            print "importing:", item, importPackage, importClassString
+    if not policy.exists('parameters.inputItems'):
+        # Propagate the clipboard to the output queue, but otherwise
+        # do nothing.
+        log.log(Log.WARN, "No InputItems found")
+        return
 
-            # For example  importPackage -> lsst.afw.Core.afwLib  
-            #              importClassString -> MaskedImageF
-            importType = __import__(importPackage, globals(), locals(), \
-                                       [importClassString], -1)
+    additionalData = lsst.pex.harness.Utils.createAdditionalData(stage,
+            policy, clipboard)
 
-            # Add the item name to the additionalData.
-            additionalData.set('itemName', item)
+    # Create a persistence object using policy, if present.
+    if policy.exists('parameters.persistence'):
+        persistencePolicy = pexPolicy.Policy(
+                policy.getPolicy('parameters.persistence'))
+    else:
+        persistencePolicy = pexPolicy.Policy()
+    persistence = dafPersist.Persistence.getPersistence(
+            persistencePolicy)
 
+    # Iterate over items in InputItems policy.
+    inputPolicy = policy.getPolicy('parameters.inputItems')
+    itemNames = inputPolicy.policyNames(True)
+    for item in itemNames:
+
+        itemPolicy = inputPolicy.getPolicy(item)
+        cppType = itemPolicy.getString('type')
+        pythonTypeName = itemPolicy.getString('pythonType')
+        # import this pythonType dynamically 
+        pythonTypeTokenList = pythonTypeName.split('.')
+        importClassString = pythonTypeTokenList.pop()
+        importClassString = importClassString.strip()
+        importPackage = ".".join(pythonTypeTokenList)
+
+        # For example  importPackage -> lsst.afw.Core.afwLib  
+        #              importClassString -> MaskedImageF
+        importType = __import__(importPackage, globals(), locals(), \
+                                   [importClassString], -1)
+        pythonType = getattr(importType, importClassString)
+
+        # Add the item name to the additionalData.
+        additionalData.set('itemName', item)
+
+        if itemPolicy.exists("datasetType"):
+            result = []
+            datasetType = itemPolicy.get("datasetType")
+            idList = []
+            for ds in clipboard.get(policy.get("inputKeys.inputDatasets")):
+                if ds.type == datasetType:
+                    idList.append(ds.ids)
+            storage = itemPolicy.getString('storage')
+            location = itemPolicy.getString('location')
+
+            for id in idList:
+                tempAdditionalData = additionalData.deepCopy()
+                for k, v in id.iteritems():
+                    tempAdditionalData.set(k, v)
+                finalItem = _read(item, cppType, pythonType,
+                        [(storage, location)], tempAdditionalData,
+                        persistence, log)
+                result.append(finalItem)
+            if len(result) == 1:
+                clipboard.put(item, result[0])
+            else:
+                clipboard.put(item, result)
+
+        else:
             # Get the item's StoragePolicy.
-            if itemPolicy.isArray('StoragePolicy'):
-                policyList = itemPolicy.getPolicyArray('StoragePolicy')
+            if itemPolicy.isArray('storagePolicy'):
+                policyList = itemPolicy.getPolicyArray('storagePolicy')
             else:
                 policyList = []
-                policyList.append(itemPolicy.getPolicy('StoragePolicy'))
-
-            # Create a list of Storages for the item based on policy.
-            storageList = lsst.daf.persistence.StorageList()
+                policyList.append(itemPolicy.getPolicy('storagePolicy'))
+        
+            storageInfo = []
             for policy in policyList:
-                storageName = policy.getString('Storage')
-                location = policy.getString('Location')
-                logLoc = lsst.daf.persistence.LogicalLocation(location, additionalData)
-                self.log.log(Log.INFO, "loading %s as %s" % (logLoc.locString(), item));
-                storage = persistence.getRetrieveStorage(storageName,  logLoc)
-                storageList.append(storage)
-
-            # Retrieve the item.
-            itemData = persistence.unsafeRetrieve(itemType, storageList, additionalData)
-
-            # Cast the SWIGged Persistable to a more useful type.
-            exec 'finalItem = ' + pythonType + '.swigConvert(itemData)'
-
-            # If Persistable and subclasses are NOT wrapped using SWIG_SHARED_PTR,
-            # then one must make sure that the wrapper for the useful type owns
-            # the pointer (rather than the wrapper for the original Persistable).
-            # The following lines accomplish this:
-            #itemData.this.disown()
-            #finalItem.this.acquire()
-
-            # Put the item on the clipboard
-            clipboard.put(item, finalItem)
-            
-
-class InputStageParallel(harnessStage.ParallelProcessing):
-
-    def process(self, clipboard):
-        """
-        Retrieve the requested data in the slice processes.
-        """
-
-        if self.policy.exists('RunMode') and \
-                (self.policy.getString('RunMode') == 'preprocess' or \
-                self.policy.getString('RunMode') == 'postprocess'):
-            return
-        self._input(clipboard)
-
-    def _input(self, clipboard):
-        """
-        Perform the actual retrieval.
-        """
-
-
-        if not self.policy.exists('InputItems'):
-            # Propagate the clipboard to the output queue, but otherwise
-            # do nothing.
-            self.log.log(Log.WARN, "No InputItems found")
-            return
-
-        additionalData = lsst.pex.harness.Utils.createAdditionalData(self, \
-                    self.policy, clipboard)
-
-        # Create a persistence object using policy, if present.
-        if self.policy.exists('Persistence'):
-            persistencePolicy = lsst.pex.policy.Policy( \
-                        self.policy.getPolicy('Persistence'))
-        else:
-            persistencePolicy = lsst.pex.policy.Policy()
-        persistence = lsst.daf.persistence.Persistence.getPersistence( \
-                    persistencePolicy)
-
-        # Iterate over items in InputItems policy.
-        inputPolicy = self.policy.getPolicy('InputItems')
-        itemNames = inputPolicy.policyNames(True)
-        for item in itemNames:
-
-            itemPolicy = inputPolicy.getPolicy(item)
-            itemType = itemPolicy.getString('Type')
-            pythonType = itemPolicy.getString('PythonType')
-
-            # import this pythonType dynamically 
-            pythonTypeTokenList = pythonType.split('.')
-            importClassString = pythonTypeTokenList.pop()
-            importClassString = importClassString.strip()
-            importPackage = ".".join(pythonTypeTokenList)
-
-            print "importing:", item, importPackage, importClassString
-
-            # For example  importPackage -> lsst.afw.Core.afwLib  
-            #              importClassString -> MaskedImageF
-            importType = __import__(importPackage, globals(), locals(), \
-                                       [importClassString], -1)
-
-            # Add the item name to the additionalData.
-            additionalData.set('itemName', item)
-
-            # Get the item's StoragePolicy.
-            if itemPolicy.isArray('StoragePolicy'):
-                policyList = itemPolicy.getPolicyArray('StoragePolicy')
-            else:
-                policyList = []
-                policyList.append(itemPolicy.getPolicy('StoragePolicy'))
-
-            # Create a list of Storages for the item based on policy.
-            storageList = lsst.daf.persistence.StorageList()
-            for policy in policyList:
-                storageName = policy.getString('Storage')
-                location = policy.getString('Location')
-                logLoc = lsst.daf.persistence.LogicalLocation(location, additionalData)
-                self.log.log(Log.INFO, "loading %s as %s" % (logLoc.locString(), item));
-                storage = persistence.getRetrieveStorage(storageName,  logLoc)
-                storageList.append(storage)
-
-            # Retrieve the item.
-            itemData = persistence.unsafeRetrieve(itemType, storageList, additionalData)
-
-            # Cast the SWIGged Persistable to a more useful type.
-            exec 'finalItem = ' + pythonType + '.swigConvert(itemData)'
-
-            # If Persistable and subclasses are NOT wrapped using SWIG_SHARED_PTR,
-            # then one must make sure that the wrapper for the useful type owns
-            # the pointer (rather than the wrapper for the original Persistable).
-            # The following lines accomplish this:
-            #itemData.this.disown()
-            #finalItem.this.acquire()
-
-            # Put the item on the clipboard
+                storage = policy.getString('storage')
+                location = policy.getString('location')
+                storageInfo.append((storage, location))
+    
+            finalItem = _read(item, cppType, pythonType,
+                    storageInfo, additionalData,
+                    persistence, log)
             clipboard.put(item, finalItem)
 
+def _read(item, cppType, pythonType, storageInfo,
+        additionalData, persistence, log):
+    # Create a list of Storages for the item based on policy.
+    storageList = dafPersist.StorageList()
+    for storageName, location in storageInfo:
+        logLoc = dafPersist.LogicalLocation(location, additionalData)
+        log.log(Log.INFO, "loading %s as %s" % (logLoc.locString(), item));
+        storage = persistence.getRetrieveStorage(storageName,  logLoc)
+        storageList.append(storage)
+
+    # Retrieve the item.
+    itemData = persistence.unsafeRetrieve(cppType, storageList, additionalData)
+
+    # Cast the SWIGged Persistable to a more useful type.
+
+    cvt = getattr(pythonType, "swigConvert")
+    finalItem = cvt(itemData)
+
+    # If Persistable and subclasses are NOT wrapped using SWIG_SHARED_PTR,
+    # then one must make sure that the wrapper for the useful type owns
+    # the pointer (rather than the wrapper for the original Persistable).
+    # The following lines accomplish this:
+    #itemData.this.disown()
+    #finalItem.this.acquire()
+
+    # Put the item on the clipboard
+    return finalItem

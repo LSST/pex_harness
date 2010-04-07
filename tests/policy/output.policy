@@ -1,10 +1,12 @@
-AdditionalData: "visitId=tcsEvent.visitId"
-OutputItems: {
-    theProperty: {
-        Required: true
-        StoragePolicy: {
-            Storage: "BoostStorage"
-            Location: "theProperty.%(visitId)"
+parameters: {
+    additionalData: "visitId=tcsEvent.visitId"
+    outputItems: {
+        theProperty: {
+            required: true
+            storagePolicy: {
+                storage: "BoostStorage"
+                location: "theProperty.%(visitId)"
+            }
         }
     }
 }

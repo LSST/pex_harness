@@ -1,0 +1,13 @@
+parameters: {
+    additionalData: "root=root"
+    additionalData: "field=ps.field"
+    inputItems: {
+        exposureSet: {
+            datasetType: postIsr
+            type: DecoratedImageU
+            pythonType: lsst.afw.image.DecoratedImageU
+            storage: FitsStorage
+            location: %(input)/%(root)/%(field)/raw-%(visit)-e%03d(snap)-c%03d(ccd)-a%03d(amp).fits
+        }
+    }
+}
