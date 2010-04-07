@@ -4,6 +4,8 @@
 
 execute: { 
 
+    nSlices: 1
+
     executionMode: "oneloop"
     localLogMode: true  
     eventBrokerHost: "lsst4.ncsa.uiuc.edu" 

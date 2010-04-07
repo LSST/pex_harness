@@ -73,7 +73,7 @@ class Pipeline:
         self.cppLogUtils = logutils.LogUtils()
         self._stop = PyEvent()
 
-    def stop (self):
+    def setStop (self):
         self._stop.set()
 
     def exit (self):
@@ -154,6 +154,7 @@ class Pipeline:
 
         self.executePolicy.loadPolicyFiles()
 
+
         # Obtain the working directory space locators
         psLookup = lsst.daf.base.PropertySet()
         if (self.executePolicy.exists('dir')):
@@ -178,6 +179,7 @@ class Pipeline:
                                 << Prop("rank", -1)   \
                                 << LogRec.endr;
         
+
         # Configure persistence logical location map with values for directory 
         # work space locators
         dafPersist.LogicalLocation.setLocationMap(psLookup)
@@ -227,6 +229,49 @@ class Pipeline:
             StageClass = getattr(AppStage, classString)
             self.stageClassList.append(StageClass) 
 
+        #
+        # Configure the Failure Stage
+        #   - Read the policy information
+        #   - Import failure stage Class and make failure stage instance Object
+        #
+        self.failureStageName = None 
+        self.failSerialName   = None
+        if (self.executePolicy.exists('failureStage')):
+            failstg = self.executePolicy.get("failureStage")
+            self.failureStageName = failstg.get("name") 
+
+            if (failstg.exists('serialClass')):
+                self.failSerialName = failstg.getString('serialClass')
+                failStagePolicy = failstg.get('stagePolicy') 
+            else:
+                self.failSerialName = "lsst.pex.harness.stage.NoOpSerialProcessing"
+                failStagePolicy = None
+
+            astage = self.failSerialName
+            tokenList = astage.split('.')
+            failClassString = tokenList.pop()
+            failClassString = failClassString.strip()
+
+            package = ".".join(tokenList)
+
+            # For example  package -> lsst.pex.harness.App1Stage  classString -> App1Stage
+            FailAppStage = __import__(package, globals(), locals(), [failClassString], -1)
+            FailStageClass = getattr(FailAppStage, failClassString)
+
+            sysdata = {}
+            sysdata["name"] = self._pipelineName
+            sysdata["rank"] = -1
+            sysdata["stageId"] = -1
+            sysdata["universeSize"] = self.universeSize
+            sysdata["runId"] =  self._runId
+            if (failStagePolicy != None):
+                self.failStageObject = FailStageClass(failStagePolicy, self.log, self.eventBrokerHost, sysdata)
+                # (self, policy=None, log=None, eventBroker=None, sysdata=None, callSetup=True):
+            else:
+                self.failStageObject = FailStageClass(None, self.log, self.eventBrokerHost, sysdata)
+
+            log.log(self.VERB2, "failureStage %s " % self.failureStageName)
+            log.log(self.VERB2, "failSerialName %s " % self.failSerialName)
 
         # Process Event Topics
         self.eventTopicList = []
@@ -538,6 +583,8 @@ class Pipeline:
             if(loopEventB.isSet()):
                 loopEventB.clear()
 
+        self.checkExitBySyncPoint()
+
     def forceShutdown(self): 
         """
         Shutdown the Pipeline execution: delete the MPI environment
@@ -583,7 +630,7 @@ class Pipeline:
             self.log.log(self.VERB2, 'Slice ' + str(i) + ' ended.')
 
         # Also have to tell the shutdown Thread to stop  
-        self.oneShutdownThread.stop()
+        self.oneShutdownThread.setStop()
         self.oneShutdownThread.join()
         self.log.log(self.VERB2, 'Shutdown thread ended ')
 
@@ -625,8 +672,29 @@ class Pipeline:
                     sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             prelog.log(Log.FATAL, trace)
 
+            prelog.log(self.VERB2, "Flagging error in tryPreProcess, tryPostProcess to be skipped")
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
+
+            if(self.failureStageName != None): 
+                if(self.failSerialName != "lsst.pex.harness.stage.NoOpSerialProcessing"):
+
+                    LogRec(prelog, self.VERB2) << "failureStageName exists "    \
+                                           << self.failureStageName     \
+                                           << "and failSerialName exists "    \
+                                           << self.failSerialName     \
+                                           << LogRec.endr;
+
+                    inputQueue  = self.queueList[iStage-1]
+                    outputQueue = self.queueList[iStage]
+
+                    self.failStageObject.initialize(outputQueue, inputQueue)
+
+                    self.interQueue = self.failStageObject.applyPreprocess()
+
+                else:
+                    prelog.log(self.VERB2, "No SerialProcessing to do for failure stage")
+
             # Post the cliphoard that the Stage failed to transfer to the output queue
             self.postOutputClipboard(iStage)
 
@@ -648,7 +716,7 @@ class Pipeline:
                 stage.applyPostprocess(self.interQueue)
                 processlog.done()
             else:
-                postlog.log(self.TRACE, "Skipping process due to error")
+                postlog.log(self.TRACE, "Skipping applyPostprocess due to flagged error")
                 self.transferClipboard(iStage)
 
         except:
@@ -658,11 +726,59 @@ class Pipeline:
 
             # Flag that an exception occurred to guide the framework to skip processing
             self.errorFlagged = 1
+
+            if(self.failureStageName != None):
+                if(self.failSerialName != "lsst.pex.harness.stage.NoOpSerialProcessing"):
+
+                    LogRec(postlog, self.VERB2) << "failureStageName exists "    \
+                                           << self.failureStageName     \
+                                           << "and failSerialName exists "    \
+                                           << self.failSerialName     \
+                                           << LogRec.endr;
+
+                    inputQueue  = self.queueList[iStage-1]
+                    outputQueue = self.queueList[iStage]
+
+                    self.failStageObject.initialize(outputQueue, inputQueue)
+
+                    self.failStageObject.applyPostprocess(self.interQueue)
+
+                else:
+                    postlog.log(self.VERB2, "No SerialProcessing to do for failure stage")
+
             # Post the cliphoard that the Stage failed to transfer to the output queue
             self.postOutputClipboard(iStage)
 
         # Done try - except around stage preprocess
         postlog.done()
+
+    def waitForEvent(self, thisTopic):
+        """
+        wait for a single event of a designated topic
+        """
+
+        eventsSystem = events.EventSystem.getDefaultEventSystem()
+
+        sleepTimeout = 0.1
+        transTimeout = 900
+
+        inputParamPropertySetPtr  = None
+        waitLoopCount = 0
+        while((inputParamPropertySetPtr == None) and (waitLoopCount < self.eventTimeout)):
+            if(self.logthresh == self.VERB3):
+                print "Pipeline waitForEvent Looping : checking for event ... \n"
+
+            inputParamPropertySetPtr = eventsSystem.receive(thisTopic, transTimeout)
+
+            time.sleep(sleepTimeout)
+
+            if((self._stop.isSet())):
+                break
+
+            waitLoopCount = waitLoopCount+1
+
+        return inputParamPropertySetPtr
+
 
     def handleEvents(self, iStage, stagelog):
         """
@@ -681,7 +797,11 @@ class Pipeline:
 
             waitlog = log.traceBlock("eventwait " + thisTopic, self.TRACE,
                                      "wait for event...")
-            inputParamPropertySetPtr = eventsSystem.receive(thisTopic, self.eventTimeout)
+
+            inputParamPropertySetPtr = self.waitForEvent(thisTopic)
+
+            # inputParamPropertySetPtr = eventsSystem.receive(thisTopic, self.eventTimeout)
+
             waitlog.done()
 
             if (inputParamPropertySetPtr != None):
@@ -699,8 +819,20 @@ class Pipeline:
                 eventsSystem.publish(sliceTopic, inputParamPropertySetPtr)
 
                 log.log(self.VERB2, "event sent to Slices")
-            else: # event was not received after a long timeout
-                log.log(self.VERB2, "No more data: Shutting down : No more events received")
+            else: 
+                if((self._stop.isSet())):
+                    # Shutdown event received while waiting for data event 
+                    log.log(self.VERB2, "Pipeline Shutting down : Shutdown event received.")
+                else:
+                    # event was not received after a long timeout
+                    # log.log(self.VERB2, "Pipeline Shutting Down: Event timeout self.: No event arrived")
+
+                    LogRec(log, self.VERB2) << "Pipeline Shutting Down: Event timeout  "   \
+                                << str(self.eventTimeout) \
+                                << "reached: No or next event did not arrive " \
+                                << LogRec.endr;
+
+
                 sys.exit()
 
         else: # This stage has no event dependence 

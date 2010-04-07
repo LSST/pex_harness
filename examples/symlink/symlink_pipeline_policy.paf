@@ -4,6 +4,8 @@
 # This policy file executes the Pipeline within a scenario that utilizes 
 # the SymLink stage.
 
+nSlices: 1
+
 localLogMode: true
 executionMode: "oneloop"
 eventBrokerHost: "lsst4.ncsa.uiuc.edu"

@@ -25,17 +25,16 @@ class SampleStageSerial(harnessStage.SerialProcessing):
         Processing code for this Stage to be executed by the main Pipeline 
         prior to invoking Slice process 
         """
-        # root =  Log.getDefaultLog()
         log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageSerial.preprocess")
 
         log.log(Log.INFO, 'Executing SampleStageSerial preprocess')
+
 
     def postprocess(self, clipboard): 
         """
         Processing code for this Stage to be executed by the main Pipeline 
         after the completion of Slice process 
         """
-        # root =  Log.getDefaultLog()
 
         log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageSerial.postprocess")
         log.log(Log.INFO, 'Executing SampleStageSerial postprocess')
@@ -59,7 +58,6 @@ class SampleStageParallel(harnessStage.ParallelProcessing):
         Processing code for this Stage to be executed within a Slice 
         """
 
-        # root =  Log.getDefaultLog()
         log = Log(self.log, "lsst.pexhexamples.pipeline.SampleStageParallel.process")
 
         lr = LogRec(log, Log.INFO)
@@ -69,6 +67,74 @@ class SampleStageParallel(harnessStage.ParallelProcessing):
         lr << " universeSize " + str(self.universeSize) 
         lr << " RunMode from Policy " + self.runmode 
         lr << LogRec.endr
+
+class SampleFailingStageSerial(harnessStage.SerialProcessing):
+
+    def setup(self): 
+        self.runmode ="None"
+        if self.policy.exists('RunMode'):
+            self.runmode = self.policy.getString('RunMode')
+
+    def preprocess(self, clipboard): 
+        """
+        Processing code for this Stage to be executed by the main Pipeline 
+        prior to invoking Slice process 
+        """
+        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleFailingStageSerial.preprocess")
+
+        log.log(Log.INFO, 'Executing SampleFailingStageSerial preprocess')
+
+
+        if (self.runmode == "preprocess"):
+            # Create a PropertySet
+            oneData = lsst.daf.base.PropertySet()
+            oneData.setString("message", "Calculating variance")
+            clipboard.put("onedata", oneData) 
+
+            # Raise a bogus error
+            raise RuntimeError("SampleFailingStageSerial: Divide by zero occurred in preprocess")
+
+    def postprocess(self, clipboard): 
+        """
+        Processing code for this Stage to be executed by the main Pipeline 
+        after the completion of Slice process 
+        """
+
+        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleFailingStageSerial.postprocess")
+        log.log(Log.INFO, 'Executing SampleFailingStageSerial postprocess')
+
+        lr = LogRec(log, Log.INFO)
+        lr << " rank " + str(self.rank)
+        lr << " stageId " + str(self.stageId) 
+        lr << " universeSize " + str(self.universeSize) 
+        lr << " RunMode from Policy " + self.runmode 
+        lr << LogRec.endr
+
+
+class SampleFailingStageParallel(harnessStage.ParallelProcessing):
+
+    def setup(self): 
+        self.runmode ="None"
+        if self.policy.exists('RunMode'):
+            self.runmode = self.policy.getString('RunMode')
+
+    def process(self, clipboard): 
+        """
+        Processing code for this Stage to be executed by the Slices 
+        """
+        log = Log(self.log, "lsst.pexhexamples.pipeline.SampleFailingStageSerial.preprocess")
+
+        log.log(Log.INFO, 'Executing SampleFailingStageParallel process')
+
+        if (self.runmode == "process"):
+
+            oneData = lsst.daf.base.PropertySet()
+            oneData.setString("message", "Calculating variance")
+            clipboard.put("onedata", oneData) 
+
+            # Raise a bogus error
+            raise RuntimeError("SampleFailingStageParallel: Divide by zero occurred in process")
+
 
 class ShutdownTestStageSerial(harnessStage.SerialProcessing):
 
@@ -91,7 +157,6 @@ class ShutdownTestStageSerial(harnessStage.SerialProcessing):
         Processing code for this Stage to be executed by the main Pipeline 
         after the completion of Slice process 
         """
-        # root =  Log.getDefaultLog()
 
         log = Log(self.log, "lsst.pexhexamples.pipeline.ShutdownStageSerial.postprocess")
         log.log(Log.INFO, 'Executing ShutdownTestStageSerial postprocess')
@@ -406,4 +471,70 @@ class StoreStageParallel(harnessStage.ParallelProcessing):
                         self.visitId = propertySet.getInt(name)
                         print 'Python pipeline.StoreStage process() ', self.rank, key, name, self.visitId
 
+
+class AppFailureStageSerial(harnessStage.SerialProcessing):
+
+    def preprocess(self, clipboard): 
+        """
+        Execute the needed preprocessing code for this Stage
+        """
+        print 'Python pipeline.AppFailureStageSerial preprocess : stageId %i' % self.stageId
+        print 'Python pipeline.AppFailureStageSerial preprocess : universeSize %i' % self.universeSize
+
+        log = Log(self.log, "lsst.pexhexamples.pipeline.AppFailureStageSerial.preprocess")
+
+        log.log(Log.INFO, 'Executing AppFailureStageSerial preprocess')
+
+        # Place one clipboard entry here
+        clipboard.put("testKey", "test1");
+
+        # Examine all clipboard keys
+        csKeys = clipboard.getKeys()
+        for akey in csKeys:       
+            log.log(Log.INFO, 'AppFailureStageSerial clipboard key is: ' + akey)
+
+        # Retrieve a clipboard entry here in the Failure Stage (AppFailureStageSerial) that was placed
+        # on the clipboard within the stage that failed (SampleFailingStageSerial) 
+        oneData = clipboard.get("onedata", "missing")
+
+        theMessage = oneData.getString("message")
+
+        log.log(Log.INFO, 'Message in AppFailureStageSerial off clipboard (from SampleFailingStageSerial) is: ' + theMessage)
+
+
+    def postprocess(self, clipboard): 
+        """
+        Execute the needed postprocessing code for this Stage
+        """
+        print 'Python pipeline.AppFailureStageSerial postprocess : stageId %d' % self.stageId
+
+class AppFailureStageParallel(harnessStage.ParallelProcessing):
+
+    def process(self, clipboard): 
+        """
+        Execute the needed processing code for this Stage
+        """
+        print 'Python pipeline.AppFailureStageParallel process : _rank %i stageId %i' % (self.rank, self.stageId)
+        print 'Python pipeline.AppFailureStageParallel process : _rank %i universeSize %i' % (self.rank, self.universeSize)
+
+
+        log = Log(self.log, "lsst.pexhexamples.pipeline.AppFailureStageParallel.process")
+
+        log.log(Log.INFO, 'Executing AppFailureStageParallel process')
+
+        # Place one clipboard entry here
+        clipboard.put("testKey", "test1");
+
+        # Examine all clipboard keys
+        csKeys = clipboard.getKeys()
+        for akey in csKeys:
+            log.log(Log.INFO, 'AppFailureStageParallel clipboard key is: ' + akey)
+
+        # Retrieve a clipboard entry here in the Failure Stage (AppFailureStageParallel) that was placed
+        # on the clipboard within the stage that failed (SampleFailingStageParallel) 
+        oneData = clipboard.get("onedata", "missing")
+
+        theMessage = oneData.getString("message")
+
+        log.log(Log.INFO, 'Message in AppFailureStageParallel off clipboard (from SampleFailingStageParallel) is: ' + theMessage)
 

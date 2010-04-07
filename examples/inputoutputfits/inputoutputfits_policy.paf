@@ -1,6 +1,7 @@
 # inputoutputfits_policy.paf
 #
 #
+nSlices: 1
 localLogMode: true 
 executionMode: "oneloop"
 eventBrokerHost: "lsst4.ncsa.uiuc.edu"

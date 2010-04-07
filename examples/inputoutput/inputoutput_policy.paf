@@ -11,6 +11,7 @@
 # The required event is issued with the script triggerIpdpEventTransmit.py 
 #
 
+nSlices: 1
 localLogMode: true
 executionMode: "oneloop"
 eventBrokerHost: "lsst4.ncsa.uiuc.edu" 
@@ -27,6 +28,7 @@ appStage: {
 
 appStage: { 
      # serialClass: "lsst.pexhexamples.apps.IPDPStageSerial"
+     name: "IPDPStage"
      parallelClass: "lsst.pexhexamples.apps.IPDPStageParallel"
      eventTopic: "None"
      stagePolicy: "None"

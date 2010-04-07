@@ -49,7 +49,6 @@ The OutputStage encodes the exposureId within the name of the output file (as sp
 in its policy). 
 
 By default this example will run with the Pipeline with one Slice on a single node.
-Edit the MPI machinefile "nodelist.scr" to specify the hostname of the current host.
 
 The pipeline is then executed via, for example, 
 
