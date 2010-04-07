@@ -7,6 +7,12 @@ import lsst.daf.base as dafBase
 import lsst.daf.persistence as dafPersist
 import lsst.afw.image as afwImage
 
+# Fake up a Dataset so we don't have to depend on changes to daf_persistence.
+class Dataset:
+    def __init__(self, datasetType, **rest):
+        self.type = datasetType
+        self.ids = rest
+
 lm = dafBase.PropertySet()
 lm.add("input", "tests")
 lm.add("output", ".")
@@ -15,8 +21,8 @@ ps = dafBase.PropertySet()
 ps.add("field", "D4")
 clip0 = {
     'inputDatasets': [
-        dafPersist.Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=0),
-        dafPersist.Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=1)
+        Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=0),
+        Dataset('postIsr', visit=707911, snap=0, ccd=13, amp=1)
     ],
     'root': "raw",
     'ps': ps

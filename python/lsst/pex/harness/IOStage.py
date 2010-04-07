@@ -153,10 +153,10 @@ def _output(stage, policy, clipboard, log):
     @param log       A logger for messages.
     """
 
-    if not policy.exists('OutputItems'):
+    if not policy.exists('parameters.outputItems'):
         # Propagate the clipboard to the output queue, but otherwise
         # do nothing.
-        log.log(Log.WARN, "No OutputItems found")
+        log.log(Log.WARN, "No outputItems found")
         return
 
     additionalData = lsst.pex.harness.Utils.createAdditionalData(stage,
