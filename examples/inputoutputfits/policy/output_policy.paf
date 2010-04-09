@@ -1,11 +1,14 @@
-AdditionalData: "exposureId=triggerImageprocEvent.exposureid"
-RunMode: "process"
-OutputItems: {
-    OutputImage: {
-        required: true
-        StoragePolicy: {
-            Storage: "FitsStorage"
-            Location: "%(output)/image%(exposureId)"
+parameters: {
+    additionalData: "exposureId=triggerImageprocEvent.exposureid"
+    runMode: "process"
+    outputItems: {
+        outputImage: {
+            required: true
+            storagePolicy: {
+                storage: "FitsStorage"
+                location: "%(output)/image%(exposureId)"
+            }
         }
     }
 }
+
