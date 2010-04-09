@@ -163,7 +163,6 @@ class ImageprocStageParallel(harnessStage.ParallelProcessing):
         print 'Python apps.ImageprocStageParallel process() ', key, "ccdid", self.ccdId
 
         inputImage = clipboard.get('InputImage')
-
         print inputImage
 
         clipboard.put('OutputImage', inputImage)
@@ -177,7 +176,8 @@ class IPDPStageParallel(harnessStage.ParallelProcessing):
         """
         print 'Python IPDPStage process : _rank %i stageId %d' % (self.rank, self.stageId)
 
-        inputImage = clipboard.get("inputImage") 
+        inputImage = clipboard.get("theProperty") 
+        print "inputImage properties: "
 
         nameList = inputImage.names()
 
