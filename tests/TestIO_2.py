@@ -6,12 +6,7 @@ import lsst.pex.harness.IOStage as IOStage
 import lsst.daf.base as dafBase
 import lsst.daf.persistence as dafPersist
 import lsst.afw.image as afwImage
-
-# Fake up a Dataset so we don't have to depend on changes to daf_persistence.
-class Dataset:
-    def __init__(self, datasetType, **rest):
-        self.type = datasetType
-        self.ids = rest
+from lsst.pex.harness import Dataset
 
 lm = dafBase.PropertySet()
 lm.add("input", "tests")

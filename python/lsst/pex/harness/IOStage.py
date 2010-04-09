@@ -16,6 +16,7 @@ import sys
 import lsst.pex.harness.stage as harnessStage
 
 import lsst.pex.harness.Utils
+from lsst.pex.harness import Dataset
 import lsst.daf.base as dafBase
 import lsst.daf.persistence as dafPersist
 import lsst.pex.policy as pexPolicy
@@ -87,6 +88,13 @@ class InputStageParallel(harnessStage.ParallelProcessing):
                 defaultFile.getRepositoryPath())
         self.policy.mergeDefaults(defaults)
 
+        if self.policy.exists('parameters.butler'):
+            bf = dafPersist.ButlerFactory(
+                    self.policy.getPolicy('parameters.butler'))
+            self.butler = bf.create()
+        else:
+            self.butler = None
+
     def process(self, clipboard):
         """
         Retrieve the requested data in the slice processes.
@@ -110,6 +118,13 @@ class InputStageSerial(harnessStage.SerialProcessing):
         defaults = pexPolicy.Policy.createPolicy(defaultFile,
                 defaultFile.getRepositoryPath())
         self.policy.mergeDefaults(defaults)
+
+        if self.policy.exists('parameters.butler'):
+            bf = dafPersist.ButlerFactory(
+                    self.policy.getPolicy('parameters.butler'))
+            self.butler = bf.create()
+        else:
+            self.butler = None
 
     def preprocess(self, clipboard):
         """
@@ -197,9 +212,9 @@ def _output(stage, policy, clipboard, log):
        
         # Create a list of Storages for the item based on policy.
         storageList = dafPersist.StorageList()
-        for policy in policyList:
-            storageName = policy.getString('storage')
-            location = policy.getString('location')
+        for storagePolicy in policyList:
+            storageName = storagePolicy.getString('storage')
+            location = storagePolicy.getString('location')
             logLoc = dafPersist.LogicalLocation(location, additionalData)
             log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
             additionalData.add('StorageLocation.' + storageName, logLoc.locString())
@@ -212,6 +227,24 @@ def _output(stage, policy, clipboard, log):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
+
+        if itemPolicy.exists('datasetId'):
+            dsPolicy = itemPolicy.getPolicy('datasetId')
+            ds = Dataset(dsPolicy.get('datasetType'), ids={})
+            if dsPolicy.exists('set'):
+                setPolicy = dsPolicy.getPolicy('set')
+                for param in setPolicy.paramNames():
+                    ds.ids[param] = setPolicy.get(param)
+            if dsPolicy.exists('fromClipboard'):
+                jobIdentity = clipboard.get(policy.get('inputKeys.jobIdentity'))
+                for id in dsPolicy.getStringArray('fromClipboard'):
+                    ds.ids[id] = jobIdentity[id]
+            outputKey = policy.get('outputKeys.outputDatasets')
+            dsList = clipboard.get(outputKey)
+            if dsList is None:
+                dsList = []
+                clipboard.put(outputKey, dsList)
+            dsList.append(ds)
 
 def _input(stage, policy, clipboard, log):
     """Perform the retrieval of items from the clipboard as controlled by policy.
@@ -226,6 +259,10 @@ def _input(stage, policy, clipboard, log):
         # Propagate the clipboard to the output queue, but otherwise
         # do nothing.
         log.log(Log.WARN, "No InputItems found")
+        return
+
+    if stage.butler is not None:
+        _inputUsingButler(stage, policy, clipboard, log)
         return
 
     additionalData = lsst.pex.harness.Utils.createAdditionalData(stage,
@@ -332,3 +369,35 @@ def _read(item, cppType, pythonType, storageInfo,
 
     # Put the item on the clipboard
     return finalItem
+
+def _inputUsingButler(stage, policy, clipboard, log):
+    inputPolicy = policy.getPolicy('parameters.inputItems')
+    itemNames = inputPolicy.policyNames(True)
+    for item in itemNames:
+        itemPolicy = inputPolicy.getPolicy(item)
+        datasetType = itemPolicy.getString('datasetType')
+        datasetIdPolicy = itemPolicy.getPolicy('datasetId')
+        if datasetIdPolicy.exists('fromInputDatasets') and \
+                datasetIdPolicy.getBool('fromInputDatasets'):
+            inputDatasets = clipboard.get(
+                    policy.getString('inputKeys.inputDatasets'))
+            itemList = []
+            for ds in inputDatasets:
+                if ds.type == datasetType:
+                    obj = stage.butler.get(datasetType, dataId=ds.ids)
+                    itemList.append(obj)
+            if len(itemList) == 1:
+                clipboard.put(item, itemList[0])
+            else:
+                clipboard.put(item, itemList)
+        elif datasetIdPolicy.exists('fromJobIdentity'):
+            jobIdentity = clipboard.get(
+                    policy.getString('inputKeys.jobIdentity'))
+            dataId = {}
+            for key in datasetIdPolicy.getStringArray('fromJobIdentity'):
+                dataId[key] = jobIdentity[key]
+            obj = stage.butler.get(datasetType, dataId=dataId)
+            clipboard.put(item, obj)
+        else:
+            raise pexExcept.LsstException, \
+                "datasetId missing both fromInputDatasets and fromJobIdentity"

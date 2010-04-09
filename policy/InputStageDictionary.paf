@@ -10,9 +10,15 @@ definitions: {
             definitions: {
                 inputDatasets: {
                     type: string
-                    description: "Specify the clipboard key of the list of input datasets to be processed."
+                    description: "Key for the list of input datasets to be processed."
                     maxOccurs: 1
                     default: "inputDatasets"
+                }
+                jobIdentity: {
+                    type: string
+                    description: "Key for the dictionary defining the job identity."
+                    maxOccurs: 1
+                    default: "jobIdentity"
                 }
             }
         }
@@ -36,6 +42,11 @@ definitions: {
                 additionalData: {
                     type: string
                     description: "{psKey}={clipKey} mappings from clipboard keys to PropertySet keys for use in formatters and logical location substitutions."
+                }
+		butler: {
+                    type: policy
+                    # description: "Policy configuring the data butler."
+                    maxOccurs: 1
                 }
                 inputItems: {
                     type: policy
