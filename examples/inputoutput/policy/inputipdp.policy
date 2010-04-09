@@ -1,12 +1,14 @@
-AdditionalData: "visitId=triggerIpdpEvent.visitid"
-RunMode: "process"
-InputItems: {
-    inputImage: {
-        Type: "PropertySet"
-        PythonType: "lsst.daf.base.PropertySet"
-        StoragePolicy: {
-            Storage: "BoostStorage"
-            Location: "inputImage.%(visitId).%(sliceId)"
-        }
+parameters: {
+    additionalData: "visitId=triggerIpdpEvent.visitid"
+    runMode: "process"
+    inputItems: {
+            theProperty: {
+                type: "PropertySet"
+                pythonType: "lsst.daf.base.PropertySet"
+                storagePolicy: {
+                    storage: "BoostStorage"
+                    location: "inputImage.%(visitId).%(sliceId)"
+                }
+            }
     }
 }
