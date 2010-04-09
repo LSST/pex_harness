@@ -1,7 +1,58 @@
+import glob
 import os
 import re
-from lsst.daf.persistence import Mapper, FsRegistry, ButlerLocation
+from lsst.daf.persistence import Mapper, ButlerLocation
 import lsst.afw.image as afwImage
+
+class FsRegistry(object):
+    def __init__(self, location, pathTemplate):
+        fmt = re.compile(r'%\((\w+)\).*?([diouxXeEfFgGcrs])')
+        globString = fmt.sub('*', pathTemplate)
+        last = 0
+        self.fieldList = []
+        intFields = []
+        reString = ""
+        n = 0
+        for m in fmt.finditer(pathTemplate):
+            fieldName = m.group(1)
+            if fieldName in self.fieldList:
+                fieldName += "_%d" % (n,)
+                n += 1
+            self.fieldList.append(fieldName)
+
+            if m.group(2) not in 'crs':
+                intFields.append(fieldName)
+        
+            prefix = pathTemplate[last:m.start(0)]
+            last = m.end(0)
+            reString += prefix
+
+            if m.group(2) in 'crs':
+                reString += r'(?P<' + fieldName + '>.+?)'
+            elif m.group(2) in 'xX':
+                reString += r'(?P<' + fieldName + '>[\dA-Fa-f]+?)'
+            else:
+                reString += r'(?P<' + fieldName + '>[\d.eE+-]+?)'
+
+        reString += pathTemplate[last:] 
+
+        curdir = os.getcwd()
+        os.chdir(location)
+        pathList = glob.glob(globString)
+        os.chdir(curdir)
+        self.tuples = []
+        for path in pathList:
+            dataId = re.search(reString, path).groupdict()
+            idList = []
+            for f in self.fieldList:
+                if f in intFields:
+                    idList.append(int(dataId[f]))
+                else:
+                    idList.append(dataId[f])
+            self.tuples.append(tuple(idList))
+
+    def getFields(self):
+        return self.fieldList
 
 class MinMapper(Mapper):
     def __init__(self, policy=None, root=".", calibRoot=None):
@@ -33,9 +84,6 @@ class MinMapper(Mapper):
                 "lsst.afw.image.DecoratedImageU", "DecoratedImageU",
                 "FitsStorage", path, dataId)
 
-    def query_raw(self, key, format, dataId):
-        return self.rawRegistry.getCollection(key, format, dataId)
-
     def std_raw(self, item, dataId):
         md = item.getMetadata()
         md.set("LSSTAMP", "%(raft)s %(sensor)s %(channel)s" % dataId)
@@ -43,18 +91,6 @@ class MinMapper(Mapper):
                 afwImage.makeMaskedImage(item.getImage()))
         newItem.setMetadata(md)
         return newItem
-
-    def query_bias(self, key, format, dataId):
-        return self.calibRegistry.queryMetadata(key, format, dataId)
-
-    def query_dark(self, key, format, dataId):
-        return self.calibRegistry.queryMetadata(key, format, dataId)
-
-    def query_flat(self, key, format, dataId):
-        return self.calibRegistry.queryMetadata(key, format, dataId)
-
-    def query_fringe(self, key, format, dataId):
-        return self.calibRegistry.queryMetadata(key, format, dataId)
 
     def _mapIdToActual(self, dataId):
         # TODO map mapped fields in actualId to actual fields
