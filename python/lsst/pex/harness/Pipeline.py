@@ -259,14 +259,13 @@ class Pipeline:
             FailStageClass = getattr(FailAppStage, failClassString)
 
             sysdata = {}
-            sysdata["name"] = self._pipelineName
+            sysdata["name"] = self.failureStageName
             sysdata["rank"] = -1
             sysdata["stageId"] = -1
             sysdata["universeSize"] = self.universeSize
             sysdata["runId"] =  self._runId
             if (failStagePolicy != None):
                 self.failStageObject = FailStageClass(failStagePolicy, self.log, self.eventBrokerHost, sysdata)
-                # (self, policy=None, log=None, eventBroker=None, sysdata=None, callSetup=True):
             else:
                 self.failStageObject = FailStageClass(None, self.log, self.eventBrokerHost, sysdata)
 
@@ -348,7 +347,7 @@ class Pipeline:
             # Use a constructor with the Policy as an argument 
             StageClass = self.stageClassList[iStage-1]
             sysdata = {} 
-            sysdata["name"] = self._pipelineName
+            sysdata["name"] = self.stageNames[iStage-1]
             sysdata["rank"] = -1 
             sysdata["stageId"] = iStage 
             sysdata["universeSize"] = self.universeSize 
@@ -672,8 +671,8 @@ class Pipeline:
                     sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
             prelog.log(Log.FATAL, trace)
 
-            prelog.log(self.VERB2, "Flagging error in tryPreProcess, tryPostProcess to be skipped")
             # Flag that an exception occurred to guide the framework to skip processing
+            prelog.log(self.VERB2, "Flagging error in tryPreProcess, tryPostProcess to be skipped")
             self.errorFlagged = 1
 
             if(self.failureStageName != None): 
@@ -687,6 +686,13 @@ class Pipeline:
 
                     inputQueue  = self.queueList[iStage-1]
                     outputQueue = self.queueList[iStage]
+
+                    clipboard = inputQueue.element()
+                    clipboard.put("failedInStage",  stage.getName()) 
+                    clipboard.put("failedInStageN", iStage) 
+                    clipboard.put("failureType", str(sys.exc_info()[0])) 
+                    clipboard.put("failureMessage", str(sys.exc_info()[1])) 
+                    clipboard.put("failureTraceback", trace) 
 
                     self.failStageObject.initialize(outputQueue, inputQueue)
 

@@ -233,7 +233,8 @@ class Slice:
 
             sysdata = {}
 
-            sysdata["name"] = self._pipelineName
+            # sysdata["name"] = self._pipelineName
+            sysdata["name"] = self.failureStageName
             sysdata["rank"] = self._rank
             sysdata["stageId"] = -1
             sysdata["universeSize"] = self.universeSize
@@ -313,7 +314,8 @@ class Slice:
             # Use a constructor with the Policy as an argument
             StageClass = self.stageClassList[iStage-1]
             sysdata = {}
-            sysdata["name"] = self._pipelineName
+            # sysdata["name"] = self._pipelineName
+            sysdata["name"] = self.stageNames[iStage-1]
             sysdata["rank"] = self._rank
             sysdata["stageId"] = iStage
             sysdata["universeSize"] = self.universeSize
@@ -482,7 +484,6 @@ class Slice:
                 proclog.log(self.TRACE, "Skipping process due to error")
                 self.transferClipboard(iStage)
   
-        ### raise lsst.pex.exceptions.LsstException("Terrible Test Exception")
         except:
             trace = "".join(traceback.format_exception(
                 sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
@@ -503,6 +504,13 @@ class Slice:
 
                     inputQueue  = self.queueList[iStage-1]
                     outputQueue = self.queueList[iStage]
+
+                    clipboard = inputQueue.element()
+                    clipboard.put("failedInStage",  stage.getName())
+                    clipboard.put("failedInStageN", iStage)
+                    clipboard.put("failureType", str(sys.exc_info()[0]))
+                    clipboard.put("failureMessage", str(sys.exc_info()[1]))
+                    clipboard.put("failureTraceback", trace)
 
                     self.failStageObject.initialize(outputQueue, inputQueue)
 
