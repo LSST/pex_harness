@@ -12,6 +12,13 @@
 
 #include "lsst/pex/harness/LogUtils.h"
 
+#include "lsst/ctrl/events.h"
+#include "lsst/ctrl/events/EventSystem.h"
+#include "lsst/ctrl/events/EventLog.h"
+
+
+using lsst::ctrl::events::EventSystem;
+using lsst::ctrl::events::EventLog;
 using lsst::pex::logging::Log;
 
 namespace lsst {
@@ -44,6 +51,14 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
         /* Make output file stream   */
         outlog =  new ofstream(logfile);
     }
+
+    /* Create LSSTLogging transmitter here. (Moved from setupHarnessLogging in TracingLog.cc 
+       Need to re-check this for MPI SLices. */ 
+    if (_evbHost.length() > 0) { 
+        EventSystem& eventSystem = EventSystem::getDefaultEventSystem();
+        eventSystem.createTransmitter(_evbHost, "LSSTLogging");
+    }
+
     boost::shared_ptr<TracingLog> 
         lp(setupHarnessLogging(std::string(runId), -1, _evbHost, name,
                                outlog, "harness.pipeline"));
@@ -80,6 +95,7 @@ void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writin
         outlog =  new ofstream(logfile.c_str());
     }
 
+    
     boost::shared_ptr<TracingLog>
         lp(setupHarnessLogging(std::string(runId), rank, _evbHost,
                                name, outlog, "harness.slice"));

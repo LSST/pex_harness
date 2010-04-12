@@ -53,8 +53,11 @@ TracingLog *setupHarnessLogging(const std::string& runId, int sliceId,
                                 const std::string& logname)
 {
     if (eventBrokerHost.length() > 0) {
+        /*  Move this to LogUtils.cc and only call for the Pipeline 
+            Re-examine this for MPI Slices 
         EventSystem& eventSystem = EventSystem::getDefaultEventSystem();
         eventSystem.createTransmitter(eventBrokerHost, "LSSTLogging");
+        */ 
         EventLog::createDefaultLog(runId, sliceId);
     }
     Log& root = Log::getDefaultLog();
