@@ -458,7 +458,7 @@ class Stage(object):
         set the instance of the event broker that the stage components should
         use.
         """
-        self.eventBroker = eventBroker
+        self.eventBroker = broker
 
     def updateSysProperty(self, sysdata):
         """

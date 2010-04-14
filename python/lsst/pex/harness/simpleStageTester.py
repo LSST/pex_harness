@@ -46,9 +46,34 @@ class SimpleStageTester:
         if stage:
             self.stages.append( (name, stage) )
 
-    def addStage(self, stage, name=None):
+    def setEventBroker(self, host, port=None):
+        """
+        set the event broker to use to get and receiver events.  Pass in
+        None for the host to disable receiving events.
+        @param host   the host where the event broker is running
+        @param port   the port that the event broker is listening to
+        """
+        self.brokerhost = host
+        if port:
+            self.brokerport = port
+        for stage in self.stages:
+            stage.setEventBroker(self.brokerhost)
+
+    def getEventBroker(self):
+        return (self.brokerhost, self.brokerport)
+
+    def addStage(self, stage, name=None, event=None):
+        """
+        add a stage to this simple pipeline.
+        @param stage    the Stage instance to add in order
+        @param name     a name for the stage.  If None, create one from the
+                           stage object
+        @param event    an event which must be received prior to execution
+                           NOT YET IMPLEMENTED (ignored).
+        """
         if name is None:
             name = str(len(self.stages))
+        stage.setEventBroker(self.brokerhost)
         self.stages.append( (name, stage) )
 
     def run(self, clipboard, sliceID):
