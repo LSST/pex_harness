@@ -24,9 +24,7 @@ from lsst.pex.logging import Log
 import re
 
 class OutputStageSerial(harnessStage.SerialProcessing):
-    """
-    A Stage that persists data.
-    """
+    """A Stage that persists data."""
 
     def setup(self):
         self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
@@ -37,10 +35,8 @@ class OutputStageSerial(harnessStage.SerialProcessing):
         self.policy.mergeDefaults(defaults)
 
     def preprocess(self, clipboard):
-        """
-        Persist the requested data in the master process before any
-        (subclass) processing, if desired.
-        """
+        """Persist the requested data in the master process before any
+        (subclass) processing, if desired."""
 
         if self.policy.exists('parameters.runMode') and \
                 self.policy.getString('parameters.runMode') == 'preprocess':
@@ -48,10 +44,8 @@ class OutputStageSerial(harnessStage.SerialProcessing):
 
 
     def postprocess(self, clipboard):
-        """
-        Persist the requested data in the master process after any
-        (subclass) processing, if desired.
-        """
+        """Persist the requested data in the master process after any
+        (subclass) processing, if desired."""
 
         if self.policy.exists('parameters.runMode') and \
                 self.policy.getString('parameters.runMode') == 'postprocess':
@@ -68,14 +62,8 @@ class OutputStageParallel(harnessStage.ParallelProcessing):
         self.policy.mergeDefaults(defaults)
 
     def process(self, clipboard):
-        """
-        Persist the requested data in the slice processes.
-        """
+        """Persist the requested data in the slice processes."""
 
-        if self.policy.exists('parameters.runMode') and \
-                (self.policy.getString('parameters.runMode') == 'preprocess' or \
-                self.policy.getString('parameters.runMode') == 'postprocess'):
-            return
         _output(self, self.policy, clipboard, self.log)
 
 class InputStageParallel(harnessStage.ParallelProcessing):
@@ -96,20 +84,12 @@ class InputStageParallel(harnessStage.ParallelProcessing):
             self.butler = None
 
     def process(self, clipboard):
-        """
-        Retrieve the requested data in the slice processes.
-        """
+        """Retrieve the requested data in the slice processes."""
 
-        if self.policy.exists('parameters.runMode') and \
-                (self.policy.getString('parameters.runMode') == 'preprocess' or \
-                self.policy.getString('parameters.runMode') == 'postprocess'):
-            return
         _input(self, self.policy, clipboard, self.log)
 
 class InputStageSerial(harnessStage.SerialProcessing):
-    """
-    A Stage that retrieves data.
-    """
+    """A Stage that retrieves data."""
 
     def setup(self):
         self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.input")
@@ -127,20 +107,16 @@ class InputStageSerial(harnessStage.SerialProcessing):
             self.butler = None
 
     def preprocess(self, clipboard):
-        """
-        Retrieve the requested data in the master process before any
-        (subclass) processing, if desired.
-        """
+        """Retrieve the requested data in the master process before any
+        (subclass) processing, if desired."""
 
         if self.policy.exists('parameters.runMode') and \
                 self.policy.getString('parameters.runMode') == 'preprocess':
             _input(self, self.policy, clipboard, self.log)
 
     def postprocess(self, clipboard):
-        """
-        Retrieve the requested data in the master process after any
-        (subclass) processing, if desired.
-        """
+        """Retrieve the requested data in the master process after any
+        (subclass) processing, if desired."""
 
         if self.policy.exists('parameters.runMode') and \
                 self.policy.getString('parameters.runMode') == 'postprocess':

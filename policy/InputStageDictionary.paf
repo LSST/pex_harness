@@ -30,9 +30,9 @@ definitions: {
             definitions: {
                 runMode: {
                     type: string
-                    description: "Run in preprocess, process, or postprocess."
+                    description: "Run in preprocess or postprocess (for serial processing)."
                     maxOccurs: 1
-                    allowed: "preprocess" "process" "postprocess"
+                    allowed: "preprocess" "postprocess"
                 }
                 persistence: {
                     type: policy
