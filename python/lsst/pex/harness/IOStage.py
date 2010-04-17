@@ -27,12 +27,7 @@ class OutputStageSerial(harnessStage.SerialProcessing):
     """A Stage that persists data."""
 
     def setup(self):
-        self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
-        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
-                "OutputStageDictionary.paf", "policy")
-        defaults = pexPolicy.Policy.createPolicy(defaultFile,
-                defaultFile.getRepositoryPath())
-        self.policy.mergeDefaults(defaults)
+        _outputSetup(self)
 
     def preprocess(self, clipboard):
         """Persist the requested data in the master process before any
@@ -54,12 +49,7 @@ class OutputStageSerial(harnessStage.SerialProcessing):
 class OutputStageParallel(harnessStage.ParallelProcessing):
 
     def setup(self):
-        self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
-        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
-                "OutputStageDictionary.paf", "policy")
-        defaults = pexPolicy.Policy.createPolicy(defaultFile,
-                defaultFile.getRepositoryPath())
-        self.policy.mergeDefaults(defaults)
+        _outputSetup(self)
 
     def process(self, clipboard):
         """Persist the requested data in the slice processes."""
@@ -69,19 +59,7 @@ class OutputStageParallel(harnessStage.ParallelProcessing):
 class InputStageParallel(harnessStage.ParallelProcessing):
 
     def setup(self):
-        self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.input")
-        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
-                "InputStageDictionary.paf", "policy")
-        defaults = pexPolicy.Policy.createPolicy(defaultFile,
-                defaultFile.getRepositoryPath())
-        self.policy.mergeDefaults(defaults)
-
-        if self.policy.exists('parameters.butler'):
-            bf = dafPersist.ButlerFactory(
-                    self.policy.getPolicy('parameters.butler'))
-            self.butler = bf.create()
-        else:
-            self.butler = None
+        _inputSetup(self)
 
     def process(self, clipboard):
         """Retrieve the requested data in the slice processes."""
@@ -92,19 +70,7 @@ class InputStageSerial(harnessStage.SerialProcessing):
     """A Stage that retrieves data."""
 
     def setup(self):
-        self.log = Log(Log.getDefaultLog(), "pex.harness.iostage.input")
-        defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
-                "InputStageDictionary.paf", "policy")
-        defaults = pexPolicy.Policy.createPolicy(defaultFile,
-                defaultFile.getRepositoryPath())
-        self.policy.mergeDefaults(defaults)
-
-        if self.policy.exists('parameters.butler'):
-            bf = dafPersist.ButlerFactory(
-                    self.policy.getPolicy('parameters.butler'))
-            self.butler = bf.create()
-        else:
-            self.butler = None
+        _inputSetup(self)
 
     def preprocess(self, clipboard):
         """Retrieve the requested data in the master process before any
@@ -134,6 +100,22 @@ class OutputStage(harnessStage.Stage):
 
 ###############################################################################
 
+def _outputSetup(stage):
+    """Set up an OutputStage."""
+
+    stage.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
+    defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
+            "OutputStageDictionary.paf", "policy")
+    defaults = pexPolicy.Policy.createPolicy(defaultFile,
+            defaultFile.getRepositoryPath())
+    stage.policy.mergeDefaults(defaults)
+
+    if stage.policy.exists('parameters.butler'):
+        bf = dafPersist.ButlerFactory(
+                stage.policy.getPolicy('parameters.butler'))
+        stage.butler = bf.create()
+    else:
+        stage.butler = None
 
 def _output(stage, policy, clipboard, log):
     """Perform the actual persistence.
@@ -201,6 +183,10 @@ def _output(stage, policy, clipboard, log):
                 dsList = []
                 clipboard.put(outputKey, dsList)
             dsList.append(ds)
+            if stage.butler is not None:
+                # Use the butler to figure out storage and locations.
+                stage.butler.put(itemData, datasetType, dataId=ds.ids)
+                return
 
         # Get the item's StoragePolicy.
         if itemPolicy.isArray('storagePolicy'):
@@ -227,6 +213,25 @@ def _output(stage, policy, clipboard, log):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
+
+###############################################################################
+
+def _inputSetup(stage):
+    """Set up an InputStage."""
+
+    stage.log = Log(Log.getDefaultLog(), "pex.harness.iostage.input")
+    defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
+            "InputStageDictionary.paf", "policy")
+    defaults = pexPolicy.Policy.createPolicy(defaultFile,
+            defaultFile.getRepositoryPath())
+    stage.policy.mergeDefaults(defaults)
+
+    if stage.policy.exists('parameters.butler'):
+        bf = dafPersist.ButlerFactory(
+                stage.policy.getPolicy('parameters.butler'))
+        stage.butler = bf.create()
+    else:
+        stage.butler = None
 
 def _input(stage, policy, clipboard, log):
     """Perform the retrieval of items from the clipboard as controlled by policy.
