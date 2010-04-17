@@ -150,7 +150,7 @@ def _output(stage, policy, clipboard, log):
         log.log(Log.WARN, "No outputItems found")
         return
 
-    additionalData = lsst.pex.harness.Utils.createAdditionalData(stage,
+    mainAdditionalData = lsst.pex.harness.Utils.createAdditionalData(stage,
             policy, clipboard)
 
     # Create a persistence object using policy, if present.
@@ -167,6 +167,8 @@ def _output(stage, policy, clipboard, log):
     itemNames = outputPolicy.policyNames(True)
     for item in itemNames:
 
+        additionalData = mainAdditionalData.deepCopy()
+
         itemPolicy = outputPolicy.getPolicy(item)
 
         # Skip the item if it is not required and is not present.
@@ -178,6 +180,27 @@ def _output(stage, policy, clipboard, log):
 
         # Add the item name to the additionalData.
         additionalData.set('itemName', item)
+
+        if itemPolicy.exists('datasetId'):
+            dsPolicy = itemPolicy.getPolicy('datasetId')
+            ds = Dataset(dsPolicy.get('datasetType'))
+            ds.ids = {}
+            if dsPolicy.exists('set'):
+                setPolicy = dsPolicy.getPolicy('set')
+                for param in setPolicy.paramNames():
+                    ds.ids[param] = setPolicy.get(param)
+                    additionalData.set(param, setPolicy.get(param))
+            if dsPolicy.exists('fromClipboard'):
+                jobIdentity = clipboard.get(policy.get('inputKeys.jobIdentity'))
+                for id in dsPolicy.getStringArray('fromClipboard'):
+                    ds.ids[id] = jobIdentity[id]
+                    additionalData.set(id, jobIdentity[id])
+            outputKey = policy.get('outputKeys.outputDatasets')
+            dsList = clipboard.get(outputKey)
+            if dsList is None:
+                dsList = []
+                clipboard.put(outputKey, dsList)
+            dsList.append(ds)
 
         # Get the item's StoragePolicy.
         if itemPolicy.isArray('storagePolicy'):
@@ -194,6 +217,7 @@ def _output(stage, policy, clipboard, log):
             logLoc = dafPersist.LogicalLocation(location, additionalData)
             log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
             additionalData.add('StorageLocation.' + storageName, logLoc.locString())
+            mainAdditionalData.add('StorageLocation.' + storageName, logLoc.locString())
             storage = persistence.getPersistStorage(storageName,  logLoc)
             storageList.append(storage)
 
@@ -203,24 +227,6 @@ def _output(stage, policy, clipboard, log):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
-
-        if itemPolicy.exists('datasetId'):
-            dsPolicy = itemPolicy.getPolicy('datasetId')
-            ds = Dataset(dsPolicy.get('datasetType'), ids={})
-            if dsPolicy.exists('set'):
-                setPolicy = dsPolicy.getPolicy('set')
-                for param in setPolicy.paramNames():
-                    ds.ids[param] = setPolicy.get(param)
-            if dsPolicy.exists('fromClipboard'):
-                jobIdentity = clipboard.get(policy.get('inputKeys.jobIdentity'))
-                for id in dsPolicy.getStringArray('fromClipboard'):
-                    ds.ids[id] = jobIdentity[id]
-            outputKey = policy.get('outputKeys.outputDatasets')
-            dsList = clipboard.get(outputKey)
-            if dsList is None:
-                dsList = []
-                clipboard.put(outputKey, dsList)
-            dsList.append(ds)
 
 def _input(stage, policy, clipboard, log):
     """Perform the retrieval of items from the clipboard as controlled by policy.
