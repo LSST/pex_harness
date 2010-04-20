@@ -185,7 +185,7 @@ def _output(stage, policy, clipboard, log):
             dsList.append(ds)
             if stage.butler is not None:
                 # Use the butler to figure out storage and locations.
-                stage.butler.put(itemData, datasetType, dataId=ds.ids)
+                stage.butler.put(itemData, ds.type, dataId=ds.ids)
                 return
 
         # Get the item's StoragePolicy.
