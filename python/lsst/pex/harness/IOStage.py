@@ -147,6 +147,8 @@ def _output(stage, policy, clipboard, log):
     # Iterate over items in OutputItems policy.
     outputPolicy = policy.getPolicy('parameters.outputItems')
     itemNames = outputPolicy.policyNames(True)
+    somethingWasOutput = False
+
     for item in itemNames:
 
         additionalData = mainAdditionalData.deepCopy()
@@ -190,7 +192,8 @@ def _output(stage, policy, clipboard, log):
             if stage.butler is not None:
                 # Use the butler to figure out storage and locations.
                 stage.butler.put(itemData, ds.type, dataId=ds.ids)
-                return
+                somethingWasOutput = True
+                continue
 
         # Get the item's StoragePolicy.
         if itemPolicy.isArray('storagePolicy'):
@@ -217,6 +220,11 @@ def _output(stage, policy, clipboard, log):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
+        somethingWasOutput = True
+
+    if not somethingWasOutput:
+        log.log(Log.WARN, "No items were output")
+
 
 ###############################################################################
 
