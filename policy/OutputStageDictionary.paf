@@ -56,6 +56,11 @@ definitions: {
                     # description: "Policy specifying items to input."
                     maxOccurs: 1
                 }
+                butler: {
+                    type: policy
+                    # description: "Policy for configuring Data Butler."
+                    maxOccurs: 1
+                }
             }
         }
     }
