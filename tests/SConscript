@@ -24,6 +24,9 @@ tests.run("testTracingLog.cc")
 pytstsrps = filter(lambda a: not a.startswith("TestIO_") or a[7] not in "2 3 4".split(), 
                    filter(lambda t: t.startswith("Test") and t.endswith(".py"),
                           os.listdir(".")))
+#pytstsrps += filter(lambda t: t.startswith("test") and t.endswith(".py"),
+#                    os.listdir("."))
+pytstsrps.append("testDataset.py")
 for target in pytstsrps:
     env.Depends(tests.run(target), "../python/lsst/pex/harness/_harnessLib%s" % env['LDMODULESUFFIX'])
 

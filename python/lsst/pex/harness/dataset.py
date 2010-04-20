@@ -73,7 +73,9 @@ class Dataset(object):
             return self.path
         out = self.type
         if self.ids is not None:
-            for id in self.ids:
+            names = self.ids.keys()
+            names.sort()
+            for id in names:
                 out += "-%s%s" % (id, self.ids[id])
         return out
 
