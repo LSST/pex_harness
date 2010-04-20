@@ -156,8 +156,12 @@ def _output(stage, policy, clipboard, log):
         # Skip the item if it is not required and is not present.
         itemRequired = itemPolicy.exists('required') and \
                 itemPolicy.getBool('required')
-        if itemRequired and not clipboard.contains(item):
-            raise RuntimeError, 'Missing output item: ' + item
+        if not clipboard.contains(item):
+            if itemRequired:
+                raise RuntimeError, 'Missing output item: ' + item
+            else:
+                continue
+
         itemData = clipboard.get(item)
 
         # Add the item name to the additionalData.
