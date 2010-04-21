@@ -36,6 +36,7 @@ class SimpleStageTester:
         self.event = None
         self.inQ = Queue()
         self.outQ = Queue()
+        self.brokerhost = None
 
         self.sysdata = {}
         self.sysdata["runId"] = runID
