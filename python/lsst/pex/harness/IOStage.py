@@ -178,9 +178,9 @@ def _output(stage, policy, clipboard, log):
                 for param in setPolicy.paramNames():
                     ds.ids[param] = setPolicy.get(param)
                     additionalData.set(param, setPolicy.get(param))
-            if dsPolicy.exists('fromClipboard'):
+            if dsPolicy.exists('fromJobIdentity'):
                 jobIdentity = clipboard.get(policy.get('inputKeys.jobIdentity'))
-                for id in dsPolicy.getStringArray('fromClipboard'):
+                for id in dsPolicy.getStringArray('fromJobIdentity'):
                     ds.ids[id] = jobIdentity[id]
                     additionalData.set(id, jobIdentity[id])
             outputKey = policy.get('outputKeys.outputDatasets')
