@@ -395,6 +395,10 @@ def _inputUsingButler(stage, policy, clipboard, log):
             dataId = {}
             for key in datasetIdPolicy.getStringArray('fromJobIdentity'):
                 dataId[key] = jobIdentity[key]
+            if datasetIdPolicy.exists('set'):
+                setPolicy = datasetIdPolicy.getPolicy('set')
+                for param in setPolicy.paramNames():
+                    dataId[param] = setPolicy.get(param)
             obj = stage.butler.get(datasetType, dataId=dataId)
             clipboard.put(item, obj)
         else:
