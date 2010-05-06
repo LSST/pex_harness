@@ -56,6 +56,7 @@ class Pipeline:
         self.VERB3 = self.VERB2 - 1
         self.log = None
         self.logthresh = None
+        self._logdir = ""
 
         self._pipelineName = name
         
@@ -115,7 +116,7 @@ class Pipeline:
         self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId)
+        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir)
 
         # The log for use in the Python Pipeline
         self.log = self.cppLogUtils.getLogger()
@@ -393,7 +394,7 @@ class Pipeline:
             loopEventA = self.loopEventList[k]
             loopEventB = self.loopEventList[k+1]
             oneSliceThread = SliceThread(i, self._pipelineName, self.pipelinePolicyName, \
-                    self._runId, self.logthresh, self.universeSize, loopEventA, loopEventB)
+               self._runId, self.logthresh, self.universeSize, loopEventA, loopEventB, self._logdir)
             self.sliceThreadList.append(oneSliceThread)
 
         for slicei in self.sliceThreadList:
@@ -931,6 +932,16 @@ class Pipeline:
             self.log.log(Log.INFO, 
                          "Upating Root Log Message Threshold to %i" % level)
         self.logthresh = level
+
+    def setLogDir(self, logdir):
+        """
+        set the default directory into which the pipeline should write log files 
+        @param logdir   the directory in which log files should be written
+        """
+        if (logdir == "None" or logdir == None):
+            self._logdir = ""
+        else:
+            self._logdir = logdir
 
     def setEventTimeout(self, timeout):
         """

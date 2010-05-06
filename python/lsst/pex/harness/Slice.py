@@ -51,6 +51,7 @@ class Slice:
         self.VERB3 = self.VERB2 - 1
         self.log = None
         self.logthresh = None
+        self._logdir = ""
         
         self._pipelineName = name
         
@@ -98,7 +99,7 @@ class Slice:
         self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName, self._runId, self._rank)
+        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self._rank)
 
         # The log for use in the Python Slice
         self.log = self.cppLogUtils.getLogger()
@@ -623,6 +624,16 @@ class Slice:
             self.log.log(Log.INFO, 
                          "Upating Root Log Message Threshold to %i" % level)
         self.logthresh = level
+
+    def setLogDir(self, logdir):
+        """
+        set the default directory into which the slice should write log files 
+        @param logdir   the directory in which log files should be written
+        """
+        if (logdir == "None" or logdir == None):
+            self._logdir = ""
+        else:
+            self._logdir = logdir
 
     def makeStageName(self, appStagePolicy):
         if appStagePolicy.getValueType("stagePolicy") == appStagePolicy.FILE:

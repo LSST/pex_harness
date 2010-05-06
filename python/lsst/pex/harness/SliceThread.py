@@ -8,7 +8,7 @@ from lsst.pex.harness.Slice import Slice
 
 class SliceThread(threading.Thread):
 
-    def __init__ (self, rank, name, pipelinePolicyName, runId, logthresh, usize, eventa, eventb):
+    def __init__ (self, rank, name, pipelinePolicyName, runId, logthresh, usize, eventa, eventb, logdir):
         Thread.__init__(self)
         self.rank = rank
         self.name = name
@@ -18,6 +18,7 @@ class SliceThread(threading.Thread):
         self.eventa = eventa
         self.eventb = eventb
         self.universeSize = usize
+        self.logdir = logdir
         self.pid = os.getpid()
 
     def getPid (self):
@@ -44,6 +45,7 @@ class SliceThread(threading.Thread):
         self.pySlice.setLoopEventA(self.eventa)
         self.pySlice.setLoopEventB(self.eventb)
         self.pySlice.setUniverseSize(self.universeSize)
+        self.pySlice.setLogDir(self.logdir)
 
         self.pySlice.initializeLogger()
 

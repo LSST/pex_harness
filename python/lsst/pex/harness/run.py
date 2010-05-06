@@ -95,7 +95,7 @@ def createLog():
     return log
 
 
-def launchPipeline(policyFile, runid, name=None, verbosity=None):
+def launchPipeline(policyFile, runid, name=None, verbosity=None, logdir=None):
     if not os.environ.has_key(pkgdirvar):
         raise RuntimeError(pkgdirvar + " env. var not setup")
 
@@ -118,6 +118,8 @@ def launchPipeline(policyFile, runid, name=None, verbosity=None):
         clineOptions += " -n %s" % name
     if verbosity is not None:
         clineOptions += " -V %s" % verbosity
+
+    clineOptions += " -g %s" % logdir
 
     cmd = "runPipelin.sh.py %s %s %s" % \
           (clineOptions, policyFile, runid)
