@@ -22,6 +22,8 @@ cl = optparse.OptionParser(usage=usage, description=desc)
 run.addAllVerbosityOptions(cl)
 cl.add_option("-n", "--nodelist", action="store", dest="nodelist", 
               metavar="file", help="file containing the MPI machine list")
+cl.add_option("-g", "--logdir", action="store", dest="logdir", 
+              metavar="file", help="directory into which log files will be written")
 
 # command line results
 cl.opts = {}
@@ -57,6 +59,11 @@ def main():
         logger.log(Log.INFO, "command line option 0 : policyFile :  " + cl.args[0])
         logger.log(Log.INFO, "command line option 1 : runid :  " + cl.args[1])
 
+        if (cl.opts.logdir == None):
+            logger.log(Log.INFO, "command line logdir option is None ")
+        else:
+            logger.log(Log.INFO, "command line logdir option : " + cl.opts.logdir)
+
         if (name == None):
             logger.log(Log.INFO, "name is None")
         else:
@@ -67,7 +74,7 @@ def main():
         else:
             logger.log(Log.INFO, cl.opts.verbosity)
     
-        run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity)
+        run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity, cl.opts.logdir)
 
     except SystemExit:
         pass
