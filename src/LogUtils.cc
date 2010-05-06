@@ -16,6 +16,7 @@
 #include "lsst/ctrl/events/EventSystem.h"
 #include "lsst/ctrl/events/EventLog.h"
 
+using namespace std;
 
 using lsst::ctrl::events::EventSystem;
 using lsst::ctrl::events::EventLog;
@@ -44,12 +45,23 @@ LogUtils::~LogUtils(void) {
  */
 void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing logs to local files
                                 const std::string& name,
-                                const std::string& runId  
+                                const std::string& runId,
+                                const std::string& logdir
                                 ) {
-    char *logfile = "Pipeline.log";
+    std::stringstream logfileBuffer;
+    std::string logfile;
+
+    if (logdir.length() > 0) { 
+        logfileBuffer << logdir;
+        logfileBuffer << "/";
+    }
+
+    logfileBuffer << "Pipeline.log";
+    logfileBuffer >> logfile;
+
     if(isLocalLogMode) {
         /* Make output file stream   */
-        outlog =  new ofstream(logfile);
+        outlog =  new ofstream(logfile.c_str());
     }
 
     /* Create LSSTLogging transmitter here. (Moved from setupHarnessLogging in TracingLog.cc 
@@ -68,7 +80,7 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
     pipelineLog.format(Log::INFO, 
                        "Pipeline Logger initialized for pid=%d", getpid());
     if (outlog) 
-        pipelineLog.format(Log::INFO, "replicating messages to %s", logfile);
+        pipelineLog.format(Log::INFO, "replicating messages to %s", logfile.c_str());
 }
 
 /** Initialize the logger "sliceLog" to be used globally in the Slice class. 
@@ -77,6 +89,7 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
 void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writing logs to local files
                                 const std::string& name,
                                 const std::string& runId,
+                                const std::string& logdir,
                                 const int rank
                             ) {
 
@@ -84,6 +97,11 @@ void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writin
     if(isLocalLogMode) {
         /* Make a log file name coded to the rank    */
         std::stringstream logfileBuffer;
+
+        if (logdir.length() > 0) {
+            logfileBuffer << logdir;
+            logfileBuffer << "/";
+        }
 
         logfileBuffer << "Slice";
         logfileBuffer << rank;
