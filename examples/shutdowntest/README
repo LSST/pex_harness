@@ -19,11 +19,11 @@ One executes the pipeline then with:
 
 such as 
 
-% launchPipeline.py shutdowntest_policy.paf  test_2390
+% launchPipeline.py shutdowntest_policy.paf  test_19001
 
 One can specify a name and a logging level on the command line as well:
 
-% launchPipeline.py shutdowntest_policy.paf test_10025 mytemplate -L 3 
+% launchPipeline.py shutdowntest_policy.paf test_19001  mytemplate -L 3 
 
 
 Description

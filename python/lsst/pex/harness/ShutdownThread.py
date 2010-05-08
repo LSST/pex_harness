@@ -53,22 +53,35 @@ class ShutdownThread(threading.Thread):
         shutdownTopic = self.pipeline.getShutdownTopic()
         eventBrokerHost = self.pipeline.getEventBrokerHost()
 
-        eventsSystem = events.EventSystem.getDefaultEventSystem()
-        eventsSystem.createReceiver(eventBrokerHost, shutdownTopic)
+        # eventsSystem = events.EventSystem.getDefaultEventSystem()
+        # eventsSystem.createReceiver(eventBrokerHost, shutdownTopic)
+        clause = "RUNID = '" + runId + "'"
+        recv = events.EventReceiver(eventBrokerHost, shutdownTopic, clause)
+        # works 
+        # recv = events.EventReceiver(eventBrokerHost, shutdownTopic)
 
         sleepTimeout = 2.0
         transTimeout = 900
 
+        shutdownEvent = None
         shutdownPropertySetPtr = None
-        while(shutdownPropertySetPtr == None):
-            if(self.logthresh == self.VERB3):
+
+        # while(shutdownPropertySetPtr == None):
+        while(shutdownEvent == None):
+            if(self.logthresh == Log.DEBUG):
                 print "ShutdownThread Looping : checking for Shutdown event ... \n" 
+                print "ShutdownThread Looping : " + clause 
 
             time.sleep(sleepTimeout)
-            shutdownPropertySetPtr = eventsSystem.receive(shutdownTopic, transTimeout)
-    
-            if (shutdownPropertySetPtr != None):
-               self.level = shutdownPropertySetPtr.getInt("level")
+            # shutdownPropertySetPtr = eventsSystem.receive(shutdownTopic, transTimeout)
+            shutdownEvent  = recv.receiveEvent(transTimeout)
+            if(shutdownEvent == None):
+                pass
+            else:
+                # if (shutdownPropertySetPtr != None):
+                # if (shutdownEvent != None):
+                shutdownPropertySetPtr = shutdownEvent.getCustomPropertySet()
+                self.level = shutdownPropertySetPtr.getInt("level")
 
             if(self._stop.isSet()):
                 if(self.logthresh == self.VERB3):

@@ -68,11 +68,14 @@ public:
 
     void initializeLogger(bool isLocalLogMode,  //!< A flag for writing logs to local files
                                 const std::string& name,
-                                const std::string& runId
+                                const std::string& runId,
+                                const std::string& logdir
                                 ); 
+
     void initializeSliceLogger(bool isLocalLogMode, //!< A flag for writing logs to local files
                                 const std::string& name,
                                 const std::string& runId,
+                                const std::string& logdir,
                                 const int rank
                             );
 

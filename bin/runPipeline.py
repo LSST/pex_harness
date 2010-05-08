@@ -36,6 +36,9 @@ cl.add_option("-n", "--name", action="store", default=None, dest="name",
               help="a name for identifying the pipeline")
 cl.add_option("-V", "--verbosity", action="store", default=None, dest="verbosity",
               help="verbosity level of logging for the pipeline")
+cl.add_option("-g", "--logdir", action="store", default=None, dest="logdir",
+              help="directory into which log files will be written")
+
 run.addVerbosityOption(cl)
 
 def createLog():
@@ -73,9 +76,9 @@ def main():
     else: 
         logger.log(Log.INFO, "name " + cl.opts.name)
 
-    runPipeline(pipelinePolicyName, runId, logthresh, cl.opts.name)
+    runPipeline(pipelinePolicyName, runId, logthresh, cl.opts.name, cl.opts.logdir)
 
-def runPipeline(policyFile, runId, logthresh=None, name=None):
+def runPipeline(policyFile, runId, logthresh=None, name=None, logdir=None):
     """
     Create the Pipeline object and start the pipeline execution
     @param policyFile   the name of the policy file that defines the pipeline
@@ -89,6 +92,8 @@ def runPipeline(policyFile, runId, logthresh=None, name=None):
     pyPipeline = Pipeline(runId, policyFile, name)
     if isinstance(logthresh, int):
         pyPipeline.setLogThreshold(logthresh)
+    if (logdir != None):
+        pyPipeline.setLogDir(logdir)
 
     pyPipeline.initializeLogger()   
 
