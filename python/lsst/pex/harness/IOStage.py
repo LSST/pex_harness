@@ -191,7 +191,10 @@ def _output(stage, policy, clipboard, log):
             dsList.append(ds)
             if stage.butler is not None:
                 # Use the butler to figure out storage and locations.
+                log.log(Log.INFO, "persisting %s as %s with keys %s" % (item,
+                    ds.type, ds.ids))
                 stage.butler.put(itemData, ds.type, dataId=ds.ids)
+                log.log(Log.INFO, "persisting %s complete" % (item,))
                 somethingWasOutput = True
                 continue
 
@@ -208,7 +211,7 @@ def _output(stage, policy, clipboard, log):
             storageName = storagePolicy.getString('storage')
             location = storagePolicy.getString('location')
             logLoc = dafPersist.LogicalLocation(location, additionalData)
-            log.log(Log.INFO, "persisting %s as %s" % (item, logLoc.locString()))
+            log.log(Log.INFO, "persisting %s to %s" % (item, logLoc.locString()))
             additionalData.add('StorageLocation.' + storageName, logLoc.locString())
             mainAdditionalData.add('StorageLocation.' + storageName, logLoc.locString())
             storage = persistence.getPersistStorage(storageName,  logLoc)
@@ -220,6 +223,7 @@ def _output(stage, policy, clipboard, log):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
+        log.log(Log.INFO, "persisting %s complete" % (item,))
         somethingWasOutput = True
 
     if not somethingWasOutput:
@@ -347,7 +351,7 @@ def _read(item, cppType, pythonType, storageInfo,
     storageList = dafPersist.StorageList()
     for storageName, location in storageInfo:
         logLoc = dafPersist.LogicalLocation(location, additionalData)
-        log.log(Log.INFO, "loading %s as %s" % (logLoc.locString(), item));
+        log.log(Log.INFO, "loading %s from %s" % (item, logLoc.locString()));
         storage = persistence.getRetrieveStorage(storageName,  logLoc)
         storageList.append(storage)
 
@@ -358,6 +362,7 @@ def _read(item, cppType, pythonType, storageInfo,
 
     cvt = getattr(pythonType, "swigConvert")
     finalItem = cvt(itemData)
+    log.log(Log.INFO, "loading %s complete" % (item,));
 
     # If Persistable and subclasses are NOT wrapped using SWIG_SHARED_PTR,
     # then one must make sure that the wrapper for the useful type owns
@@ -383,6 +388,8 @@ def _inputUsingButler(stage, policy, clipboard, log):
             itemList = []
             for ds in inputDatasets:
                 if ds.type == datasetType:
+                    log.log(Log.INFO, "will load %s from %s with keys %s" %
+                            (item, datasetType, str(ds.ids)));
                     obj = stage.butler.get(datasetType, dataId=ds.ids)
                     itemList.append(obj)
             if len(itemList) == 1:
@@ -399,6 +406,8 @@ def _inputUsingButler(stage, policy, clipboard, log):
                 setPolicy = datasetIdPolicy.getPolicy('set')
                 for param in setPolicy.paramNames():
                     dataId[param] = setPolicy.get(param)
+            log.log(Log.INFO, "will load %s from %s with keys %s" % (item,
+                datasetType, str(dataId)));
             obj = stage.butler.get(datasetType, dataId=dataId)
             clipboard.put(item, obj)
         else:
