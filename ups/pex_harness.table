@@ -3,7 +3,7 @@ setupRequired(pex_logging >= 3.3.3)
 setupRequired(pex_exceptions >= 3.2.2)
 setupRequired(pex_policy >= 3.4.2)
 setupRequired(daf_persistence >= 3.3.10)
-setupRequired(ctrl_events >= 3.6)
+setupRequired(ctrl_events >= 3.11)
 
 envAppend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
 envAppend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
