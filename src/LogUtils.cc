@@ -68,7 +68,8 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
        Need to re-check this for MPI SLices. */ 
     if (_evbHost.length() > 0) { 
         EventSystem& eventSystem = EventSystem::getDefaultEventSystem();
-        eventSystem.createTransmitter(_evbHost, "LSSTLogging");
+        /* eventSystem.createTransmitter(_evbHost, EventLog::LOGGING_TOPIC); */
+        eventSystem.createTransmitter(_evbHost, "logging");
     }
 
     boost::shared_ptr<TracingLog> 
