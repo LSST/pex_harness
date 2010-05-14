@@ -392,7 +392,10 @@ def _inputUsingButler(stage, policy, clipboard, log):
                             (item, datasetType, str(ds.ids)));
                     obj = stage.butler.get(datasetType, dataId=ds.ids)
                     itemList.append(obj)
-            if len(itemList) == 1:
+            if len(itemList) == 0:
+                raise IOError, "No input datasets of type %s for item %s" % \
+                        (datasetType, item)
+            elif len(itemList) == 1:
                 clipboard.put(item, itemList[0])
             else:
                 clipboard.put(item, itemList)
