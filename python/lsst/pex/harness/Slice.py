@@ -517,6 +517,12 @@ class Slice:
 
                     self.failStageObject.applyProcess()
 
+                    proclog.log(self.TRACE, "Popping off failure stage Clipboard")
+                    clipboard = outputQueue.getNextDataset()
+                    clipboard.close()
+                    del clipboard
+                    proclog.log(self.TRACE, "Erasing and deleting failure stage Clipboard")
+
                 else:
                     proclog.log(self.VERB2, "No ParallelProcessing to do for failure stage")
 
