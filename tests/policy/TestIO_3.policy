@@ -11,7 +11,7 @@ parameters: {
         ps: {
             datasetId: {
                 datasetType: postIsr
-                fromClipboard: "name" "visit" "ccd" "snap" "filter"
+                fromJobIdentity: "name" "visit" "ccd" "snap" "filter"
                 set: {
                     field: deep
                 }

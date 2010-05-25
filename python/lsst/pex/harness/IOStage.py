@@ -12,7 +12,10 @@ pass to the persistence framework.  This data comes from the clipboard passed
 to the stage; PropertySet names of the additional data items to be retrieved
 are given in the AdditionalData sub-Policy.
 """
+
+import os
 import sys
+import time
 import lsst.pex.harness.stage as harnessStage
 
 import lsst.pex.harness.Utils
@@ -21,7 +24,6 @@ import lsst.daf.base as dafBase
 import lsst.daf.persistence as dafPersist
 import lsst.pex.policy as pexPolicy
 from lsst.pex.logging import Log
-import re
 
 class OutputStageSerial(harnessStage.SerialProcessing):
     """A Stage that persists data."""
@@ -351,8 +353,10 @@ def _read(item, cppType, pythonType, storageInfo,
     storageList = dafPersist.StorageList()
     for storageName, location in storageInfo:
         logLoc = dafPersist.LogicalLocation(location, additionalData)
+        if not logLoc.locString().startswith("mysql:"):
+            _waitForPath(logLoc.locString(), log)
         log.log(Log.INFO, "loading %s from %s" % (item, logLoc.locString()));
-        storage = persistence.getRetrieveStorage(storageName,  logLoc)
+        storage = persistence.getRetrieveStorage(storageName, logLoc)
         storageList.append(storage)
 
     # Retrieve the item.
@@ -388,6 +392,7 @@ def _inputUsingButler(stage, policy, clipboard, log):
             itemList = []
             for ds in inputDatasets:
                 if ds.type == datasetType:
+                    _waitForDataset(stage.butler, datasetType, ds.ids, log)
                     log.log(Log.INFO, "will load %s from %s with keys %s" %
                             (item, datasetType, str(ds.ids)));
                     obj = stage.butler.get(datasetType, dataId=ds.ids)
@@ -409,6 +414,7 @@ def _inputUsingButler(stage, policy, clipboard, log):
                 setPolicy = datasetIdPolicy.getPolicy('set')
                 for param in setPolicy.paramNames():
                     dataId[param] = setPolicy.get(param)
+            _waitForDataset(stage.butler, datasetType, dataId, log)
             log.log(Log.INFO, "will load %s from %s with keys %s" % (item,
                 datasetType, str(dataId)));
             obj = stage.butler.get(datasetType, dataId=dataId)
@@ -416,3 +422,24 @@ def _inputUsingButler(stage, policy, clipboard, log):
         else:
             raise pexExcept.LsstException, \
                 "datasetId missing both fromInputDatasets and fromJobIdentity"
+
+def _waitFor(func, log, timeoutMsg="Unavailable dataset", timeout=60.0,
+        initial=1.0, backoff=1.2):
+    sleep = initial
+    totalSleep = 0
+    while func() is False: # Allow for None return
+        log.log(Log.INFO, "waiting for dataset")
+        time.sleep(sleep)
+        totalSleep += sleep
+        sleep *= backoff
+        if totalSleep > timeout:
+            raise pexExcept.LsstException, timeoutMsg
+
+def _waitForPath(path, log):
+    _waitFor(lambda: os.path.exists(path), log,
+            "Timed out waiting for file %s" % (path,))
+
+def _waitForDataset(butler, datasetType, dataId, log):
+    _waitFor(lambda: butler.fileExists(datasetType, dataId=dataId), log,
+            "Timed out waiting for dataset %s with keys %s" %
+            (datasetType, str(dataId)))

@@ -21,9 +21,13 @@ tests = lsst.tests.Control(env, verbose = True)
 
 tests.run("testTracingLog.cc")
 
-pytstsrps = filter(lambda a: not a.startswith("TestIO_") or a[7] not in "2 3 4".split(), 
-                   filter(lambda t: t.startswith("Test") and t.endswith(".py"),
-                          os.listdir(".")))
+pytstsrps = filter(lambda t: t.startswith("Test") and t.endswith(".py"),
+        os.listdir("."))
+if "AFW_DIR" not in os.environ:
+    print >>sys.stderr, "afw is not setup, skipping TestIO_[234].py"
+    pytstsrps = filter(lambda a: not a.startswith("TestIO_")
+            or a[7] not in "2 3 4".split(), pytstsrps)
+
 #pytstsrps += filter(lambda t: t.startswith("test") and t.endswith(".py"),
 #                    os.listdir("."))
 pytstsrps.append("testDataset.py")
