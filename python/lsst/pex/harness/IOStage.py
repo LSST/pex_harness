@@ -385,6 +385,12 @@ def _inputUsingButler(stage, policy, clipboard, log):
         itemPolicy = inputPolicy.getPolicy(item)
         datasetType = itemPolicy.getString('datasetType')
         datasetIdPolicy = itemPolicy.getPolicy('datasetId')
+        required = True
+        if itemPolicy.exists('required'):
+            required = itemPolicy.getBool('required')
+        timeout = 60.0
+        if itemPolicy.exists('timeout'):
+            timeout = itemPolicy.get('timeout')
         if datasetIdPolicy.exists('fromInputDatasets') and \
                 datasetIdPolicy.getBool('fromInputDatasets'):
             inputDatasets = clipboard.get(
@@ -392,7 +398,8 @@ def _inputUsingButler(stage, policy, clipboard, log):
             itemList = []
             for ds in inputDatasets:
                 if ds.type == datasetType:
-                    _waitForDataset(stage.butler, datasetType, ds.ids, log)
+                    _waitForDataset(stage.butler, datasetType, ds.ids, log,
+                            required, timeout)
                     log.log(Log.INFO, "will load %s from %s with keys %s" %
                             (item, datasetType, str(ds.ids)));
                     obj = stage.butler.get(datasetType, dataId=ds.ids)
@@ -414,7 +421,8 @@ def _inputUsingButler(stage, policy, clipboard, log):
                 setPolicy = datasetIdPolicy.getPolicy('set')
                 for param in setPolicy.paramNames():
                     dataId[param] = setPolicy.get(param)
-            _waitForDataset(stage.butler, datasetType, dataId, log)
+            _waitForDataset(stage.butler, datasetType, dataId, log, required,
+                    timeout)
             log.log(Log.INFO, "will load %s from %s with keys %s" % (item,
                 datasetType, str(dataId)));
             obj = stage.butler.get(datasetType, dataId=dataId)
@@ -424,22 +432,30 @@ def _inputUsingButler(stage, policy, clipboard, log):
                 "datasetId missing both fromInputDatasets and fromJobIdentity"
 
 def _waitFor(func, log, timeoutMsg="Unavailable dataset", timeout=60.0,
-        initial=1.0, backoff=1.2):
+        initial=0.5, backoff=1.2):
     sleep = initial
     totalSleep = 0
     while func() is False: # Allow for None return
         log.log(Log.INFO, "waiting for dataset")
-        time.sleep(sleep)
+        if timeout > 0:
+            time.sleep(sleep)
         totalSleep += sleep
         sleep *= backoff
-        if totalSleep > timeout:
-            raise pexExcept.LsstException, timeoutMsg
+        if totalSleep >= timeout:
+            if timeoutMsg is not None:
+                raise pexExcept.LsstException, timeoutMsg
+            else:
+                return
 
 def _waitForPath(path, log):
     _waitFor(lambda: os.path.exists(path), log,
             "Timed out waiting for file %s" % (path,))
 
-def _waitForDataset(butler, datasetType, dataId, log):
+def _waitForDataset(butler, datasetType, dataId, log, required, timeout):
+    if required:
+        msg = "Timed out waiting for dataset %s with keys %s" % \
+                (datasetType, str(dataId))
+    else:
+        msg = None
     _waitFor(lambda: butler.fileExists(datasetType, dataId=dataId), log,
-            "Timed out waiting for dataset %s with keys %s" %
-            (datasetType, str(dataId)))
+            msg, timeout)
