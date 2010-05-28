@@ -1,6 +1,6 @@
 # -*- python -*-
 Import("env")
-import glob, os
+import glob, os, sys
 
 # No C++ currently 
 # for src in glob.glob("*.cc"):
