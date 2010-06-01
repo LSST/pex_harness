@@ -24,6 +24,7 @@ import lsst.daf.base as dafBase
 import lsst.daf.persistence as dafPersist
 import lsst.pex.policy as pexPolicy
 from lsst.pex.logging import Log
+import lsst.pex.exceptions as pexExcept
 
 class OutputStageSerial(harnessStage.SerialProcessing):
     """A Stage that persists data."""
