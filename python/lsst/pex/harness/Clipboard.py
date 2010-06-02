@@ -8,7 +8,7 @@ must be provided.
 """
 
 
-class Clipboard:
+class Clipboard(object):
     '''Container for images: maintains Python dictionary'''
 
     def __init__ (self):

@@ -10,7 +10,7 @@ import lsst.pex.harness.stage as hstage
 from lsst.pex.harness.stage import StageProcessing
 from lsst.pex.harness.stage import NoOpSerialProcessing, NoOpParallelProcessing
 
-class SimpleStageTester:
+class SimpleStageTester(object):
     """
     A class for running simple tests of a Stage.  Currently, this will run
     only one Slice at a time, either a master slice (running the serial

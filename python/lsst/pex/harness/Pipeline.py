@@ -41,7 +41,7 @@ for parallel computations.
 """
 
 
-class Pipeline:
+class Pipeline(object):
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
     def __init__(self, runId='-1', pipelinePolicyName=None, name="unnamed"):

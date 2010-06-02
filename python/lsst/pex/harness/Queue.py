@@ -9,7 +9,7 @@ the image that the present Stage has completed work on for the
 next Stage (via the OutputQueue interface)
 """
 
-class Queue:
+class Queue(object):
     '''Carry references to image data from Stage to Stage via ClipBoard container'''
 
     #------------------------------------------------------------------------

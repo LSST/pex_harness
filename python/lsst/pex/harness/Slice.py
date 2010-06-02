@@ -35,7 +35,7 @@ in the main Pipeline.
 A Slice obtains its configuration by reading a policy file. 
 """
 
-class Slice:
+class Slice(object):
     '''Slice: Python Slice class implementation. '''
 
     #------------------------------------------------------------------------
