@@ -458,5 +458,5 @@ def _waitForDataset(butler, datasetType, dataId, log, required, timeout):
                 (datasetType, str(dataId))
     else:
         msg = None
-    _waitFor(lambda: butler.fileExists(datasetType, dataId=dataId), log,
+    _waitFor(lambda: butler.datasetExists(datasetType, dataId=dataId), log,
             msg, timeout)
