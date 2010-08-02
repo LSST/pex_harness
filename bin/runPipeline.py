@@ -61,6 +61,8 @@ cl.add_option("-V", "--verbosity", action="store", default=None, dest="verbosity
               help="verbosity level of logging for the pipeline")
 cl.add_option("-g", "--logdir", action="store", default=None, dest="logdir",
               help="directory into which log files will be written")
+cl.add_option("-w", "--workerid", action="store", default=None, dest="workerid",
+              help="identifier for a pipeline worker within a production")
 
 run.addVerbosityOption(cl)
 
@@ -99,9 +101,14 @@ def main():
     else: 
         logger.log(Log.INFO, "name " + cl.opts.name)
 
-    runPipeline(pipelinePolicyName, runId, logthresh, cl.opts.name, cl.opts.logdir)
+    if (cl.opts.workerid == None):
+        logger.log(Log.INFO, "cl.opts.workerid is None")
+    else: 
+        logger.log(Log.INFO, "workerid " + cl.opts.workerid)
 
-def runPipeline(policyFile, runId, logthresh=None, name=None, logdir=None):
+    runPipeline(pipelinePolicyName, runId, logthresh, cl.opts.name, cl.opts.logdir, cl.opts.workerid)
+
+def runPipeline(policyFile, runId, logthresh=None, name=None, logdir=None, workerid=None):
     """
     Create the Pipeline object and start the pipeline execution
     @param policyFile   the name of the policy file that defines the pipeline
@@ -112,7 +119,7 @@ def runPipeline(policyFile, runId, logthresh=None, name=None, logdir=None):
     if name is None or name == "None":
         name = os.path.splitext(os.path.basename(policyFile))[0]
     
-    pyPipeline = Pipeline(runId, policyFile, name)
+    pyPipeline = Pipeline(runId, policyFile, name, workerid)
     if isinstance(logthresh, int):
         pyPipeline.setLogThreshold(logthresh)
     if (logdir != None):

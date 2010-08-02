@@ -47,6 +47,8 @@ cl.add_option("-n", "--nodelist", action="store", dest="nodelist",
               metavar="file", help="file containing the MPI machine list")
 cl.add_option("-g", "--logdir", action="store", dest="logdir", 
               metavar="file", help="directory into which log files will be written")
+cl.add_option("-w", "--workerid", action="store", dest="workerid", 
+              metavar="file", help="identifier for a pipeline worker within a production")
 
 # command line results
 cl.opts = {}
@@ -96,8 +98,13 @@ def main():
             logger.log(Log.INFO, "verbosity option not specified")
         else:
             logger.log(Log.INFO, cl.opts.verbosity)
+
+        if (cl.opts.workerid == None):
+            logger.log(Log.INFO, "workerid option not specified")
+        else:
+            logger.log(Log.INFO, cl.opts.workerid)
     
-        run.launchPipeline(cl.args[0], cl.args[1], name, cl.opts.verbosity, cl.opts.logdir)
+        run.launchPipeline(cl.args[0], cl.args[1], cl.opts.workerid, name, cl.opts.verbosity, cl.opts.logdir)
 
     except SystemExit:
         pass
