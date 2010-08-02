@@ -413,15 +413,15 @@ class Slice(object):
 
 
             visitcount += 1
-            looplog.setPreamblePropertyInt("loopnum", visitcount)
+            looplog.setPreamblePropertyInt("LOOPNUM", visitcount)
             looplog.start()
-            stagelog.setPreamblePropertyInt("loopnum", visitcount)
+            stagelog.setPreamblePropertyInt("LOOPNUM", visitcount)
 
             self.startInitQueue()    # place an empty clipboard in the first Queue
 
             self.errorFlagged = 0
             for iStage in range(1, self.nStages+1):
-                stagelog.setPreamblePropertyInt("stageId", iStage)
+                stagelog.setPreamblePropertyInt("STAGEID", iStage)
                 stagelog.start(self.stageNames[iStage-1] + " loop")
 
                 stageObject = self.stageList[iStage-1]

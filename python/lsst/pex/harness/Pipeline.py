@@ -476,10 +476,10 @@ class Pipeline(object):
                 break
             else:
                 visitcount += 1
-                looplog.setPreamblePropertyInt("loopnum", visitcount)
+                looplog.setPreamblePropertyInt("LOOPNUM", visitcount)
                 looplog.start()
-                stagelog.setPreamblePropertyInt("loopnum", visitcount)
-                proclog.setPreamblePropertyInt("loopnum", visitcount)
+                stagelog.setPreamblePropertyInt("LOOPNUM", visitcount)
+                proclog.setPreamblePropertyInt("LOOPNUM", visitcount)
 
                 # self.cppPipeline.invokeContinue()
 
@@ -487,9 +487,9 @@ class Pipeline(object):
 
                 self.errorFlagged = 0
                 for iStage in range(1, self.nStages+1):
-                    stagelog.setPreamblePropertyInt("stageId", iStage)
+                    stagelog.setPreamblePropertyInt("STAGEID", iStage)
                     stagelog.start(self.stageNames[iStage-1] + " loop")
-                    proclog.setPreamblePropertyInt("stageId", iStage)
+                    proclog.setPreamblePropertyInt("STAGEID", iStage)
 
                     stage = self.stageList[iStage-1]
 
