@@ -67,7 +67,7 @@ for parallel computations.
 class Pipeline(object):
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
-    def __init__(self, runId='-1', pipelinePolicyName=None, name="unnamed"):
+    def __init__(self, runId='-1', pipelinePolicyName=None, name="unnamed", workerId=None):
         """
         Initialize the Pipeline: create empty Queue and Stage lists;
         import the C++ Pipeline instance; initialize the MPI environment
@@ -93,6 +93,10 @@ class Pipeline(object):
         self.executionMode = 0
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
+        if workerId is not None:
+            self.workerId = workerId
+        else:
+            self.workerId = -1
 
         self.cppLogUtils = logutils.LogUtils()
         self._stop = PyEvent()
@@ -139,7 +143,7 @@ class Pipeline(object):
         self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir)
+        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self.workerid)
 
         # The log for use in the Python Pipeline
         self.log = self.cppLogUtils.getLogger()
@@ -201,6 +205,7 @@ class Pipeline(object):
                                 << Prop("universeSize", self.universeSize) \
                                 << Prop("runID", self._runId) \
                                 << Prop("rank", -1)   \
+                                << Prop("workerid", self.workerid) \
                                 << LogRec.endr;
         
 
