@@ -62,7 +62,7 @@ class Slice(object):
     '''Slice: Python Slice class implementation. '''
 
     #------------------------------------------------------------------------
-    def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed", rank=-1):
+    def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed", rank=-1, workerId=None):
         """
         Initialize the Slice: create an empty Queue List and Stage List;
         Import the C++ Slice  and initialize the MPI environment
@@ -93,6 +93,13 @@ class Slice(object):
         self.cppLogUtils = logutils.LogUtils()
         self._rank = int(rank)
 
+        if workerId is not None:
+            self.workerId = workerId
+        else:
+            self.workerId = -1
+
+
+
     def __del__(self):
         """
         Delete the Slice object: cleanup 
@@ -119,10 +126,10 @@ class Slice(object):
             self.eventBrokerHost = self.executePolicy.getString('eventBrokerHost')
         else:
             self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
-        self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
+        self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost)
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self._rank)
+        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self._rank, self.workerId)
 
         # The log for use in the Python Slice
         self.log = self.cppLogUtils.getLogger()

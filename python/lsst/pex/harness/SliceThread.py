@@ -30,7 +30,7 @@ from lsst.pex.harness.Slice import Slice
 
 class SliceThread(threading.Thread):
 
-    def __init__ (self, rank, name, pipelinePolicyName, runId, logthresh, usize, eventa, eventb, logdir):
+    def __init__ (self, rank, name, pipelinePolicyName, runId, logthresh, usize, eventa, eventb, logdir, workerid):
         Thread.__init__(self)
         self.rank = rank
         self.name = name
@@ -41,6 +41,7 @@ class SliceThread(threading.Thread):
         self.eventb = eventb
         self.universeSize = usize
         self.logdir = logdir
+        self.workerId = workerid
         self.pid = os.getpid()
 
     def getPid (self):
@@ -60,7 +61,7 @@ class SliceThread(threading.Thread):
         if self.name is None or self.name == "None":
             self.name = os.path.splitext(os.path.basename(self.pipelinePolicyName))[0]
 
-        self.pySlice = Slice(self._runId, self.pipelinePolicyName, self.name, self.rank)
+        self.pySlice = Slice(self._runId, self.pipelinePolicyName, self.name, self.rank, self.workerId)
         if isinstance(self.logthresh, int):
             self.pySlice.setLogThreshold(self.logthresh)
 

@@ -143,7 +143,7 @@ class Pipeline(object):
         self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self.workerid)
+        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self.workerId)
 
         # The log for use in the Python Pipeline
         self.log = self.cppLogUtils.getLogger()
@@ -205,7 +205,7 @@ class Pipeline(object):
                                 << Prop("universeSize", self.universeSize) \
                                 << Prop("runID", self._runId) \
                                 << Prop("rank", -1)   \
-                                << Prop("workerid", self.workerid) \
+                                << Prop("workerId", self.workerId) \
                                 << LogRec.endr;
         
 
@@ -422,7 +422,7 @@ class Pipeline(object):
             loopEventA = self.loopEventList[k]
             loopEventB = self.loopEventList[k+1]
             oneSliceThread = SliceThread(i, self._pipelineName, self.pipelinePolicyName, \
-               self._runId, self.logthresh, self.universeSize, loopEventA, loopEventB, self._logdir)
+               self._runId, self.logthresh, self.universeSize, loopEventA, loopEventB, self._logdir, self.workerId)
             self.sliceThreadList.append(oneSliceThread)
 
         for slicei in self.sliceThreadList:
