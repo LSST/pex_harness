@@ -71,6 +71,7 @@ using lsst::pex::logging::LogDestination;
 TracingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
                                 const std::string& eventBrokerHost, 
                                 const std::string& pipename,
+                                const std::string& workerid,
                                 std::ostream *messageStrm,
                                 const std::string& logname)
 {
@@ -84,6 +85,7 @@ TracingLog *setupHarnessLogging(const std::string& runId, int sliceId,
     }
     Log& root = Log::getDefaultLog();
     root.addPreambleProperty("pipeline", pipename);
+    root.addPreambleProperty("workerid", workerid);
 
     if (messageStrm != 0) {
         boost::shared_ptr<LogFormatter> frmtr(new IndentedFormatter(true));

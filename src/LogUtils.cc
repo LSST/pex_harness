@@ -69,7 +69,8 @@ LogUtils::~LogUtils(void) {
 void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing logs to local files
                                 const std::string& name,
                                 const std::string& runId,
-                                const std::string& logdir
+                                const std::string& logdir,
+                                const std::string& workerid
                                 ) {
     std::stringstream logfileBuffer;
     std::string logfile;
@@ -96,7 +97,7 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
     }
 
     boost::shared_ptr<TracingLog> 
-        lp(setupHarnessLogging(std::string(runId), -1, _evbHost, name,
+        lp(setupHarnessLogging(std::string(runId), -1, _evbHost, name, workerid,
                                outlog, "harness.pipeline"));
                                
     pipelineLog = *lp;
@@ -114,7 +115,8 @@ void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writin
                                 const std::string& name,
                                 const std::string& runId,
                                 const std::string& logdir,
-                                const int rank
+                                const int rank,
+                                const std::string& workerid
                             ) {
 
     std::string logfile;
@@ -140,7 +142,7 @@ void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writin
     
     boost::shared_ptr<TracingLog>
         lp(setupHarnessLogging(std::string(runId), rank, _evbHost,
-                               name, outlog, "harness.slice"));
+                               name, workerid, outlog, "harness.slice"));
     pipelineLog = *lp;
 
     pipelineLog.format(Log::INFO, "Slice Logger initialized for pid=%d", getpid());
