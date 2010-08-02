@@ -212,6 +212,7 @@ private:
 TracingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
                                 const std::string& eventBrokerHost="", 
                                 const std::string& pipename="unnamed",
+                                const std::string& workerid="-1",
                                 std::ostream *messageStrm=0,
                                 const std::string& logname="harness");
 
