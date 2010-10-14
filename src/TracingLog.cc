@@ -85,7 +85,7 @@ TracingLog *setupHarnessLogging(const std::string& runId, int sliceId,
     }
     Log& root = Log::getDefaultLog();
     root.addPreambleProperty("PIPELINE", pipename);
-    root.addPreambleProperty("WORKERID", workerid);
+    root.addPreambleProperty("workerid", workerid);
 
     if (messageStrm != 0) {
         boost::shared_ptr<LogFormatter> frmtr(new IndentedFormatter(true));
