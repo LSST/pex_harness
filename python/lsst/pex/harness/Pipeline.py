@@ -96,7 +96,7 @@ class Pipeline(object):
         if workerId is not None:
             self.workerId = workerId
         else:
-            self.workerId = -1
+            self.workerId = "-1"
 
         self.cppLogUtils = logutils.LogUtils()
         self._stop = PyEvent()
@@ -528,6 +528,7 @@ class Pipeline(object):
             finalQueue = self.queueList[self.nStages]
             finalClipboard = finalQueue.getNextDataset()
             looplog.log(Log.DEBUG, "deleting final clipboard")
+            looplog.done()
             # delete entries on the clipboard
             finalClipboard.close()
             del finalClipboard
