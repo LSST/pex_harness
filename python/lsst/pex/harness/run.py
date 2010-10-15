@@ -118,7 +118,7 @@ def createLog():
     return log
 
 
-def launchPipeline(policyFile, runid, name=None, verbosity=None, logdir=None):
+def launchPipeline(policyFile, runid, workerid=None, name=None, verbosity=None, logdir=None):
     if not os.environ.has_key(pkgdirvar):
         raise RuntimeError(pkgdirvar + " env. var not setup")
 
@@ -126,6 +126,12 @@ def launchPipeline(policyFile, runid, name=None, verbosity=None, logdir=None):
 
     logger.log(Log.INFO, "policyFile " + policyFile) 
     logger.log(Log.INFO, "runid " + runid) 
+
+    if(workerid == None): 
+        logger.log(Log.INFO, "workerid is None") 
+    else:
+        logger.log(Log.INFO, "workerid " + workerid) 
+
     if(name == None): 
         logger.log(Log.INFO, "name is None") 
     else:
@@ -139,8 +145,12 @@ def launchPipeline(policyFile, runid, name=None, verbosity=None, logdir=None):
     clineOptions = ""
     if name is not None:
         clineOptions += " -n %s" % name
+
     if verbosity is not None:
         clineOptions += " -V %s" % verbosity
+
+    if workerid is not None:
+        clineOptions += " -w %s" % workerid
 
     clineOptions += " -g %s" % logdir
 

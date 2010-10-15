@@ -67,7 +67,7 @@ for parallel computations.
 class Pipeline(object):
     '''Python Pipeline class implementation. Contains main pipeline workflow'''
 
-    def __init__(self, runId='-1', pipelinePolicyName=None, name="unnamed"):
+    def __init__(self, runId='-1', pipelinePolicyName=None, name="unnamed", workerId=None):
         """
         Initialize the Pipeline: create empty Queue and Stage lists;
         import the C++ Pipeline instance; initialize the MPI environment
@@ -93,6 +93,10 @@ class Pipeline(object):
         self.executionMode = 0
         self._runId = runId
         self.pipelinePolicyName = pipelinePolicyName
+        if workerId is not None:
+            self.workerId = workerId
+        else:
+            self.workerId = "-1"
 
         self.cppLogUtils = logutils.LogUtils()
         self._stop = PyEvent()
@@ -139,7 +143,7 @@ class Pipeline(object):
         self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir)
+        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self.workerId)
 
         # The log for use in the Python Pipeline
         self.log = self.cppLogUtils.getLogger()
@@ -201,6 +205,7 @@ class Pipeline(object):
                                 << Prop("universeSize", self.universeSize) \
                                 << Prop("runID", self._runId) \
                                 << Prop("rank", -1)   \
+                                << Prop("workerId", self.workerId) \
                                 << LogRec.endr;
         
 
@@ -417,7 +422,7 @@ class Pipeline(object):
             loopEventA = self.loopEventList[k]
             loopEventB = self.loopEventList[k+1]
             oneSliceThread = SliceThread(i, self._pipelineName, self.pipelinePolicyName, \
-               self._runId, self.logthresh, self.universeSize, loopEventA, loopEventB, self._logdir)
+               self._runId, self.logthresh, self.universeSize, loopEventA, loopEventB, self._logdir, self.workerId)
             self.sliceThreadList.append(oneSliceThread)
 
         for slicei in self.sliceThreadList:
@@ -471,10 +476,10 @@ class Pipeline(object):
                 break
             else:
                 visitcount += 1
-                looplog.setPreamblePropertyInt("loopnum", visitcount)
+                looplog.setPreamblePropertyInt("LOOPNUM", visitcount)
                 looplog.start()
-                stagelog.setPreamblePropertyInt("loopnum", visitcount)
-                proclog.setPreamblePropertyInt("loopnum", visitcount)
+                stagelog.setPreamblePropertyInt("LOOPNUM", visitcount)
+                proclog.setPreamblePropertyInt("LOOPNUM", visitcount)
 
                 # self.cppPipeline.invokeContinue()
 
@@ -482,9 +487,9 @@ class Pipeline(object):
 
                 self.errorFlagged = 0
                 for iStage in range(1, self.nStages+1):
-                    stagelog.setPreamblePropertyInt("stageId", iStage)
+                    stagelog.setPreamblePropertyInt("STAGEID", iStage)
                     stagelog.start(self.stageNames[iStage-1] + " loop")
-                    proclog.setPreamblePropertyInt("stageId", iStage)
+                    proclog.setPreamblePropertyInt("STAGEID", iStage)
 
                     stage = self.stageList[iStage-1]
 
@@ -523,6 +528,7 @@ class Pipeline(object):
             finalQueue = self.queueList[self.nStages]
             finalClipboard = finalQueue.getNextDataset()
             looplog.log(Log.DEBUG, "deleting final clipboard")
+            looplog.done()
             # delete entries on the clipboard
             finalClipboard.close()
             del finalClipboard

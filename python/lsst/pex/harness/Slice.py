@@ -45,7 +45,7 @@ import lsst.ctrl.events as events
 import lsst.pex.exceptions
 from lsst.pex.exceptions import *
 
-import os, sys, re, traceback, time
+import os, sys, re, traceback, time, datetime
 import threading
 from threading import Event as PyEvent
 
@@ -62,7 +62,7 @@ class Slice(object):
     '''Slice: Python Slice class implementation. '''
 
     #------------------------------------------------------------------------
-    def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed", rank=-1):
+    def __init__(self, runId="TEST", pipelinePolicyName=None, name="unnamed", rank=-1, workerId=None):
         """
         Initialize the Slice: create an empty Queue List and Stage List;
         Import the C++ Slice  and initialize the MPI environment
@@ -93,6 +93,13 @@ class Slice(object):
         self.cppLogUtils = logutils.LogUtils()
         self._rank = int(rank)
 
+        if workerId is not None:
+            self.workerId = workerId
+        else:
+            self.workerId = -1
+
+
+
     def __del__(self):
         """
         Delete the Slice object: cleanup 
@@ -119,10 +126,10 @@ class Slice(object):
             self.eventBrokerHost = self.executePolicy.getString('eventBrokerHost')
         else:
             self.eventBrokerHost = "lsst8.ncsa.uiuc.edu"   # default value
-        self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
+        self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost)
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self._rank)
+        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self._rank, self.workerId)
 
         # The log for use in the Python Slice
         self.log = self.cppLogUtils.getLogger()
@@ -141,6 +148,11 @@ class Slice(object):
         """
         Configure the slice via reading a Policy file 
         """
+
+        log = Log(self.log, "configureSlice")
+
+        conflog = TracingLog(self.log, "configureSlice", self.TRACE)
+        conflog.start()
 
         stgcfg = self.executePolicy.getArray("appStage")
 
@@ -166,9 +178,6 @@ class Slice(object):
         if (self.executePolicy.exists('database.url')):
             psLookup.set('dbUrl', self.executePolicy.get('database.url'))
 
-        log = Log(self.log, "configureSlice")
-        log.log(Log.INFO,
-                "Logging messages using threshold=%i" % log.getThreshold())
         LogRec(log, self.VERB1) << "Configuring Slice"        \
                                 << Prop("universeSize", self.universeSize) \
                                 << Prop("runID", self._runId) \
@@ -317,20 +326,33 @@ class Slice(object):
                 log.log(self.VERB3, "Creating receiver %s" % (topic))
 
 
+        conflog.done()
+
         log.log(self.VERB1, "Slice configuration complete");
 
     def initializeQueues(self):
         """
         Initialize the Queue List
         """
+        log = Log(self.log, "initializeQueues")
+        queuelog = TracingLog(self.log, "initializeQueues", self.TRACE)
+        queuelog.start()
+
         for iQueue in range(1, self.nStages+1+1):
             queue = Queue()
             self.queueList.append(queue)
+
+        queuelog.done()
 
     def initializeStages(self):
         """
         Initialize the Stage List
         """
+        log = Log(self.log, "initializeStages")
+
+        istageslog = TracingLog(self.log, "initializeStages", self.TRACE)
+        istageslog.start()
+
         for iStage in range(1, self.nStages+1):
             # Make a Policy object for the Stage Policy file
             stagePolicy = self.stagePolicyList[iStage-1]
@@ -357,6 +379,8 @@ class Slice(object):
             # stageObject.setLookup(self._lookup)
             stageObject.initialize(outputQueue, inputQueue)
             self.stageList.append(stageObject)
+
+        istageslog.done()
 
     def startInitQueue(self):
         """
@@ -394,10 +418,13 @@ class Slice(object):
         looplog = TracingLog(self.log, "visit", self.TRACE)
         stagelog = TracingLog(looplog, "stage", self.TRACE-1)
 
+        self.log.log(Log.INFO, "Begin startStagesLoopLog")
+
         self.threadBarrier()
 
         visitcount = 0
         while True:
+            self.log.log(Log.INFO, "visitcount %d %s " %  (visitcount, datetime.datetime.now()))
 
             if ((self.executionMode == 1) and (visitcount == 1)):
                 LogRec(looplog, Log.INFO)  << "terminating Slice Stage Loop "
@@ -406,16 +433,18 @@ class Slice(object):
 
 
             visitcount += 1
-            looplog.setPreamblePropertyInt("loopnum", visitcount)
+            looplog.setPreamblePropertyInt("LOOPNUM", visitcount)
             looplog.start()
-            stagelog.setPreamblePropertyInt("loopnum", visitcount)
+            stagelog.setPreamblePropertyInt("LOOPNUM", visitcount)
+            timesVisitStart = os.times()
 
             self.startInitQueue()    # place an empty clipboard in the first Queue
 
             self.errorFlagged = 0
             for iStage in range(1, self.nStages+1):
-                stagelog.setPreamblePropertyInt("stageId", iStage)
+                stagelog.setPreamblePropertyInt("STAGEID", iStage)
                 stagelog.start(self.stageNames[iStage-1] + " loop")
+                stagelog.log(Log.INFO, "Begin stage loop iteration iStage %d " % iStage)
 
                 stageObject = self.stageList[iStage-1]
                 self.handleEvents(iStage, stagelog)
@@ -434,6 +463,10 @@ class Slice(object):
                 # synchronize after postprocess
                 self.threadBarrier()
 
+                stagelog.log(self.TRACE, "End stage loop iteration iStage %d " % iStage)
+                stagelog.log(self.TRACE, "End stage loop iteration : ErrorCheck \
+                   iStage %d stageName %s errorFlagged_%d " % (iStage, self.stageNames[iStage-1], self.errorFlagged) )
+
                 stagelog.done()
 
             looplog.log(self.VERB2, "Completed Stage Loop")
@@ -451,6 +484,14 @@ class Slice(object):
                 looplog.log(Log.DEBUG, "Deleted final Clipboard")
             else:
                 looplog.log(self.VERB3, "Error flagged on this visit")
+
+            timesVisitDone = os.times()
+            utime = timesVisitDone[0] - timesVisitStart[0]
+            stime = timesVisitDone[1] - timesVisitStart[1]
+            wtime = timesVisitDone[4] - timesVisitStart[4]
+            totalTime = utime + stime
+            looplog.log(Log.INFO, "visittimes : utime %.4f stime %.4f  total %.4f wtime %.4f" % (utime, stime, totalTime, wtime) )
+
             looplog.done()
 
         startStagesLoopLog.done()
