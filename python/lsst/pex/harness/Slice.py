@@ -416,7 +416,7 @@ class Slice(object):
         """
         startStagesLoopLog = self.log.traceBlock("startStagesLoop", self.TRACE)
         looplog = TracingLog(self.log, "visit", self.TRACE)
-        stagelog = TracingLog(looplog, "stage", self.TRACE-1)
+        stagelog = TracingLog(looplog, "stage", self.TRACE)
 
         self.log.log(Log.INFO, "Begin startStagesLoopLog")
 
@@ -431,18 +431,23 @@ class Slice(object):
                 # self.cppPipeline.invokeShutdown()
                 break
 
-
             visitcount += 1
             looplog.setPreamblePropertyInt("LOOPNUM", visitcount)
-            looplog.start()
+
             stagelog.setPreamblePropertyInt("LOOPNUM", visitcount)
+            # stagelog.setPreamblePropertyInt("stagename", visitcount)
             timesVisitStart = os.times()
+
+            looplog.setPreamblePropertyFloat("usertime", timesVisitStart[0])
+            looplog.setPreamblePropertyFloat("systemtime", timesVisitStart[1])
+            looplog.start()
 
             self.startInitQueue()    # place an empty clipboard in the first Queue
 
             self.errorFlagged = 0
             for iStage in range(1, self.nStages+1):
                 stagelog.setPreamblePropertyInt("STAGEID", iStage)
+                stagelog.setPreamblePropertyString("stagename", self.stageNames[iStage-1])
                 stagelog.start(self.stageNames[iStage-1] + " loop")
                 stagelog.log(Log.INFO, "Begin stage loop iteration iStage %d " % iStage)
 
@@ -471,9 +476,7 @@ class Slice(object):
 
             looplog.log(self.VERB2, "Completed Stage Loop")
 
-            # If no error/exception was flagged, 
-            # then clear the final Clipboard in the final Queue
-
+            # If no error/exception was flagged, then clear the final Clipboard in the final Queue
             if self.errorFlagged == 0:
                 looplog.log(Log.DEBUG,
                             "Retrieving final Clipboard for deletion")
@@ -492,7 +495,13 @@ class Slice(object):
             totalTime = utime + stime
             looplog.log(Log.INFO, "visittimes : utime %.4f stime %.4f  total %.4f wtime %.4f" % (utime, stime, totalTime, wtime) )
 
+            looplog.setPreamblePropertyFloat("usertime", timesVisitDone[0])
+            looplog.setPreamblePropertyFloat("systemtime", timesVisitDone[1])
             looplog.done()
+
+            # LogRec(looplog, Log.INFO) << Prop("usertime", utime) \
+            #                            << Prop("systemtime", stime) \
+            #                           << LogRec.endr;
 
         startStagesLoopLog.done()
 

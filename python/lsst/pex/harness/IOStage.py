@@ -49,6 +49,8 @@ import lsst.pex.policy as pexPolicy
 from lsst.pex.logging import Log
 import lsst.pex.exceptions as pexExcept
 
+from lsst.pex.harness.harnessLib import TracingLog
+
 class OutputStageSerial(harnessStage.SerialProcessing):
     """A Stage that persists data."""
 
@@ -217,9 +219,13 @@ def _output(stage, policy, clipboard, log):
             dsList.append(ds)
             if stage.butler is not None:
                 # Use the butler to figure out storage and locations.
+                # Write Using Butler
+                iolog = TracingLog(log, "write_using_butler", Log.INFO)
+                iolog.start()
                 log.log(Log.INFO, "persisting %s as %s with keys %s" % (item,
                     ds.type, ds.ids))
                 stage.butler.put(itemData, ds.type, dataId=ds.ids)
+                iolog.done()
                 log.log(Log.INFO, "persisting %s complete" % (item,))
                 somethingWasOutput = True
                 continue
@@ -245,10 +251,14 @@ def _output(stage, policy, clipboard, log):
 
         # Persist the item.
 
+        # Write Without Butler
+        iolog = TracingLog(log, "write_without_butler", Log.INFO)
+        iolog.start()
         if hasattr(itemData, '__deref__'):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
+        iolog.done()
         log.log(Log.INFO, "persisting %s complete" % (item,))
         somethingWasOutput = True
 
@@ -383,6 +393,8 @@ def _read(item, cppType, pythonType, storageInfo,
         storage = persistence.getRetrieveStorage(storageName, logLoc)
         storageList.append(storage)
 
+    iolog = TracingLog(log, "read_without_butler", Log.INFO)
+    iolog.start()
     # Retrieve the item.
     itemData = persistence.unsafeRetrieve(cppType, storageList, additionalData)
 
@@ -390,6 +402,7 @@ def _read(item, cppType, pythonType, storageInfo,
 
     cvt = getattr(pythonType, "swigConvert")
     finalItem = cvt(itemData)
+    iolog.done()
     log.log(Log.INFO, "loading %s complete" % (item,));
 
     # If Persistable and subclasses are NOT wrapped using SWIG_SHARED_PTR,
