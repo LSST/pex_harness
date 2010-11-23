@@ -469,7 +469,7 @@ class Slice(object):
                 self.threadBarrier()
 
                 stagelog.log(self.TRACE, "End stage loop iteration iStage %d " % iStage)
-                stagelog.log(self.TRACE, "End stage loop iteration : ErrorCheck \
+                stagelog.log(Log.INFO, "End stage loop iteration : ErrorCheck \
                    iStage %d stageName %s errorFlagged_%d " % (iStage, self.stageNames[iStage-1], self.errorFlagged) )
 
                 stagelog.done()
