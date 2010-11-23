@@ -38,6 +38,7 @@ Access to the C++ harness classes from the lsst.pex.harness module
 #include "lsst/pex/policy/Dictionary.h"
 #include "lsst/daf/base/PropertySet.h"
 #include "lsst/daf/persistence/PropertySetFormatter.h"
+#include "lsst/pex/logging/BlockTimingLog.h"
 #include "lsst/pex/logging/Log.h"
 #include "lsst/pex/logging/ScreenLog.h"
 #include "lsst/pex/logging/DualLog.h"
