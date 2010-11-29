@@ -27,9 +27,9 @@ from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.stage import StageProcessing
 from lsst.pex.harness.stage import NoOpParallelProcessing
 from lsst.pex.harness.Clipboard import Clipboard
-from lsst.pex.harness.harnessLib import TracingLog
 from lsst.pex.harness.Directories import Directories
 from lsst.pex.logging import Log, LogRec, Prop
+from lsst.pex.logging import BlockTimingLog
 from lsst.pex.harness import harnessLib as logutils
 
 import lsst.pex.policy as policy
@@ -68,7 +68,7 @@ class Slice(object):
         Import the C++ Slice  and initialize the MPI environment
         """
         # log message levels
-        self.TRACE = TracingLog.TRACE
+        self.TRACE = BlockTimingLog.INSTRUM+2
         self.VERB1 = self.TRACE
         self.VERB2 = self.VERB1 - 1
         self.VERB3 = self.VERB2 - 1
@@ -129,7 +129,10 @@ class Slice(object):
         self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost)
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self._rank, self.workerId)
+        self.cppLogUtils.initializeSliceLogger(doLogFile, self._pipelineName,
+                                               self._runId, self._logdir,
+                                               self._rank, self.workerId,
+                                               BlockTimingLog.LINUXUDATA)
 
         # The log for use in the Python Slice
         self.log = self.cppLogUtils.getLogger()
@@ -141,7 +144,7 @@ class Slice(object):
                 self.logthresh = self.TRACE
         self.setLogThreshold(self.logthresh)
 
-        self.log.addDestination(cout, Log.DEBUG);
+        # self.log.addDestination(cout, Log.DEBUG);
 
 
     def configureSlice(self):
@@ -151,7 +154,7 @@ class Slice(object):
 
         log = Log(self.log, "configureSlice")
 
-        conflog = TracingLog(self.log, "configureSlice", self.TRACE)
+        conflog = BlockTimingLog(self.log, "configureSlice", self.TRACE)
         conflog.start()
 
         stgcfg = self.executePolicy.getArray("appStage")
@@ -335,7 +338,7 @@ class Slice(object):
         Initialize the Queue List
         """
         log = Log(self.log, "initializeQueues")
-        queuelog = TracingLog(self.log, "initializeQueues", self.TRACE)
+        queuelog = BlockTimingLog(self.log, "initializeQueues", self.TRACE)
         queuelog.start()
 
         for iQueue in range(1, self.nStages+1+1):
@@ -350,7 +353,7 @@ class Slice(object):
         """
         log = Log(self.log, "initializeStages")
 
-        istageslog = TracingLog(self.log, "initializeStages", self.TRACE)
+        istageslog = BlockTimingLog(self.log, "initializeStages", self.TRACE)
         istageslog.start()
 
         for iStage in range(1, self.nStages+1):
@@ -414,9 +417,9 @@ class Slice(object):
         the analogous stage loop in the central Pipeline by means of
         MPI Bcast and Barrier calls.
         """
-        startStagesLoopLog = self.log.traceBlock("startStagesLoop", self.TRACE)
-        looplog = TracingLog(self.log, "visit", self.TRACE)
-        stagelog = TracingLog(looplog, "stage", self.TRACE)
+        startStagesLoopLog = self.log.timeBlock("startStagesLoop", self.TRACE)
+        looplog = BlockTimingLog(self.log, "visit", self.TRACE)
+        stagelog = BlockTimingLog(looplog, "stage", self.TRACE)
 
         self.log.log(Log.INFO, "Begin startStagesLoopLog")
 
@@ -541,7 +544,7 @@ class Slice(object):
         Executes the try/except construct for Stage process() call 
         """
         # Important try - except construct around stage process() 
-        proclog = stagelog.traceBlock("tryProcess", self.TRACE-2);
+        proclog = stagelog.timeBlock("tryProcess", self.TRACE-2);
 
         stageObject = self.stageList[iStage-1]
         proclog.log(self.VERB3, "Getting process signal from Pipeline")
@@ -551,7 +554,7 @@ class Slice(object):
             # If no error/exception has been flagged, run process()
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
-                processlog = stagelog.traceBlock("process", self.TRACE)
+                processlog = stagelog.timeBlock("process", self.TRACE)
                 stageObject.applyProcess()
                 processlog.done()
             else:
@@ -608,7 +611,7 @@ class Slice(object):
         """
         Handles Events: transmit or receive events as specified by Policy
         """
-        log = stagelog.traceBlock("handleEvents", self.TRACE-2)
+        log = stagelog.timeBlock("handleEvents", self.TRACE-2)
         eventsSystem = events.EventSystem.getDefaultEventSystem()
 
         thisTopic = self.eventTopicList[iStage-1]
@@ -617,8 +620,8 @@ class Slice(object):
             log.log(self.VERB3, "Processing topic: " + thisTopic)
             sliceTopic = self.sliceEventTopicList[iStage-1]
 
-            waitlog = log.traceBlock("eventwait " + sliceTopic, self.TRACE,
-                                     "wait for event...")
+            waitlog = log.timeBlock("eventwait " + sliceTopic, self.TRACE,
+                                    "wait for event...")
 
             # Receive the event from the Pipeline 
             # Call with a timeout , followed by a call to time sleep to free the GIL 

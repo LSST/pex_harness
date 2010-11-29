@@ -70,7 +70,8 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
                                 const std::string& name,
                                 const std::string& runId,
                                 const std::string& logdir,
-                                const std::string& workerid
+                                const std::string& workerid,
+                                int resourceUsageFlags
                                 ) {
     std::stringstream logfileBuffer;
     std::string logfile;
@@ -96,9 +97,10 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
         eventSystem.createTransmitter(_evbHost, "logging");
     }
 
-    boost::shared_ptr<TracingLog> 
+    boost::shared_ptr<BlockTimingLog> 
         lp(setupHarnessLogging(std::string(runId), -1, _evbHost, name, workerid,
-                               outlog, "harness.pipeline"));
+                               outlog, "harness.pipeline",resourceUsageFlags));
+                               
                                
     pipelineLog = *lp;
 
@@ -112,13 +114,14 @@ void LogUtils::initializeLogger(bool isLocalLogMode,  //!< A flag for writing lo
  *  Add an ofstreamDestination to the default logger if the localLogMode is True
  */
 void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writing logs to local files
-                                const std::string& name,
-                                const std::string& runId,
-                                const std::string& logdir,
-                                const int rank,
-                                const std::string& workerid
-                            ) {
-
+                                     const std::string& name,
+                                     const std::string& runId,
+                                     const std::string& logdir,
+                                     const int rank,
+                                     const std::string& workerid,
+                                     int resourceUsageFlags
+                                     ) 
+{
     std::string logfile;
     if(isLocalLogMode) {
         /* Make a log file name coded to the rank    */
@@ -140,9 +143,10 @@ void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writin
     }
 
     
-    boost::shared_ptr<TracingLog>
+    boost::shared_ptr<BlockTimingLog>
         lp(setupHarnessLogging(std::string(runId), rank, _evbHost,
-                               name, workerid, outlog, "harness.slice"));
+                               name, workerid, outlog, "harness.slice",
+                               resourceUsageFlags));
     pipelineLog = *lp;
 
     pipelineLog.format(Log::INFO, "Slice Logger initialized for pid=%d", getpid());
@@ -152,6 +156,55 @@ void LogUtils::initializeSliceLogger(bool isLocalLogMode, //!< A flag for writin
                         "replicating messages to %s", logfile.c_str());
 }
 
+using lsst::ctrl::events::EventSystem;
+using lsst::ctrl::events::EventLog;
+using lsst::pex::logging::Log;
+using lsst::pex::logging::Rec;
+using lsst::pex::logging::LogFormatter;
+using lsst::pex::logging::IndentedFormatter;
+using lsst::pex::logging::LogDestination;
+
+BlockTimingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
+                                    const std::string& eventBrokerHost, 
+                                    const std::string& pipename,
+                                    const std::string& workerid,
+                                    std::ostream *messageStrm,
+                                    const std::string& logname,
+                                    int resourceUsageFlags)
+{
+    if (eventBrokerHost.length() > 0) {
+        /*  Move this to LogUtils.cc and only call for the Pipeline 
+            Re-examine this for MPI Slices 
+        EventSystem& eventSystem = EventSystem::getDefaultEventSystem();
+        eventSystem.createTransmitter(eventBrokerHost, "LSSTLogging");
+        */ 
+        EventLog::createDefaultLog(runId, sliceId);
+    }
+    Log& root = Log::getDefaultLog();
+    root.addPreambleProperty("PIPELINE", pipename);
+    root.addPreambleProperty("workerid", workerid);
+
+    if (messageStrm != 0) {
+        boost::shared_ptr<LogFormatter> frmtr(new IndentedFormatter(true));
+        boost::shared_ptr<LogDestination> 
+            dest(new LogDestination(messageStrm, frmtr, Log::DEBUG));
+        root.addDestination(dest);
+    }
+
+    BlockTimingLog *out = 0;
+    try {
+        out = new BlockTimingLog(root, logname);
+        out->setUsageFlags(resourceUsageFlags);
+        out->format(Log::INFO, 
+                    "Harness Logger initialized with message threshold = %i", 
+                    out->getThreshold());
+        return out;
+    }
+    catch (...) {
+        delete out;
+        throw;
+    }
+}
 
 }
 }

@@ -47,27 +47,25 @@
 #include "lsst/pex/policy/Policy.h"
 #include "lsst/utils/Utils.h"
 
-#include "lsst/pex/harness/TracingLog.h"
 #include "lsst/daf/base/PropertySet.h"
 #include "lsst/pex/logging/Component.h"
 #include "lsst/pex/logging/LogRecord.h"
 #include "lsst/pex/logging/LogDestination.h"
 #include "lsst/pex/logging/LogFormatter.h"
 #include "lsst/pex/logging/Log.h"
-#include "lsst/pex/logging/DualLog.h"
-#include "lsst/pex/logging/ScreenLog.h"
+#include "lsst/pex/logging/BlockTimingLog.h"
 #include "lsst/ctrl/events/EventLog.h"
 #include "lsst/pex/exceptions.h"
 #include <boost/shared_ptr.hpp>
 
 using namespace lsst::daf::base;
-using namespace lsst::pex::harness;
 
 using namespace std;
 using namespace lsst;
 using namespace boost;
 
 using lsst::pex::logging::Log;
+using lsst::pex::logging::BlockTimingLog;
 
 namespace lsst {
 namespace pex {
@@ -90,22 +88,24 @@ public:
     ~LogUtils(); // destructor
 
     void initializeLogger(bool isLocalLogMode,  //!< A flag for writing logs to local files
-                                const std::string& name,
-                                const std::string& runId,
-                                const std::string& logdir,
-                                const std::string& workerid 
-                                ); 
+                          const std::string& name,
+                          const std::string& runId,
+                          const std::string& logdir,
+                          const std::string& workerid,
+                          int resourceUsageFlags = 0  
+                          ); 
 
     void initializeSliceLogger(bool isLocalLogMode, //!< A flag for writing logs to local files
-                                const std::string& name,
-                                const std::string& runId,
-                                const std::string& logdir,
-                                const int rank,
-                                const std::string& workerid
-                            );
+                               const std::string& name,
+                               const std::string& runId,
+                               const std::string& logdir,
+                               const int rank,
+                               const std::string& workerid,
+                               int resourceUsageFlags = 0 
+                               );
 
 
-    TracingLog& getLogger() {
+    BlockTimingLog& getLogger() {
         return pipelineLog;
     }
 
@@ -114,11 +114,39 @@ public:
     }
     const std::string& getEventBrokerHost() {  return _evbHost;  }
 
-    TracingLog pipelineLog;
+    BlockTimingLog pipelineLog;
     std::string _evbHost;
     ofstream* outlog;
 
 };
+
+/**
+ * @brief create and configure logging for a harness application 
+ * 
+ * This will create and configure a default log needed to send all log
+ * messages through the event system.  It then creates a child log to 
+ * be used by a harness class instance (i.e. Pipeline or Slice).
+ * @param runId             the production run identifier that harness is 
+ *                             running under
+ * @param sliceId           the slice identifier (-1 for the master process)
+ * @param eventBrokerHost   the hostname where the desired event broker is 
+ *                             running
+ * @param pipename          the name used to identify the pipeline
+ * @param messageStrm       if non-null, a (file) stream to replicate the 
+ *                             messages in.
+ * @param logname           the name to give to the harness logger (default:
+ *                             "harness")
+ * @param resourceUsageFlags  the OR-ed flags that control the resource usage
+ *                             data to collect; see BlockTimingLog. (default:
+ *                             NOUDATA, no resource usage data.)
+ */
+BlockTimingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
+                                    const std::string& eventBrokerHost="", 
+                                    const std::string& pipename="unnamed",
+                                    const std::string& workerid="-1",
+                                    std::ostream *messageStrm=0,
+                                    const std::string& logname="harness",
+                                    int resourceUsageFlags=0);
 
 } // namespace harness 
 

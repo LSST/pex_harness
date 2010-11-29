@@ -27,8 +27,7 @@ import os, sys, re, traceback, time
 from threading import Thread
 from threading import Event as PyEvent
 
-from lsst.pex.logging import Log 
-from lsst.pex.harness.harnessLib import TracingLog
+from lsst.pex.logging import Log, BlockTimingLog
 
 import lsst.ctrl.events as events
 
@@ -54,12 +53,12 @@ class ShutdownThread(threading.Thread):
         self.pid = os.getpid()
 
         # log message levels
-        self.TRACE = TracingLog.TRACE
+        self.TRACE = BlockTimingLog.INSTRUM+2
         self.VERB1 = self.TRACE
         self.VERB2 = self.VERB1 - 1
         self.VERB3 = self.VERB2 - 1
         self.logthresh = self.pipeline.getLogThreshold()
-
+        
     def getPid (self):
         return self.pid
 

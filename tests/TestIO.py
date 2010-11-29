@@ -26,6 +26,7 @@
 import lsst.pex.harness.Clipboard
 import lsst.pex.harness.Queue
 import lsst.pex.harness.IOStage
+from lsst.pex.logging import Log, BlockTimingLog, ScreenLog
 
 # Get the policies
 outputPolicy = lsst.pex.policy.Policy.createPolicy("tests/policy/output.policy")
@@ -45,12 +46,18 @@ sysdata["universeSize"] = 100
 sysdata["runId"] =  "testrun"
 eventBrokerHost = "lsst4.ncsa.uiuc.edu"
 
+ScreenLog.createDefaultLog(True)
+log = BlockTimingLog(Log.getDefaultLog(), "TestIO", BlockTimingLog.INSTRUM)
+log.setUsageFlags(log.ALLUDATA)
+log.setThreshold(log.DEBUG)
+log.log(log.INFO, "hello")
+
 # Create and initialize the stages
-outputStage = lsst.pex.harness.IOStage.OutputStageParallel(outputPolicy, None, eventBrokerHost, sysdata)
+outputStage = lsst.pex.harness.IOStage.OutputStageParallel(outputPolicy, log, eventBrokerHost, sysdata)
 outputStage.initialize(q2, q1)
 
 sysdata["rank"] = -1
-inputStage = lsst.pex.harness.IOStage.InputStageSerial(inputPolicy, None, eventBrokerHost, sysdata)
+inputStage = lsst.pex.harness.IOStage.InputStageSerial(inputPolicy, log, eventBrokerHost, sysdata)
 inputStage.initialize(q4, q3)
 # Note: no direct connection between the stages!
 

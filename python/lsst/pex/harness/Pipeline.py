@@ -28,8 +28,8 @@ from lsst.pex.harness.stage import StageProcessing
 from lsst.pex.harness.stage import NoOpSerialProcessing
 from lsst.pex.harness.Clipboard import Clipboard
 from lsst.pex.harness.Directories import Directories
-from lsst.pex.harness.harnessLib import TracingLog
 from lsst.pex.logging import Log, LogRec, cout, Prop
+from lsst.pex.logging import BlockTimingLog
 from lsst.pex.harness import harnessLib as logutils
 
 from lsst.pex.harness.SliceThread import SliceThread
@@ -73,7 +73,7 @@ class Pipeline(object):
         import the C++ Pipeline instance; initialize the MPI environment
         """
         # log message levels
-        self.TRACE = TracingLog.TRACE
+        self.TRACE = BlockTimingLog.INSTRUM+2
         self.VERB1 = self.TRACE
         self.VERB2 = self.VERB1 - 1
         self.VERB3 = self.VERB2 - 1
@@ -143,7 +143,10 @@ class Pipeline(object):
         self.cppLogUtils.setEventBrokerHost(self.eventBrokerHost);
 
         doLogFile = self.executePolicy.getBool('localLogMode')
-        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName, self._runId, self._logdir, self.workerId)
+        self.cppLogUtils.initializeLogger(doLogFile, self._pipelineName,
+                                          self._runId, self._logdir,
+                                          self.workerId,
+                                          BlockTimingLog.LINUXUDATA)
 
         # The log for use in the Python Pipeline
         self.log = self.cppLogUtils.getLogger()
@@ -155,7 +158,7 @@ class Pipeline(object):
                 self.logthresh = self.TRACE
         self.setLogThreshold(self.logthresh)
 
-        self.log.addDestination(cout, Log.DEBUG);
+        # self.log.addDestination(cout, Log.DEBUG);
 
     def configurePipeline(self):
         """
@@ -367,7 +370,7 @@ class Pipeline(object):
         """
         Initialize the Stage List for the Pipeline
         """
-        log = self.log.traceBlock("initializeStages", self.TRACE-2)
+        log = self.log.timeBlock("initializeStages", self.TRACE-2)
 
         for iStage in range(1, self.nStages+1):
             # Make a Policy object for the Stage Policy file
@@ -404,7 +407,7 @@ class Pipeline(object):
         """
         Initialize the Queue by defining an initial dataset list
         """
-        log = self.log.traceBlock("startSlices", self.TRACE-2)
+        log = self.log.timeBlock("startSlices", self.TRACE-2)
 
         log.log(self.VERB3, "Number of slices " + str(self.nSlices));
 
@@ -457,10 +460,10 @@ class Pipeline(object):
         """
         Method to execute loop over Stages
         """
-        startStagesLoopLog = self.log.traceBlock("startStagesLoop", self.TRACE)
-        looplog = TracingLog(self.log, "visit", self.TRACE)
-        stagelog = TracingLog(looplog, "stage", self.TRACE-1)
-        proclog = TracingLog(stagelog, "process", self.TRACE)
+        startStagesLoopLog = self.log.timeBlock("startStagesLoop", self.TRACE)
+        looplog = BlockTimingLog(self.log, "visit", self.TRACE)
+        stagelog = BlockTimingLog(looplog, "stage", self.TRACE-1)
+        proclog = BlockTimingLog(stagelog, "process", self.TRACE)
 
         visitcount = 0 
 
@@ -671,7 +674,7 @@ class Pipeline(object):
         THIS GOES AWAY in non MPI harness 
         If needed, calls the C++ Pipeline invokeSyncSlices
         """
-        invlog = stagelog.traceBlock("invokeSyncSlices", self.TRACE-1)
+        invlog = stagelog.timeBlock("invokeSyncSlices", self.TRACE-1)
         if(self.shareDataList[iStage-1]):
             invlog.log(self.VERB3, "Calling invokeSyncSlices")
             # self.cppPipeline.invokeSyncSlices()  
@@ -682,14 +685,14 @@ class Pipeline(object):
         """
         Executes the try/except construct for Stage preprocess() call 
         """
-        prelog = stagelog.traceBlock("tryPreProcess", self.TRACE-2);
+        prelog = stagelog.timeBlock("tryPreProcess", self.TRACE-2);
 
         # Important try - except construct around stage preprocess() 
         try:
             # If no error/exception has been flagged, run preprocess()
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
-                processlog = stagelog.traceBlock("preprocess", self.TRACE)
+                processlog = stagelog.timeBlock("preprocess", self.TRACE)
                 self.interQueue = stage.applyPreprocess()
                 processlog.done()
             else:
@@ -741,14 +744,14 @@ class Pipeline(object):
         """
         Executes the try/except construct for Stage postprocess() call 
         """
-        postlog = stagelog.traceBlock("tryPostProcess",self.TRACE-2);
+        postlog = stagelog.timeBlock("tryPostProcess",self.TRACE-2);
 
         # Important try - except construct around stage postprocess() 
         try:
             # If no error/exception has been flagged, run postprocess()
             # otherwise, simply pass along the Clipboard 
             if (self.errorFlagged == 0):
-                processlog = stagelog.traceBlock("postprocess", self.TRACE)
+                processlog = stagelog.timeBlock("postprocess", self.TRACE)
                 stage.applyPostprocess(self.interQueue)
                 processlog.done()
             else:
@@ -820,7 +823,7 @@ class Pipeline(object):
         """
         Handles Events: transmit or receive events as specified by Policy
         """
-        log = stagelog.traceBlock("handleEvents", self.TRACE-2)
+        log = stagelog.timeBlock("handleEvents", self.TRACE-2)
         eventsSystem = events.EventSystem.getDefaultEventSystem()
 
         thisTopic = self.eventTopicList[iStage-1]
@@ -831,7 +834,7 @@ class Pipeline(object):
             log.log(self.VERB3, "Processing topic: " + thisTopic)
             sliceTopic = "%s_%s" % (thisTopic, self._pipelineName)
 
-            waitlog = log.traceBlock("eventwait " + thisTopic, self.TRACE,
+            waitlog = log.timeBlock("eventwait " + thisTopic, self.TRACE,
                                      "wait for event...")
 
             inputParamPropertySetPtr = self.waitForEvent(thisTopic)
@@ -880,7 +883,7 @@ class Pipeline(object):
         """
         Place the event payload onto the Clipboard 
         """
-        log = self.log.traceBlock("populateClipboard", self.TRACE-2);
+        log = self.log.timeBlock("populateClipboard", self.TRACE-2);
 
         queue = self.queueList[iStage-1]
         clipboard = queue.element()

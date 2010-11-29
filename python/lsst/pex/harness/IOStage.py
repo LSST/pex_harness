@@ -46,10 +46,8 @@ from lsst.pex.harness import Dataset
 import lsst.daf.base as dafBase
 import lsst.daf.persistence as dafPersist
 import lsst.pex.policy as pexPolicy
-from lsst.pex.logging import Log
+from lsst.pex.logging import Log, BlockTimingLog
 import lsst.pex.exceptions as pexExcept
-
-from lsst.pex.harness.harnessLib import TracingLog
 
 class OutputStageSerial(harnessStage.SerialProcessing):
     """A Stage that persists data."""
@@ -131,7 +129,12 @@ class OutputStage(harnessStage.Stage):
 def _outputSetup(stage):
     """Set up an OutputStage."""
 
-    stage.log = Log(Log.getDefaultLog(), "pex.harness.iostage.output")
+    if not stage.log:
+        stage.log = BlockTimingLog(Log.getDefaultLog(),
+                                   "pex.harness.iostage.output")
+    else:
+        stage.log = BlockTimingLog(stage.log, "iostage.output")
+        
     defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
             "OutputStageDictionary.paf", "policy")
     defaults = pexPolicy.Policy.createPolicy(defaultFile,
@@ -220,13 +223,11 @@ def _output(stage, policy, clipboard, log):
             if stage.butler is not None:
                 # Use the butler to figure out storage and locations.
                 # Write Using Butler
-                iolog = TracingLog(log, "write_using_butler", Log.INFO)
-                iolog.start()
-                log.log(Log.INFO, "persisting %s as %s with keys %s" % (item,
-                    ds.type, ds.ids))
+                iolog = BlockTimingLog(log, "write_using_butler", Log.INFO-1)
+                iolog.start("persisting %s as %s with keys %s" %
+                            (item, ds.type, ds.ids))
                 stage.butler.put(itemData, ds.type, dataId=ds.ids)
                 iolog.done()
-                log.log(Log.INFO, "persisting %s complete" % (item,))
                 somethingWasOutput = True
                 continue
 
@@ -243,7 +244,7 @@ def _output(stage, policy, clipboard, log):
             storageName = storagePolicy.getString('storage')
             location = storagePolicy.getString('location')
             logLoc = dafPersist.LogicalLocation(location, additionalData)
-            log.log(Log.INFO, "persisting %s to %s" % (item, logLoc.locString()))
+            log.log(Log.INFO-1, "persisting %s to %s" % (item, logLoc.locString()))
             additionalData.add('StorageLocation.' + storageName, logLoc.locString())
             mainAdditionalData.add('StorageLocation.' + storageName, logLoc.locString())
             storage = persistence.getPersistStorage(storageName,  logLoc)
@@ -252,14 +253,13 @@ def _output(stage, policy, clipboard, log):
         # Persist the item.
 
         # Write Without Butler
-        iolog = TracingLog(log, "write_without_butler", Log.INFO)
-        iolog.start()
+        iolog = BlockTimingLog(log, "write_without_butler", Log.INFO-1)
+        iolog.start("persisting %s" % (item,))
         if hasattr(itemData, '__deref__'):
             persistence.persist(itemData.__deref__(), storageList, additionalData)
         else:
             persistence.persist(itemData, storageList, additionalData)
         iolog.done()
-        log.log(Log.INFO, "persisting %s complete" % (item,))
         somethingWasOutput = True
 
     if not somethingWasOutput:
@@ -271,7 +271,12 @@ def _output(stage, policy, clipboard, log):
 def _inputSetup(stage):
     """Set up an InputStage."""
 
-    stage.log = Log(Log.getDefaultLog(), "pex.harness.iostage.input")
+    if not stage.log:
+        stage.log = BlockTimingLog(Log.getDefaultLog(),
+                                   "pex.harness.iostage.output")
+    else:
+        stage.log = BlockTimingLog(stage.log, "iostage.output")
+
     defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
             "InputStageDictionary.paf", "policy")
     defaults = pexPolicy.Policy.createPolicy(defaultFile,
@@ -389,12 +394,12 @@ def _read(item, cppType, pythonType, storageInfo,
         logLoc = dafPersist.LogicalLocation(location, additionalData)
         if not logLoc.locString().startswith("mysql:"):
             _waitForPath(logLoc.locString(), log)
-        log.log(Log.INFO, "loading %s from %s" % (item, logLoc.locString()));
+        log.log(Log.INFO-1, "loading %s from %s" % (item, logLoc.locString()));
         storage = persistence.getRetrieveStorage(storageName, logLoc)
         storageList.append(storage)
 
-    iolog = TracingLog(log, "read_without_butler", Log.INFO)
-    iolog.start()
+    iolog = BlockTimingLog(log, "read_without_butler", Log.INFO-1)
+    iolog.start("load of %s" % (item,))
     # Retrieve the item.
     itemData = persistence.unsafeRetrieve(cppType, storageList, additionalData)
 
@@ -403,7 +408,6 @@ def _read(item, cppType, pythonType, storageInfo,
     cvt = getattr(pythonType, "swigConvert")
     finalItem = cvt(itemData)
     iolog.done()
-    log.log(Log.INFO, "loading %s complete" % (item,));
 
     # If Persistable and subclasses are NOT wrapped using SWIG_SHARED_PTR,
     # then one must make sure that the wrapper for the useful type owns
