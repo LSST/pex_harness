@@ -171,6 +171,10 @@ class Pipeline(object):
             self.nSlices = 0   # default value
         self.universeSize = self.nSlices + 1; 
 
+        if (self.executePolicy.exists('barrierDelay')):
+            self.barrierDelay = self.executePolicy.getDouble('barrierDelay')
+        else:
+            self.barrierDelay = 0.000001   # default value
 
         # do some juggling to capture the actual stage policy names.  We'll
         # use these to assign some logical names to the stages for logging
@@ -217,6 +221,7 @@ class Pipeline(object):
         dafPersist.LogicalLocation.setLocationMap(psLookup)
 
         log.log(self.VERB2, "eventBrokerHost %s " % self.eventBrokerHost)
+        log.log(self.VERB2, "barrierDelay %s " % self.barrierDelay)
 
         # Check for eventTimeout
         if (self.executePolicy.exists('eventTimeout')):
@@ -607,7 +612,7 @@ class Pipeline(object):
             # Wait for the B event to be set by the Slice
             # Excute time sleep in between checks to free the GIL periodically 
             while( not (loopEventB.isSet())):
-                 time.sleep(0.1)
+                 time.sleep(self.barrierDelay)
 
             signalTime2 = time.time()
             log.log(Log.DEBUG, "Done waiting for signal from Slice %d %f" % (i, signalTime2)) 
