@@ -472,7 +472,7 @@ class Pipeline(object):
 
         visitcount = 0 
 
-        self.threadBarrier()
+        self.threadBarrier(0)
 
         while True:
 
@@ -504,20 +504,20 @@ class Pipeline(object):
                     self.handleEvents(iStage, stagelog)
 
                     # synchronize before preprocess
-                    self.threadBarrier()
+                    self.threadBarrier(iStage)
 
                     self.tryPreProcess(iStage, stage, stagelog)
 
                     # synchronize after preprocess, before process
-                    self.threadBarrier()
+                    self.threadBarrier(iStage)
 
                     # synchronize after process, before postprocess
-                    self.threadBarrier()
+                    self.threadBarrier(iStage)
 
                     self.tryPostProcess(iStage, stage, stagelog)
 
                     # synchronize after postprocess
-                    self.threadBarrier()
+                    self.threadBarrier(iStage)
 
                     stagelog.done()
 
@@ -576,7 +576,7 @@ class Pipeline(object):
             log.log(Log.INFO, "Exit here at the end of the Visit")
             sys.exit()
 
-    def threadBarrier(self): 
+    def threadBarrier(self, iStage): 
         """
         Create an approximate barrier where all Slices intercommunicate with the Pipeline 
         """
@@ -611,8 +611,15 @@ class Pipeline(object):
 
             # Wait for the B event to be set by the Slice
             # Excute time sleep in between checks to free the GIL periodically 
+            useDelay = self.barrierDelay
+
+            if(iStage == 1): 
+                useDelay = 0.1
+            if(iStage == 290): 
+                useDelay = 0.1
+
             while( not (loopEventB.isSet())):
-                 time.sleep(self.barrierDelay)
+                 time.sleep(useDelay)
 
             signalTime2 = time.time()
             log.log(Log.DEBUG, "Done waiting for signal from Slice %d %f" % (i, signalTime2)) 

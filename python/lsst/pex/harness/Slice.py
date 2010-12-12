@@ -441,8 +441,10 @@ class Slice(object):
             # stagelog.setPreamblePropertyInt("stagename", visitcount)
             timesVisitStart = os.times()
 
-            looplog.setPreamblePropertyFloat("usertime", timesVisitStart[0])
-            looplog.setPreamblePropertyFloat("systemtime", timesVisitStart[1])
+            # looplog.setPreamblePropertyFloat("usertime", timesVisitStart[0])
+            # looplog.setPreamblePropertyFloat("systemtime", timesVisitStart[1])
+            looplog.setPreamblePropertyDouble("usertime", timesVisitStart[0])
+            looplog.setPreamblePropertyDouble("systemtime", timesVisitStart[1])
             looplog.start()
 
             self.startInitQueue()    # place an empty clipboard in the first Queue
@@ -498,8 +500,10 @@ class Slice(object):
             totalTime = utime + stime
             looplog.log(Log.INFO, "visittimes : utime %.4f stime %.4f  total %.4f wtime %.4f" % (utime, stime, totalTime, wtime) )
 
-            looplog.setPreamblePropertyFloat("usertime", timesVisitDone[0])
-            looplog.setPreamblePropertyFloat("systemtime", timesVisitDone[1])
+            # looplog.setPreamblePropertyFloat("usertime", timesVisitDone[0])
+            # looplog.setPreamblePropertyFloat("systemtime", timesVisitDone[1])
+            looplog.setPreamblePropertyDouble("usertime", timesVisitDone[0])
+            looplog.setPreamblePropertyDouble("systemtime", timesVisitDone[1])
             looplog.done()
 
             # LogRec(looplog, Log.INFO) << Prop("usertime", utime) \
