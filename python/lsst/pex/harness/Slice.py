@@ -560,6 +560,15 @@ class Slice(object):
             if (self.errorFlagged == 0):
                 processlog = stagelog.timeBlock("process", self.TRACE)
                 stageObject.applyProcess()
+
+                outputQueue = self.queueList[iStage]
+                clipboard = outputQueue.element()
+                proclog.log(Log.INFO, "Checking_For_Shotdown")
+
+                if clipboard.has_key("noMoreDatasets"): 
+                    proclog.log(Log.INFO, "Ready_For_Shutdown")
+                    self.shutdown();
+
                 processlog.done()
             else:
                 proclog.log(self.TRACE, "Skipping process due to error")
