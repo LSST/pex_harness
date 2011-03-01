@@ -45,7 +45,7 @@ import lsst.ctrl.events as events
 import lsst.pex.exceptions
 from lsst.pex.exceptions import *
 
-import os, sys, re, traceback, time, datetime
+import os, sys, signal, re, traceback, time, datetime
 import threading
 from threading import Event as PyEvent
 
@@ -540,8 +540,9 @@ class Slice(object):
         Shutdown the Slice execution
         """
         shutlog = Log(self.log, "shutdown", Log.INFO);
-        shutlog.log(Log.INFO, "Shutting down Slice")
-        sys.exit()
+        pid = os.getpid()
+        shutlog.log(Log.INFO, "Shutting down Slice:  pid " + str(pid))
+        os.kill(pid, signal.SIGKILL) 
 
     def tryProcess(self, iStage, stage, stagelog):
         """
