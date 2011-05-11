@@ -146,6 +146,8 @@ if (__name__ == '__main__'):
     except run.UsageError, e:
         print >> sys.stderr, "%s: %s" % (cl.get_prog_name(), e)
         sys.exit(1)
+    except SystemExit:
+        raise
     except Exception, e:
         log = Log(Log.getDefaultLog(),"runPipeline")
         log.log(Log.FATAL, str(e))
