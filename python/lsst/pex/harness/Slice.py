@@ -22,7 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
-+from __future__ import with_statement
+from __future__ import with_statement
 
 from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.stage import StageProcessing
