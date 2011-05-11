@@ -22,6 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
++from __future__ import with_statement
 
 from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.stage import StageProcessing
@@ -46,8 +47,6 @@ import lsst.pex.exceptions
 from lsst.pex.exceptions import *
 
 import os, sys, signal, re, traceback, time, datetime
-import threading
-from threading import Event as PyEvent
 
 
 """
@@ -506,6 +505,14 @@ class Slice(object):
             looplog.setPreamblePropertyDouble("systemtime", timesVisitDone[1])
             looplog.done()
 
+            memmsg = "mem:"
+            with open("/proc/%d/status" % os.getpid(), "r") as f:
+                for l in f:
+                    m = re.match(r'Vm(Size|RSS|Peak|HWM):\s+(\d+ \wB)', l)
+                    if m:
+                        memmsg += "  %s=%s" % m.groups()
+            looplog.log(Log.INFO, memmsg)
+
             # LogRec(looplog, Log.INFO) << Prop("usertime", utime) \
             #                            << Prop("systemtime", stime) \
             #                           << LogRec.endr;
@@ -542,7 +549,10 @@ class Slice(object):
         shutlog = Log(self.log, "shutdown", Log.INFO);
         pid = os.getpid()
         shutlog.log(Log.INFO, "Shutting down Slice:  pid " + str(pid))
-        os.kill(pid, signal.SIGKILL) 
+        # os.kill(pid, signal.SIGKILL) 
+        sys.exit(0)
+
+
 
     def tryProcess(self, iStage, stage, stagelog):
         """
@@ -575,6 +585,9 @@ class Slice(object):
                 proclog.log(self.TRACE, "Skipping process due to error")
                 self.transferClipboard(iStage)
   
+        except SystemExit:
+            raise
+
         except:
             trace = "".join(traceback.format_exception(
                 sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))

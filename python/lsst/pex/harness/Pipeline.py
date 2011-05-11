@@ -109,8 +109,8 @@ class Pipeline(object):
         if self.log is not None:
             self.log.log(self.VERB1, 'Killing Pipeline process immediately: shutdown level 1')
 
-        thisPid = os.getpid()
-        os.popen("kill -9 "+str(thisPid))
+        # thisPid = os.getpid()
+        # os.popen("kill -9 "+str(thisPid))
  
         sys.exit()
 
@@ -619,7 +619,9 @@ class Pipeline(object):
                 useDelay = 0.1
 
             while( not (loopEventB.isSet())):
-                 time.sleep(useDelay)
+                if not self.sliceThreadList[i].isAlive():
+                    self.shutdown()
+                time.sleep(useDelay)
 
             signalTime2 = time.time()
             log.log(Log.DEBUG, "Done waiting for signal from Slice %d %f" % (i, signalTime2)) 
@@ -711,6 +713,9 @@ class Pipeline(object):
                 prelog.log(self.TRACE, "Skipping process due to error")
                 self.transferClipboard(iStage)
 
+        except SystemExit:
+            raise
+
         except:
             trace = "".join(traceback.format_exception(
                     sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))
@@ -769,6 +774,9 @@ class Pipeline(object):
             else:
                 postlog.log(self.TRACE, "Skipping applyPostprocess due to flagged error")
                 self.transferClipboard(iStage)
+
+        except SystemExit:
+            raise
 
         except:
             trace = "".join(traceback.format_exception(
