@@ -28,7 +28,7 @@ pytstsrps = filter(lambda t: t.startswith("Test") and t.endswith(".py"),
 #     pytstsrps = filter(lambda a: not a.startswith("TestIO_")
 #             or a[7] not in "2 3 4".split(), pytstsrps)
 pytstsrps = filter(lambda a: not a.startswith("TestIO_")
-        or a[7] not in "2 3 4".split(), pytstsrps)
+        or a[7] not in "2 3 4 5".split(), pytstsrps)
 
 #pytstsrps += filter(lambda t: t.startswith("test") and t.endswith(".py"),
 #                    os.listdir("."))
