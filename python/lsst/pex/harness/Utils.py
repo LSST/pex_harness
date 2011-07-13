@@ -49,7 +49,13 @@ def createAdditionalData(stage, stagePolicy, clipboard):
                 if cprops is None:
                     raise RuntimeError, \
                           "Expected data not found on clipboard: "+ clipKey
-                additionalData.copy(rename, cprops, psKey)
+                if isinstance(cprops, dict):
+                    additionalData.set(rename, cprops[psKey])
+                elif isinstance(cprops, lsst.daf.base.PropertySet):
+                    additionalData.copy(rename, cprops, psKey)
+                else:
+                    raise RuntimeError, \
+                          "Unknown data type (not dict or PropertySet) found on clipboard: "+ clipKey
             else:
                 cprops = clipboard.get(name)
                 if cprops is None:
