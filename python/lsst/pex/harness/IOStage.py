@@ -273,9 +273,9 @@ def _inputSetup(stage):
 
     if not stage.log:
         stage.log = BlockTimingLog(Log.getDefaultLog(),
-                                   "pex.harness.iostage.output")
+                                   "pex.harness.iostage.input")
     else:
-        stage.log = BlockTimingLog(stage.log, "iostage.output")
+        stage.log = BlockTimingLog(stage.log, "iostage.input")
 
     defaultFile = pexPolicy.DefaultPolicyFile("pex_harness",
             "InputStageDictionary.paf", "policy")
