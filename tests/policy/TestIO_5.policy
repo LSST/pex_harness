@@ -1,0 +1,17 @@
+parameters: {
+    additionalData: "visit=jobIdentity.visit"
+    additionalData: "raft=jobIdentity.raft"
+    additionalData: "sensor=jobIdentity.sensor"
+    additionalData: "channel=jobIdentity.channel"
+    additionalData: "snap=jobIdentity.snap"
+    inputItems: {
+        rawCameraImage: {
+            type: DecoratedImageU
+            pythonType: lsst.afw.image.DecoratedImageU
+            storagePolicy: {
+                storage: FitsStorage
+                location: "%(input)/imSim/imsim_%(visit)_%(raft)_%(sensor)_%(channel)_%(snap).fits"
+            }
+        }
+    }
+}

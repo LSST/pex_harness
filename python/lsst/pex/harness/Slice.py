@@ -22,6 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import with_statement
 
 from lsst.pex.harness.Queue import Queue
 from lsst.pex.harness.stage import StageProcessing
@@ -505,6 +506,17 @@ class Slice(object):
             looplog.setPreamblePropertyDouble("usertime", timesVisitDone[0])
             looplog.setPreamblePropertyDouble("systemtime", timesVisitDone[1])
             looplog.done()
+
+            try:
+                memmsg = "mem:"
+                with open("/proc/%d/status" % os.getpid(), "r") as f:
+                    for l in f:
+                        m = re.match(r'Vm(Size|RSS|Peak|HWM):\s+(\d+ \wB)', l)
+                        if m:
+                            memmsg += " %s=%s" % m.groups()
+                looplog.log(Log.INFO, memmsg)
+            except:
+                pass
 
             # LogRec(looplog, Log.INFO) << Prop("usertime", utime) \
             #                            << Prop("systemtime", stime) \
