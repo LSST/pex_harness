@@ -27,7 +27,7 @@ Access to the C++ harness classes from the lsst.pex.harness module
 %enddef
 
 %feature("autodoc", "1");
-%module(package="lsst.pex.harness", docstring=harness_DOCSTRING,  "directors=1") harnessLib
+%module(package="lsst.pex.harness", docstring=harness_DOCSTRING) harnessLib
 
 
 %{
