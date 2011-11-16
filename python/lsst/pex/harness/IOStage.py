@@ -74,6 +74,9 @@ class OutputStageSerial(harnessStage.SerialProcessing):
 
 class OutputStageParallel(harnessStage.ParallelProcessing):
 
+    def __del__(self):
+        dafPersist.ButlerFactory.cleanCache()
+
     def setup(self):
         _outputSetup(self)
 
@@ -83,6 +86,9 @@ class OutputStageParallel(harnessStage.ParallelProcessing):
         _output(self, self.policy, clipboard, self.log)
 
 class InputStageParallel(harnessStage.ParallelProcessing):
+
+    def __del__(self):
+        dafPersist.ButlerFactory.cleanCache()
 
     def setup(self):
         _inputSetup(self)

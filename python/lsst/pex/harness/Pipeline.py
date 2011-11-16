@@ -106,18 +106,16 @@ class Pipeline(object):
 
     def exit (self):
 
+        print "Pipeline exiting"
         if self.log is not None:
             self.log.log(self.VERB1, 'Killing Pipeline process immediately: shutdown level 1')
-
-        thisPid = os.getpid()
-        os.popen("kill -9 "+str(thisPid))
- 
         sys.exit()
 
     def __del__(self):
         """
         Delete the Pipeline object: clean up
         """
+        print "deleting Pipeline"
         if self.log is not None:
             self.log.log(self.VERB1, 'Python Pipeline being deleted')
 
@@ -390,6 +388,7 @@ class Pipeline(object):
             sysdata["universeSize"] = self.universeSize 
             sysdata["runId"] =  self._runId
             if (stagePolicy != "None"):
+                print "Creating stage in Pipeline:", StageClass
                 stageObject = StageClass(stagePolicy, self.log, self.eventBrokerHost, sysdata)  
                 # (self, policy=None, log=None, eventBroker=None, sysdata=None, callSetup=True):
             else:
@@ -619,7 +618,10 @@ class Pipeline(object):
                 useDelay = 0.1
 
             while( not (loopEventB.isSet())):
-                 time.sleep(useDelay)
+                if not self.sliceThreadList[i].isAlive():
+                    print >>sys.stderr, "Thread", i, "is dead, exiting"
+                    self.shutdown()
+                time.sleep(useDelay)
 
             signalTime2 = time.time()
             log.log(Log.DEBUG, "Done waiting for signal from Slice %d %f" % (i, signalTime2)) 
@@ -671,11 +673,13 @@ class Pipeline(object):
         for i in range(self.nSlices):
             slice = self.sliceThreadList[i]
             slice.join()
+            print "Slice", i, "ended"
             self.log.log(self.VERB2, 'Slice ' + str(i) + ' ended.')
 
         # Also have to tell the shutdown Thread to stop  
         self.oneShutdownThread.setStop()
         self.oneShutdownThread.join()
+        print "Shutdown thread ended"
         self.log.log(self.VERB2, 'Shutdown thread ended ')
 
         sys.exit()
@@ -710,6 +714,9 @@ class Pipeline(object):
             else:
                 prelog.log(self.TRACE, "Skipping process due to error")
                 self.transferClipboard(iStage)
+
+        except SystemExit:
+            raise
 
         except:
             trace = "".join(traceback.format_exception(
@@ -769,6 +776,9 @@ class Pipeline(object):
             else:
                 postlog.log(self.TRACE, "Skipping applyPostprocess due to flagged error")
                 self.transferClipboard(iStage)
+
+        except SystemExit:
+            raise
 
         except:
             trace = "".join(traceback.format_exception(

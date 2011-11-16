@@ -47,8 +47,6 @@ import lsst.pex.exceptions
 from lsst.pex.exceptions import *
 
 import os, sys, signal, re, traceback, time, datetime
-import threading
-from threading import Event as PyEvent
 
 
 """
@@ -105,6 +103,7 @@ class Slice(object):
         """
         Delete the Slice object: cleanup 
         """
+        print "delete Slice"
         if self.log is not None:
             self.log.log(self.VERB1, 'Python Slice being deleted')
 
@@ -372,6 +371,7 @@ class Slice(object):
             sysdata["runId"] =  self._runId
             # Here 
             if (stagePolicy != "None"):
+                print "Creating stage in Slice:", StageClass
                 stageObject = StageClass(stagePolicy, self.log, self.eventBrokerHost, sysdata)
                 # (self, policy=None, log=None, eventBroker=None, sysdata=None, callSetup=True):
             else:
@@ -554,7 +554,8 @@ class Slice(object):
         shutlog = Log(self.log, "shutdown", Log.INFO);
         pid = os.getpid()
         shutlog.log(Log.INFO, "Shutting down Slice:  pid " + str(pid))
-        os.kill(pid, signal.SIGKILL) 
+        del self.stageList
+        sys.exit(0)
 
     def tryProcess(self, iStage, stage, stagelog):
         """
@@ -587,6 +588,9 @@ class Slice(object):
                 proclog.log(self.TRACE, "Skipping process due to error")
                 self.transferClipboard(iStage)
   
+        except SystemExit:
+            raise
+
         except:
             trace = "".join(traceback.format_exception(
                 sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2]))

@@ -45,6 +45,7 @@ from lsst.daf.base import PropertySet
 
 import lsst.ctrl.events as events
 
+import gc
 import os
 import sys
 import optparse, traceback
@@ -137,15 +138,28 @@ def runPipeline(policyFile, runId, logthresh=None, name=None, logdir=None, worke
 
     pyPipeline.startSlices()  
 
-    pyPipeline.startStagesLoop()
+    try:
+        pyPipeline.startStagesLoop()
+    except SystemExit:
+        print "Caught exit"
+
+    del pyPipeline
 
 
 if (__name__ == '__main__'):
     try:
         main()
+        del logger
+        print "Collecting garbage after main"
+        gc.collect()
     except run.UsageError, e:
         print >> sys.stderr, "%s: %s" % (cl.get_prog_name(), e)
         sys.exit(1)
+    except SystemExit:
+        del logger
+        print "Collecting garbage in exit"
+        gc.collect()
+        raise
     except Exception, e:
         log = Log(Log.getDefaultLog(),"runPipeline")
         log.log(Log.FATAL, str(e))

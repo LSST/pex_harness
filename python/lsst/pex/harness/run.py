@@ -142,25 +142,36 @@ def launchPipeline(policyFile, runid, workerid=None, name=None, verbosity=None, 
     else:
         logger.log(Log.INFO, verbosity) 
 
-    clineOptions = ""
+    clineOptions = []
     if name is not None:
-        clineOptions += " -n %s" % name
+        clineOptions += ["-n", name]
 
     if verbosity is not None:
-        clineOptions += " -V %s" % verbosity
+        clineOptions += ["-V", str(verbosity)]
 
     if workerid is not None:
-        clineOptions += " -w %s" % workerid
+        clineOptions += ["-w", str(workerid)]
 
-    clineOptions += " -g %s" % logdir
+    clineOptions += ["-g", logdir]
 
-    cmd = "runPipelin.sh.py %s %s %s" % \
-          (clineOptions, policyFile, runid)
+    cmdArgs = ["python"]
+    cmdArgs.append(os.path.join(os.environ["PEX_HARNESS_DIR"],
+        "bin", "runPipeline.py"))
+    cmdArgs += clineOptions
+    cmdArgs.append(policyFile)
+    cmdArgs.append(runid)
+
+#    cmdArgs = ["valgrind", "--leak-check=yes",
+#            "--suppressions=/home/ktlim/memcheck.suppress",
+#            "--log-file=/home/ktlim/memtest/vgmc.%p"] + cmdArgs
+
+    cmdArgs = ["valgrind", "--tool=massif", "--max-snapshots=200"] + cmdArgs
 
     logger.log(Log.INFO, "CMD to execute:") 
-    logger.log(Log.INFO, cmd) 
+    logger.log(Log.INFO, str(cmdArgs)) 
 
-    os.execvp("runPipeline.py", cmd.split())
+    os.execvp(cmdArgs[0], cmdArgs)
+#    os.execvp("runPipeline.py", cmd.split())
 
     raise RuntimeError("Failed to exec runPipeline.py")
 

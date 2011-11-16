@@ -78,7 +78,11 @@ class SliceThread(threading.Thread):
 
         self.pySlice.initializeStages()
 
-        self.pySlice.startStagesLoop()
+        try:
+            self.pySlice.startStagesLoop()
+        except SystemExit:
+            del self.pySlice
+            raise
 
         self.pySlice.shutdown()
 

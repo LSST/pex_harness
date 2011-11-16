@@ -54,7 +54,6 @@ class SimpleStageTester(object):
         @param universeSize     the number of parallel threads to pretend are
                                   running
         """
-        self.stage = stage
         self.log = Debug("SimpleStageTester")
         self.event = None
         self.inQ = Queue()
