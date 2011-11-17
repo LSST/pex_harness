@@ -14,3 +14,6 @@ doc/*.inc
 doc/doxygen.conf
 tests/.tests
 version.py
+PS-deep.boost
+tests/testTracingLog
+theProperty.fov391
