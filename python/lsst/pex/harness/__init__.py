@@ -21,3 +21,4 @@
 #
 
 from dataset import *
+from .version import *

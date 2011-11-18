@@ -1,36 +1,19 @@
-
-# /
-/.sconsign.dblite
-/.sconf_temp
-/config.log
-
-# /doc/
-/doc/htmlDir
-
-# /examples/eventstage/
-/examples/eventstage/*.log
-
-# /examples/inputoutput/
-/examples/inputoutput/*.log
-
-# /examples/inputoutputfits/
-/examples/inputoutputfits/*.log
-
-# /lib/
-/lib/*.so
-
-# /python/lsst/pex/
-/python/lsst/pex/*.pyc
-
-# /python/lsst/pex/harness/
-/python/lsst/pex/harness/harnessLib.py
-/python/lsst/pex/harness/*_wrap.cc
-/python/lsst/pex/harness/*.os
-/python/lsst/pex/harness/*.pyc
-
-# /src/
-/src/*.os
-
-# /tests/
-/tests/.tests
-/tests/testTracingLog
+.sconsign.dblite
+config.log
+.sconf_temp
+*.o
+*.os
+*.so
+*.cfgc
+*.pyc
+*_wrap.cc
+*Lib.py
+doc/html
+doc/*.tag
+doc/*.inc
+doc/doxygen.conf
+tests/.tests
+version.py
+PS-deep.boost
+tests/testTracingLog
+theProperty.fov391
