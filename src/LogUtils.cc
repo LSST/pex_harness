@@ -44,6 +44,7 @@ using namespace std;
 using lsst::ctrl::events::EventSystem;
 using lsst::ctrl::events::EventLog;
 using lsst::pex::logging::Log;
+using lsst::pex::logging::BlockTimingLog;
 
 namespace lsst {
 namespace pex {
