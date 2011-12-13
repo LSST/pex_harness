@@ -36,36 +36,11 @@
 
 
 #include <string>
-#include <unistd.h>
-#include <vector>
-#include <fstream>
-#include <iostream>
-#include <istream>
 #include <ostream>
-#include <sstream>
+#include <fstream>
 
-#include "lsst/pex/policy/Policy.h"
-#include "lsst/utils/Utils.h"
-
-#include "lsst/daf/base/PropertySet.h"
-#include "lsst/pex/logging/Component.h"
-#include "lsst/pex/logging/LogRecord.h"
-#include "lsst/pex/logging/LogDestination.h"
-#include "lsst/pex/logging/LogFormatter.h"
-#include "lsst/pex/logging/Log.h"
 #include "lsst/pex/logging/BlockTimingLog.h"
-#include "lsst/ctrl/events/EventLog.h"
-#include "lsst/pex/exceptions.h"
-#include <boost/shared_ptr.hpp>
 
-using namespace lsst::daf::base;
-
-using namespace std;
-using namespace lsst;
-using namespace boost;
-
-using lsst::pex::logging::Log;
-using lsst::pex::logging::BlockTimingLog;
 
 namespace lsst {
 namespace pex {
@@ -105,7 +80,7 @@ public:
                                );
 
 
-    BlockTimingLog& getLogger() {
+    lsst::pex::logging::BlockTimingLog& getLogger() {
         return pipelineLog;
     }
 
@@ -114,9 +89,9 @@ public:
     }
     const std::string& getEventBrokerHost() {  return _evbHost;  }
 
-    BlockTimingLog pipelineLog;
+    lsst::pex::logging::BlockTimingLog pipelineLog;
     std::string _evbHost;
-    ofstream* outlog;
+    std::ofstream* outlog;
 
 };
 
@@ -140,13 +115,14 @@ public:
  *                             data to collect; see BlockTimingLog. (default:
  *                             NOUDATA, no resource usage data.)
  */
-BlockTimingLog *setupHarnessLogging(const std::string& runId, int sliceId, 
-                                    const std::string& eventBrokerHost="", 
-                                    const std::string& pipename="unnamed",
-                                    const std::string& workerid="-1",
-                                    std::ostream *messageStrm=0,
-                                    const std::string& logname="harness",
-                                    int resourceUsageFlags=0);
+lsst::pex::logging::BlockTimingLog *setupHarnessLogging(
+    const std::string& runId, int sliceId, 
+    const std::string& eventBrokerHost="", 
+    const std::string& pipename="unnamed",
+    const std::string& workerid="-1",
+    std::ostream *messageStrm=0,
+    const std::string& logname="harness",
+    int resourceUsageFlags=0);
 
 } // namespace harness 
 
