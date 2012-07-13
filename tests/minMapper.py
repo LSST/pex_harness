@@ -142,8 +142,8 @@ class MinMapper(Mapper):
         return pathId
 
 MinMapper.map_raw = \
-        lambda self, dataId: self._pathMapper("raw", "root", dataId)
+        lambda self, dataId, write: self._pathMapper("raw", "root", dataId)
 
 for calibType in ["bias", "dark", "flat", "fringe"]:
-    setattr(MinMapper, "map_" + calibType, lambda self, dataId:
+    setattr(MinMapper, "map_" + calibType, lambda self, dataId, write:
             self._pathMapper(calibType, "calibRoot", dataId))
