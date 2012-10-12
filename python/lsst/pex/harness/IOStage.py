@@ -142,9 +142,8 @@ def _outputSetup(stage):
     stage.policy.mergeDefaults(defaults)
 
     if stage.policy.exists('parameters.butler'):
-        bf = dafPersist.ButlerFactory(
-                stage.policy.getPolicy('parameters.butler'))
-        stage.butler = bf.create()
+        mapperRoot = stage.policy.getString('parameters.butler.mapperPolicy.root')
+        stage.butler = dafPersist.Butler(mapperRoot)
     else:
         stage.butler = None
 
@@ -284,9 +283,8 @@ def _inputSetup(stage):
     stage.policy.mergeDefaults(defaults)
 
     if stage.policy.exists('parameters.butler'):
-        bf = dafPersist.ButlerFactory(
-                stage.policy.getPolicy('parameters.butler'))
-        stage.butler = bf.create()
+        mapperRoot = stage.policy.getString('parameters.butler.mapperPolicy.root')
+        stage.butler = dafPersist.Butler(mapperRoot)
     else:
         stage.butler = None
 

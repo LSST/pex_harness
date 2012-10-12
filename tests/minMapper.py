@@ -85,11 +85,12 @@ class MinMapper(Mapper):
         self.flatTemplate = "flat_r/imsim_2_%(raft)s_%(sensor)s_%(channel)s_E%(exposure)03d.fits.gz"
         self.fringeTemplate = "flat_r/imsim_2_%(raft)s_%(sensor)s_%(channel)s_E%(exposure)03d.fits.gz"
         self.root = root
-        if policy.exists('root'):
-            self.root = policy.getString('root')
         self.calibRoot = calibRoot
-        if policy.exists('calibRoot'):
-            self.root = policy.getString('calibRoot')
+        if policy is not None:
+            if policy.exists('root'):
+                self.root = policy.getString('root')
+            if policy.exists('calibRoot'):
+                self.root = policy.getString('calibRoot')
         if self.calibRoot is None:
             self.calibRoot = self.root
         self.rawRegistry = FsRegistry(self.root, self.rawTemplate)
