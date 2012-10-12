@@ -36,6 +36,7 @@ to the stage; PropertySet names of the additional data items to be retrieved
 are given in the AdditionalData sub-Policy.
 """
 
+import importlib
 import os
 import sys
 import time
@@ -142,8 +143,7 @@ def _outputSetup(stage):
     stage.policy.mergeDefaults(defaults)
 
     if stage.policy.exists('parameters.butler'):
-        mapperRoot = stage.policy.getString('parameters.butler.mapperPolicy.root')
-        stage.butler = dafPersist.Butler(mapperRoot)
+        stage.butler = _makeButler(stage.policy)
     else:
         stage.butler = None
 
@@ -283,8 +283,7 @@ def _inputSetup(stage):
     stage.policy.mergeDefaults(defaults)
 
     if stage.policy.exists('parameters.butler'):
-        mapperRoot = stage.policy.getString('parameters.butler.mapperPolicy.root')
-        stage.butler = dafPersist.Butler(mapperRoot)
+        stage.butler = _makeButler(stage.policy)
     else:
         stage.butler = None
 
@@ -498,3 +497,14 @@ def _waitForDataset(butler, datasetType, dataId, log, required, timeout):
         msg = None
     _waitFor(lambda: butler.datasetExists(datasetType, dataId=dataId), log,
             msg, timeout)
+
+def _makeButler(policy):
+    """Return a butler based on a policy containing a mapperName and a root
+    directory.  Ignore any other elements in the policy for now."""
+    mapperName = policy.getString('parameters.butler.mapperName')
+    mapperRoot = policy.getString('parameters.butler.mapperPolicy.root')
+    components = mapperName.rsplit(".", 1)
+    pkg = importlib.import_module(".".join(components[:-1]))
+    cls = getattr(pkg, components[-1])
+    mapper = cls(root=mapperRoot)
+    return dafPersist.Butler(None, mapper=mapper)
