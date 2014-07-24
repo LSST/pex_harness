@@ -43,7 +43,7 @@ msglev = { "silent": -30,
 
 pkgdirvar = "PEX_HARNESS_DIR"
 
-class RunSetupException(pexExcept.LsstException):
+class RunSetupException(pexExcept.Exception):
     """
     An error occurred while processing user input or environment at the 
     initial stages of the execution of a script.  

@@ -29,7 +29,7 @@ Stage for publishing events, pulling contents off the Clipboard according to Pol
 
 import lsst.pex.harness.stage as harnessStage
 from lsst.pex.logging import Log, Debug
-from lsst.pex.exceptions import LsstException
+import lsst.pex.exceptions
 
 import threading
 import lsst.daf.base as dafBase
@@ -50,8 +50,8 @@ class EventStageSerial(harnessStage.SerialProcessing):
         if self.policy.exists('RunMode'):
             self.runmode = self.policy.getString('RunMode')
         if self.getEventBrokerHost() is None:
-            raise LsstException("No event broker host configured " +
-                                "for this EventStage")
+            raise lsst.pex.exceptions.Exception("No event broker host configured " +
+                                                "for this EventStage")
 
     # def initialize(self, outQueue, inQueue): 
     #     """

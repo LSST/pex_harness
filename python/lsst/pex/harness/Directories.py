@@ -133,7 +133,7 @@ class Directories(object):
     def getNamedDirectory(self, name):
         try:
             dir = self.policy.getString(name) % self.patdata
-        except pexExcept.exceptionsLib.LsstCppException, e:
+        except pexExcept.exceptionsLib.Exception as e:
             dir = self.policy.getString("update") % self.patdata
 
         if not os.path.isabs(dir):
