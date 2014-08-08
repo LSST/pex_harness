@@ -35,7 +35,7 @@ import lsst.pex.harness.stage as harnessStage
 from lsst.pex.harness.simpleStageTester import SimpleStageTester
 import lsst.pex.policy as pexPolicy
 from lsst.pex.logging import Log, Debug, LogRec, Prop
-from lsst.pex.exceptions import LsstCppException
+import lsst.pex.exceptions
 
 def main():
 

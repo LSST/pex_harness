@@ -26,7 +26,7 @@ import unittest
 import lsst.utils.tests as tests
 from lsst.pex.policy import Policy
 from lsst.daf.base import PropertySet
-from lsst.pex.exceptions import LsstCppException, LsstException
+import lsst.pex.exceptions
 import lsst.pex.harness as pexHarness
 import lsst.pex.harness.SimpleStageTester
 from lsst.pex.harness.EventStage import EventStage
@@ -82,7 +82,7 @@ class EventStageTestCase(unittest.TestCase):
             clipboard[key] = PropertySet()
             clipboard[key].setString("foo", "bar")
 
-        self.assertRaises(LsstException, tester.runMaster, clipboard)
+        self.assertRaises(lss.pex.exceptions.Exception, tester.runMaster, clipboard)
         stage.setEventBrokerHost("lsst4.ncsa.uiuc.edu")
         clipboard = tester.runMaster(clipboard)
 

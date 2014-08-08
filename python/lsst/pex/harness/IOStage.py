@@ -466,8 +466,8 @@ def _inputUsingButler(stage, policy, clipboard, log):
             obj = stage.butler.get(datasetType, dataId=dataId)
             clipboard.put(item, obj)
         else:
-            raise pexExcept.LsstException, \
-                "datasetId missing both fromInputDatasets and fromJobIdentity"
+            raise pexExcept.Exception(
+                "datasetId missing both fromInputDatasets and fromJobIdentity")
 
 def _waitFor(func, log, timeoutMsg="Unavailable dataset", timeout=60.0,
         initial=0.5, backoff=1.2):
@@ -481,7 +481,7 @@ def _waitFor(func, log, timeoutMsg="Unavailable dataset", timeout=60.0,
         sleep *= backoff
         if totalSleep >= timeout:
             if timeoutMsg is not None:
-                raise pexExcept.LsstException, timeoutMsg
+                raise pexExcept.Exception(timeoutMsg)
             else:
                 return
 
